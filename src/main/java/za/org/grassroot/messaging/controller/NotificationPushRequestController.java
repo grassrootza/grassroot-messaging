@@ -1,13 +1,13 @@
 package za.org.grassroot.messaging.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import za.org.grassroot.messaging.service.MessageSendingService;
 import za.org.grassroot.messaging.service.jwt.JwtService;
+import za.org.grassroot.messaging.service.sms.model.MockSmsResponse;
+import za.org.grassroot.messaging.service.sms.model.SmsGatewayResponse;
 
 /**
  * Created by luke on 2017/05/20.
@@ -17,6 +17,8 @@ import za.org.grassroot.messaging.service.jwt.JwtService;
 @RequestMapping(value = "/notification/push")
 public class NotificationPushRequestController extends BaseController {
 
+    private static final Logger logger = LoggerFactory.getLogger(NotificationPushRequestController.class);
+
     private final MessageSendingService messageSendingService;
 
     @Autowired
@@ -25,12 +27,13 @@ public class NotificationPushRequestController extends BaseController {
         this.messageSendingService = messageSendingService;
     }
 
-    @RequestMapping(value = "/priority/{phoneNumber}")
-    public ResponseEntity<?> triggerPriorityNotification(@PathVariable String phoneNumber,
-                                                         @RequestParam String message,
-                                                         @RequestParam(required = false) Integer priorityLevel) {
-        messageSendingService.sendPriorityMessage(phoneNumber, message, priorityLevel == null ? 0 : priorityLevel);
-        return ResponseEntity.ok().build();
+    @RequestMapping(value = "/priority/{phoneNumber}", method = RequestMethod.POST)
+    public @ResponseBody SmsGatewayResponse triggerPriorityNotification(@PathVariable String phoneNumber,
+                                                   @RequestParam String message,
+                                                   @RequestParam(required = false) Integer priorityLevel) {
+        // messageSendingService.sendPriorityMessage(phoneNumber, message, priorityLevel == null ? 0 : priorityLevel);
+        logger.info("Sending priority SMS! to : {}", phoneNumber);
+        return new MockSmsResponse();
     }
 
 }

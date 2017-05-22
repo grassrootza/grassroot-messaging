@@ -47,13 +47,14 @@ public class JwtServiceImpl implements JwtService {
     @PostConstruct
     public void init() {
         PublicCredentials credentials = refreshPublicCredentials();
-        logger.info("refreshed credentials: {}, now adding authorized list", credentials);
+        logger.info("refreshed credentials, now adding authorized list, from URLs: {}", Arrays.toString(authorizedServiceKeyUrls));
         Arrays.asList(authorizedServiceKeyUrls).forEach(this::getAndAddAuthorizedPublicKey);
     }
 
     private void getAndAddAuthorizedPublicKey(String url) {
         try {
             ResponseEntity<PublicCredentials> getResponse = restTemplate.getForEntity(url, PublicCredentials.class);
+            logger.info("Retrieved public credentials: {}", getResponse.getBody());
             addTrustedCredentials(getResponse.getBody());
         } catch (RestClientException e) {
             logger.error("Error getting public credentials: {}", e.getMessage());
@@ -87,8 +88,8 @@ public class JwtServiceImpl implements JwtService {
         return publicCredentials;
     }
 
-    @Override
-    public void addTrustedCredentials(PublicCredentials publicCredentials) {
+    // should only be called at start up, on the strings provided in the variable
+    private void addTrustedCredentials(PublicCredentials publicCredentials) {
         byte[] encoded = TextCodec.BASE64URL.decode(publicCredentials.getB64UrlPublicKey());
         PublicKey publicKey = null;
         try {

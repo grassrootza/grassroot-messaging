@@ -52,7 +52,6 @@ dependencies {
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-integration', version:libs.springBootVersion
 
     compile group: 'org.springframework.boot', name: 'spring-boot-actuator', version:libs.springBootVersion
-    compile group: 'org.springframework.boot', name: 'spring-boot-starter-hateoas', version:libs.springBootVersion
 
     compile group: 'org.springframework.integration', name: 'spring-integration-xmpp', version: libs.springIntegrationVersion
     compile group: 'org.springframework.integration', name: 'spring-integration-mqtt', version:  libs.springIntegrationVersion

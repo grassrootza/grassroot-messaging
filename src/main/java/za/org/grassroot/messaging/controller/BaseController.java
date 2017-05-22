@@ -40,7 +40,7 @@ public class BaseController {
         Instant expiry = now.plus(1L, ChronoUnit.MINUTES);
 
         return Jwts.builder()
-                .setHeaderParam("kuid", jwtService.getPublicCredentials().getKuid())
+                .setHeaderParam("kid", jwtService.getPublicCredentials().getKuid())
                 .setClaims(claims)
                 .setIssuedAt(Date.from(now))
                 .setNotBefore(Date.from(now))

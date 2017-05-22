@@ -11,7 +11,6 @@ public interface JwtService {
 
     PublicCredentials getPublicCredentials();
     PublicCredentials refreshPublicCredentials();
-    void addTrustedCredentials(PublicCredentials publicCredentials);
     SigningKeyResolver getSigningKeyResolver();
     PrivateKey getPrivateKey();
 

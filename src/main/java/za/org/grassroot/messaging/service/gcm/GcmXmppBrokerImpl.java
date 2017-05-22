@@ -11,17 +11,20 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import za.org.grassroot.messaging.domain.GcmRegistration;
-import za.org.grassroot.messaging.domain.GcmRegistrationRepository;
+import za.org.grassroot.messaging.domain.repository.GcmRegistrationRepository;
 import za.org.grassroot.messaging.domain.User;
-import za.org.grassroot.messaging.domain.UserRepository;
+import za.org.grassroot.messaging.domain.repository.UserRepository;
 import za.org.grassroot.messaging.domain.enums.UserMessagingPreference;
 import za.org.grassroot.messaging.util.PhoneNumberUtil;
 
+import java.util.UUID;
+
 /**
- * Restructured and slimmed down, using Smack extensios
+ * Restructured and slimmed down, using Smack extensions, etc
  */
 @Service
 public class GcmXmppBrokerImpl implements GcmHandlingBroker {
@@ -84,6 +87,12 @@ public class GcmXmppBrokerImpl implements GcmHandlingBroker {
         user.setMessagingPreference(UserMessagingPreference.ANDROID_APP);
     }
 
+    @Scheduled(fixedRate = 300000) // runs every five minutes
+    public void gcmKeepAlive() {
+        GcmPayload gcmPayload = new GcmPayload(UUID.randomUUID().toString(), "topics/keepalive", null);
+        gcmXmppOutboundChannel.send(buildGcmFromPayload(gcmPayload));
+    }
+
     private Message<org.jivesoftware.smack.packet.Message> buildGcmFromPayload(GcmPayload gcmPayload) {
         try {
             org.jivesoftware.smack.packet.Message xmppMessage = new org.jivesoftware.smack.packet.Message();
@@ -93,12 +102,5 @@ public class GcmXmppBrokerImpl implements GcmHandlingBroker {
             throw new IllegalArgumentException("Badly formed GcmMessage passed as payload");
         }
     }
-
-	/*@Transactional(readOnly = true)
-    public Message<org.jivesoftware.smack.packet.Message> transform(Message<Object> message) throws Exception {
-		return (message.getPayload() instanceof Notification) ?
-				buildGcmFromNotification((Notification) message.getPayload()) :
-				buildGcmFromPayload(new GcmPayload(UUID.randomUUID().toString(), "/topics/keepalive", null));
-    }*/
 
 }

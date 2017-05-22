@@ -29,7 +29,7 @@ public class MessageRoutingConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(MessageRoutingConfig.class);
 
-    @Autowired // leaving it as field injection until sort out circular dependency
+    @Autowired // leaving it as field injection until sort out circular dependency (setter might fix but obscure a likely deeper problem)
     private SmsNotificationBroker smsNotificationBroker;
 
     @Autowired
@@ -51,10 +51,20 @@ public class MessageRoutingConfig {
     }
 
     @Bean
+    public MessageChannel outboundPriorityChannel() { return MessageChannels.priority().get(); }
+
+
+    @Bean
     @ServiceActivator(inputChannel = "gcmXmppOutboundChannel")
     public ChatMessageSendingMessageHandler chatMessageSendingMessageHandler(XMPPConnection connection){
         logger.info("ROUTING: Setting up gcmXmppOutboundChannel");
         return new ChatMessageSendingMessageHandler(connection);
+    }
+
+    @Bean
+    public IntegrationFlow priorityFlow() {
+        return f -> f.channel("outboundPriorityChannel")
+                .handle(smsNotificationBroker::sendPrioritySmsNotification);
     }
 
     @Bean

@@ -45,9 +45,14 @@ dependencies {
 
     compile group: 'org.springframework', name: 'spring-context', version:libs.springVersion
     compile group: 'org.springframework', name: 'spring-context-support', version:libs.springVersion
+    compile group: 'org.springframework', name: 'spring-webmvc', version:libs.springVersion
 
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa', version:libs.springBootVersion
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-undertow', version:libs.springBootVersion
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-integration', version:libs.springBootVersion
+
+    compile group: 'org.springframework.boot', name: 'spring-boot-actuator', version:libs.springBootVersion
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-hateoas', version:libs.springBootVersion
 
     compile group: 'org.springframework.integration', name: 'spring-integration-xmpp', version: libs.springIntegrationVersion
     compile group: 'org.springframework.integration', name: 'spring-integration-mqtt', version:  libs.springIntegrationVersion
@@ -64,4 +69,6 @@ dependencies {
     compile group: 'org.igniterealtime.smack', name: 'smack-experimental', version: '4.1.8'
 
     compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '8.4.3'
+    compile group: 'io.jsonwebtoken', name: 'jjwt', version: '0.7.0'
+
 }

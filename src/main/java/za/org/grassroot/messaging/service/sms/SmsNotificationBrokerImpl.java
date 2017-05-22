@@ -8,7 +8,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import za.org.grassroot.messaging.domain.Notification;
-import za.org.grassroot.messaging.domain.sms.SmsGatewayResponse;
+import za.org.grassroot.messaging.domain.PriorityMessage;
+import za.org.grassroot.messaging.service.sms.model.SmsGatewayResponse;
 import za.org.grassroot.messaging.service.NotificationBroker;
 
 /**
@@ -18,6 +19,8 @@ import za.org.grassroot.messaging.service.NotificationBroker;
 public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
 
     private static final Logger logger = LoggerFactory.getLogger(SmsNotificationBrokerImpl.class);
+
+    private boolean inTesting;
 
     @Value("${grassroot.sms.sending.awsdefault:false}")
     private boolean routeAllThroughAws;
@@ -87,8 +90,9 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
 
     @Override
     public void sendPrioritySmsNotification(Message message) {
-        Notification notification = (Notification) message.getPayload();
-        defaultSmsSender.sendPrioritySMS(notification.getMessage(), notification.getTarget().getPhoneNumber());
+        PriorityMessage payload = (PriorityMessage) message.getPayload();
+        logger.info("Inside broker, handling priority message: {}", payload);
+        defaultSmsSender.sendPrioritySMS(payload.getMessage(), payload.getPhoneNumber());
     }
 
     @Override

@@ -1,6 +1,8 @@
-package za.org.grassroot.messaging.domain;
+package za.org.grassroot.messaging.domain.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import za.org.grassroot.messaging.domain.GcmRegistration;
+import za.org.grassroot.messaging.domain.User;
 
 /**
  * Ported by Luke on 2017/05/18.

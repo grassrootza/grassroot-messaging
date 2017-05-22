@@ -10,9 +10,9 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-import za.org.grassroot.messaging.domain.sms.SmsGatewayResponse;
-import za.org.grassroot.messaging.domain.sms.AatResponseInterpreter;
-import za.org.grassroot.messaging.domain.sms.AatSmsResponse;
+import za.org.grassroot.messaging.service.sms.model.AatResponseInterpreter;
+import za.org.grassroot.messaging.service.sms.model.AatSmsResponse;
+import za.org.grassroot.messaging.service.sms.model.SmsGatewayResponse;
 
 /**
  * Created by luke on 2015/09/09.
@@ -57,6 +57,7 @@ public class AatSmsSendingManager implements SmsSendingService {
 
     @Override
     public SmsGatewayResponse sendPrioritySMS(String message, String destinationNumber) {
+        log.info("Sending a priority SMS inside AAT sender");
         UriComponentsBuilder gatewayURI = UriComponentsBuilder.newInstance().scheme("https").host(smsGatewayHost);
         gatewayURI.path("send/")
                 .queryParam("username", smsPriorityUsername)

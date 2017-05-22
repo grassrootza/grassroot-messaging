@@ -13,5 +13,7 @@ public interface MessageSendingService {
 
 	void resendFailedGcmMessage(Notification notification);
 
+	void sendPriorityMessage(String destination, String message, int priorityLevel);
+
     void sendPollingMessage();
 }

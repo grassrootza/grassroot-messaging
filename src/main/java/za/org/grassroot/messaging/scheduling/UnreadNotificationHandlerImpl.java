@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import za.org.grassroot.messaging.domain.Notification;
-import za.org.grassroot.messaging.domain.NotificationRepository;
+import za.org.grassroot.messaging.domain.repository.NotificationRepository;
 import za.org.grassroot.messaging.domain.enums.UserMessagingPreference;
 import za.org.grassroot.messaging.service.MessageSendingService;
 

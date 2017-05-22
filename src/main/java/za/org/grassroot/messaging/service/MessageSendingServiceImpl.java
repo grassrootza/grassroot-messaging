@@ -10,8 +10,9 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import za.org.grassroot.messaging.domain.GcmRegistrationRepository;
+import za.org.grassroot.messaging.domain.repository.GcmRegistrationRepository;
 import za.org.grassroot.messaging.domain.Notification;
+import za.org.grassroot.messaging.domain.PriorityMessage;
 import za.org.grassroot.messaging.domain.User;
 import za.org.grassroot.messaging.domain.enums.UserMessagingPreference;
 
@@ -27,13 +28,17 @@ public class MessageSendingServiceImpl implements MessageSendingService {
     private static final Logger logger = LoggerFactory.getLogger(MessageSendingServiceImpl.class);
 
     private final MessageChannel requestChannel;
+    private final MessageChannel priorityChannel;
     private final GcmRegistrationRepository gcmRegistrationRepository;
 
     private MqttPahoMessageDrivenChannelAdapter mqttAdapter;
 
     @Autowired
-    public MessageSendingServiceImpl(@Qualifier("outboundRouterChannel") MessageChannel requestChannel, GcmRegistrationRepository gcmRegistrationRepository) {
+    public MessageSendingServiceImpl(@Qualifier("outboundRouterChannel") MessageChannel requestChannel,
+                                     @Qualifier("outboundPriorityChannel") MessageChannel priorityChannel,
+                                     GcmRegistrationRepository gcmRegistrationRepository) {
         this.requestChannel = requestChannel;
+        this.priorityChannel = priorityChannel;
         this.gcmRegistrationRepository = gcmRegistrationRepository;
     }
 
@@ -58,6 +63,15 @@ public class MessageSendingServiceImpl implements MessageSendingService {
     @Override
     public void resendFailedGcmMessage(Notification notification) {
         sendMessage(UserMessagingPreference.SMS.name(), notification);
+    }
+
+    @Override
+    public void sendPriorityMessage(String destination, String message, int priorityLevel) {
+        priorityChannel.send(MessageBuilder
+                .withPayload(new PriorityMessage(destination, message))
+                .setHeader("route", "PRIORITY")
+                .setHeader("priority", priorityLevel)
+                .build());
     }
 
     @Override

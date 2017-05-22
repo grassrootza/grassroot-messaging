@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import za.org.grassroot.messaging.domain.Notification;
-import za.org.grassroot.messaging.domain.NotificationRepository;
+import za.org.grassroot.messaging.domain.repository.NotificationRepository;
 import za.org.grassroot.messaging.service.NotificationBroker;
 
 import java.time.Instant;
@@ -32,7 +32,6 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 	@Transactional(readOnly = true)
 	public void processPendingNotifications() {
 		Instant time = Instant.now();
-		logger.info("checking for notifications ...");
 		List<Notification> notifications = notificationRepository.findFirst75ByNextAttemptTimeBeforeOrderByNextAttemptTimeAsc(time);
 		if (notifications.size() > 0) {
 			logger.info("Sending {} registered notification(s)", notifications.size());

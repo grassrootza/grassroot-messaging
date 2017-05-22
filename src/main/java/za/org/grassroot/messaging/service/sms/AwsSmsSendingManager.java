@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-import za.org.grassroot.messaging.domain.sms.SmsGatewayResponse;
+import za.org.grassroot.messaging.service.sms.model.SmsGatewayResponse;
 
 import java.util.HashMap;
 import java.util.Map;

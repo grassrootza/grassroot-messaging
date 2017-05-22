@@ -100,6 +100,7 @@ public class GcmPayload {
                 "from='" + from + '\'' +
                 ", to='" + to + '\'' +
                 ", messageType='" + messageType + '\'' +
+                ", data='" + data + '\'' +
                 '}';
     }
 }

@@ -18,7 +18,7 @@ public class User {
     @Column(name = "id", updatable = false, nullable = false)
     private Long id;
 
-    @Column(name = "uid", nullable = false, unique = true)
+    @Column(name = "uid", nullable = false, unique = true, updatable = false)
     private String uid;
 
     @Column(name = "phone_number", nullable = false, length = 20, unique = true)
@@ -52,6 +52,8 @@ public class User {
     private User() {
         // for JPA
     }
+
+    public String getUid() { return uid; }
 
     public String getPhoneNumber() {
         return phoneNumber;

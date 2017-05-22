@@ -32,6 +32,8 @@ public class GcmXmppConfig {
     @Value("${gcm.sender.id}") private String gcmSenderId;
     @Value("${gcm.sender.key}") private String gcmSenderKey;
 
+    @Value("${grassroot.gcm.debugging.enabled:false}") private boolean gcmDebuggingEnabled;
+
     @Bean
     public XmppConnectionFactoryBean xmppConnectionFactoryBean() {
         logger.info("Starting up XMPP connection, for URL={} on port={}, with ID={} and key={}", host, port, gcmSenderId, gcmSenderKey);
@@ -53,16 +55,8 @@ public class GcmXmppConfig {
                 .setUsernameAndPassword(gcmSenderId, gcmSenderKey)
                 .setSocketFactory(SSLSocketFactory.getDefault())
                 .setSecurityMode(ConnectionConfiguration.SecurityMode.ifpossible)
+                .setDebuggerEnabled(gcmDebuggingEnabled)
                 .build();
     }
-
-    /*
-    @Bean
-    public GcmXmppInboundListener inboundAdapter(XMPPConnection connection, MessageChannel gcmInboundChannel) {
-        GcmMessageListeningEndpoint endpoint = new GcmMessageListeningEndpoint(connection);
-        endpoint.setOutputChannel(gcmInboundChannel);
-        endpoint.setAutoStartup(true);
-        return endpoint;
-    }*/
 
 }

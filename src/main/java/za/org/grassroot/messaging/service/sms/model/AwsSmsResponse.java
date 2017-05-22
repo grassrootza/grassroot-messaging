@@ -1,4 +1,4 @@
-package za.org.grassroot.messaging.domain.sms;
+package za.org.grassroot.messaging.service.sms.model;
 
 import com.amazonaws.services.sns.model.PublishResult;
 

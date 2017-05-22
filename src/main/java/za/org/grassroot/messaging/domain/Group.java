@@ -12,10 +12,10 @@ public class Group {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "uid", nullable = false, unique = true)
+    @Column(name = "uid", nullable = false, unique = true, updatable = false)
     private String uid;
 
-    @Column(name = "name", nullable = false, length = 50)
+    @Column(name = "name", nullable = false, length = 50, updatable = false)
     private String groupName;
 
     @Column(name = "created_date_time", insertable = true, updatable = false)

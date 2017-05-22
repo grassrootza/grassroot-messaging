@@ -1,7 +1,8 @@
-package za.org.grassroot.messaging.domain;
+package za.org.grassroot.messaging.domain.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
+import za.org.grassroot.messaging.domain.Notification;
 
 import java.time.Instant;
 import java.util.Collection;

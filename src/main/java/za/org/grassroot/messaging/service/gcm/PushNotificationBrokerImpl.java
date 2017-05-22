@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import za.org.grassroot.messaging.domain.*;
 import za.org.grassroot.messaging.domain.enums.NotificationType;
 import za.org.grassroot.messaging.domain.enums.UserLogType;
+import za.org.grassroot.messaging.domain.repository.GcmRegistrationRepository;
 import za.org.grassroot.messaging.util.DebugUtil;
 
 import java.util.HashMap;

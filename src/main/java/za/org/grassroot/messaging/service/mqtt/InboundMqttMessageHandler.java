@@ -18,7 +18,7 @@ import java.io.IOException;
  * Created by paballo on 2016/11/04.
  */
 @Component
-@ConditionalOnProperty(name = "mqtt.connection.enabled", havingValue = "true",  matchIfMissing = false)
+@ConditionalOnProperty(name = "grassroot.mqtt.enabled", havingValue = "true",  matchIfMissing = false)
 public class InboundMqttMessageHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(InboundMqttMessageHandler.class);

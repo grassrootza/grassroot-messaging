@@ -13,6 +13,7 @@ import org.jivesoftware.smackx.gcm.packet.GcmPacketExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import za.org.grassroot.messaging.domain.Notification;
@@ -32,11 +33,13 @@ public class GcmXmppInboundListener implements StanzaListener {
     private final GcmHandlingBroker gcmHandlingBroker;
 
     @Autowired
-    public GcmXmppInboundListener(ObjectMapper objectMapper, NotificationBroker notificationBroker, MessageSendingService messageSendingService, GcmHandlingBroker gcmHandlingBroker, XMPPConnection xmppConnection) {
-        this.objectMapper = objectMapper;
+    public GcmXmppInboundListener(NotificationBroker notificationBroker, MessageSendingService messageSendingService,
+                                  GcmHandlingBroker gcmHandlingBroker, XMPPConnection xmppConnection,
+                                  @Qualifier("gcmObjectMapper") ObjectMapper objectMapper) {
         this.notificationBroker = notificationBroker;
         this.messageSendingService = messageSendingService;
         this.gcmHandlingBroker = gcmHandlingBroker;
+        this.objectMapper = objectMapper;
 
         xmppConnection.addSyncStanzaListener(this, new StanzaTypeFilter(Message.class));
     }

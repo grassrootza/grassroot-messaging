@@ -30,8 +30,9 @@ public class UserLog {
     @Column(name="user_log_type", nullable = false, length = 50)
     private UserLogType userLogType;
 
-    @Column(name="user_uid", nullable = false)
-    private String userUid;
+    @ManyToOne
+    @JoinColumn(name="user_uid", referencedColumnName = "uid", nullable = false)
+    private User user;
 
     @Column(name="description", length = 255)
     private String description;
@@ -46,8 +47,8 @@ public class UserLog {
         return userLogType;
     }
 
-    public String getUserUid() {
-        return userUid;
+    public User getUser() {
+        return user;
     }
 
     public String getDescription() {
@@ -80,7 +81,7 @@ public class UserLog {
         return "UserLog{" +
                 "id=" + id +
                 ", userLogType=" + userLogType +
-                ", userUid=" + userUid +
+                ", userUid=" + user.getUid() +
                 ", description='" + description + '\'' +
                 ", creationTime =" + creationTime +
                 '}';

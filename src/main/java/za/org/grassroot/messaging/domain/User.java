@@ -4,6 +4,8 @@ import org.hibernate.annotations.DynamicUpdate;
 import za.org.grassroot.messaging.domain.enums.UserMessagingPreference;
 
 import javax.persistence.*;
+import java.io.Serializable;
+import java.util.Set;
 
 /**
  * Created by luke on 2017/05/17.
@@ -11,7 +13,7 @@ import javax.persistence.*;
 @Entity
 @Table(name = "user_profile")
 @DynamicUpdate
-public class User {
+public class User implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,6 +48,9 @@ public class User {
     @Column(name = "message_preference", nullable = false, length = 50)
     private UserMessagingPreference messagingPreference;
 
+    @OneToMany(mappedBy = "user")
+    public Set<UserLog> userLogs;
+
     @Version
     private Integer version;
 
@@ -66,6 +71,8 @@ public class User {
     public UserMessagingPreference getMessagingPreference() {
         return messagingPreference;
     }
+
+    public Set<UserLog> getUserLogs() { return userLogs; }
 
     public void setMessagingPreference(UserMessagingPreference messagingPreference) {
         this.messagingPreference = messagingPreference;

@@ -2,7 +2,6 @@ package za.org.grassroot.messaging.service.gcm;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jivesoftware.smack.SmackConfiguration;
 import org.jivesoftware.smackx.gcm.packet.GcmPacketExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,10 +14,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import za.org.grassroot.messaging.domain.GcmRegistration;
-import za.org.grassroot.messaging.domain.repository.GcmRegistrationRepository;
 import za.org.grassroot.messaging.domain.User;
-import za.org.grassroot.messaging.domain.repository.UserRepository;
 import za.org.grassroot.messaging.domain.enums.UserMessagingPreference;
+import za.org.grassroot.messaging.domain.repository.GcmRegistrationRepository;
+import za.org.grassroot.messaging.domain.repository.UserRepository;
 import za.org.grassroot.messaging.util.PhoneNumberUtil;
 
 import java.util.UUID;
@@ -30,20 +29,17 @@ import java.util.UUID;
 public class GcmXmppBrokerImpl implements GcmHandlingBroker {
 
     private static final Logger logger = LoggerFactory.getLogger(GcmXmppBrokerImpl.class);
-    private static final ObjectMapper objectMapper = new ObjectMapper();
 
+    private final ObjectMapper objectMapper;
     private final UserRepository userRepository;
     private final GcmRegistrationRepository gcmRegistrationRepository;
 
     private final MessageChannel gcmXmppOutboundChannel;
 
-    static {
-        SmackConfiguration.DEBUG = false;
-    }
-
     @Autowired
-    public GcmXmppBrokerImpl(UserRepository userRepository, GcmRegistrationRepository gcmRegistrationRepository,
-                             @Qualifier("gcmXmppOutboundChannel") MessageChannel gcmXmppOutboundChannel) {
+    public GcmXmppBrokerImpl(@Qualifier("gcmObjectMapper") ObjectMapper objectMapper, @Qualifier("gcmXmppOutboundChannel") MessageChannel gcmXmppOutboundChannel,
+                             UserRepository userRepository, GcmRegistrationRepository gcmRegistrationRepository) {
+        this.objectMapper = objectMapper;
         this.userRepository = userRepository;
         this.gcmRegistrationRepository = gcmRegistrationRepository;
         this.gcmXmppOutboundChannel = gcmXmppOutboundChannel;

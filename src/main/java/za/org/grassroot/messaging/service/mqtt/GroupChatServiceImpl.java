@@ -10,20 +10,21 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.MessageSource;
 import org.springframework.context.support.MessageSourceAccessor;
+import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter;
 import org.springframework.integration.mqtt.support.MqttHeaders;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.MessageChannel;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import za.org.grassroot.messaging.domain.Group;
+import za.org.grassroot.messaging.domain.GroupChatMessageStats;
+import za.org.grassroot.messaging.domain.GroupChatSettings;
 import za.org.grassroot.messaging.domain.User;
 import za.org.grassroot.messaging.domain.enums.TaskType;
 import za.org.grassroot.messaging.domain.exception.SeloParseDateTimeFailure;
-import za.org.grassroot.messaging.domain.GroupChatMessageStats;
-import za.org.grassroot.messaging.domain.GroupChatSettings;
 import za.org.grassroot.messaging.domain.repository.GroupChatSettingsRepository;
 import za.org.grassroot.messaging.domain.repository.GroupChatStatsRepository;
 import za.org.grassroot.messaging.domain.repository.GroupRepository;
@@ -41,15 +42,11 @@ import java.util.*;
  * Created by paballo on 2016/09/08.
  */
 @Service
-@ConditionalOnProperty(name = "mqtt.connection.enabled", havingValue = "true",  matchIfMissing = false)
-public class GroupChatManager implements GroupChatService {
+@ConditionalOnProperty(name = "grassroot.mqtt.enabled", havingValue = "true",  matchIfMissing = false)
+public class GroupChatServiceImpl implements GroupChatService {
 
-    private static final Logger logger = LoggerFactory.getLogger(GroupChatManager.class);
-
+    private static final Logger logger = LoggerFactory.getLogger(GroupChatServiceImpl.class);
     private static final DateTimeFormatter cmdMessageFormat = DateTimeFormatter.ofPattern("HH:mm, EEE d MMM");
-
-    @Value("${gcm.topics.path}")
-    private String TOPICS;
 
     @Value("${mqtt.status.read.threshold:0.5}")
     private Double readStatusThreshold;
@@ -64,16 +61,18 @@ public class GroupChatManager implements GroupChatService {
 
     private ObjectMapper payloadMapper;
     private MessageChannel mqttOutboundChannel;
+    private MqttPahoMessageDrivenChannelAdapter mqttAdapter;
 
     @Autowired
-    public GroupChatManager(UserRepository userRepository, GroupRepository groupRepository, GroupChatSettingsRepository groupChatSettingsRepository,
-                            LearningService learningService, GroupChatStatsRepository groupChatMessageStatsRepository, MessageSourceAccessor messageSourceAccessor) {
+    public GroupChatServiceImpl(UserRepository userRepository, GroupRepository groupRepository, GroupChatSettingsRepository groupChatSettingsRepository,
+                                LearningService learningService, GroupChatStatsRepository groupChatMessageStatsRepository,
+                                MessageSource messageSource) {
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.groupChatSettingsRepository = groupChatSettingsRepository;
         this.learningService = learningService;
         this.groupChatMessageStatsRepository = groupChatMessageStatsRepository;
-        this.messageSourceAccessor = messageSourceAccessor;
+        this.messageSourceAccessor = new MessageSourceAccessor(messageSource);
     }
 
     @Autowired
@@ -86,8 +85,14 @@ public class GroupChatManager implements GroupChatService {
         this.payloadMapper = payloadMapper;
     }
 
+    @Autowired
+    private void setMqttAdapter(MqttPahoMessageDrivenChannelAdapter mqttAdapter) {
+        this.mqttAdapter = mqttAdapter;
+    }
+
     @Scheduled(fixedRate = 300000)
     public void reactivateMutedUsers() throws Exception {
+        logger.info("Reactivating muted group users ...");
         List<GroupChatSettings> groupChatSettingses = groupChatSettingsRepository
                 .findByActiveFalseAndUserInitiatedFalseAndReactivationTimeBefore(Instant.now());
         for (GroupChatSettings messengerSetting : groupChatSettingses) {
@@ -101,17 +106,26 @@ public class GroupChatManager implements GroupChatService {
         }
     }
 
-    @Override
-    @Transactional
-    public void createUserGroupMessagingSetting(String userUid, String groupUid, boolean active, boolean canSend, boolean canReceive) {
-        Objects.requireNonNull(userUid);
-        Objects.requireNonNull(groupUid);
+    @Scheduled(cron = "0 0 1 * * *") //runs at 1 am everyday
+    public void subscribeServerToAllGroupTopics() {
+        logger.info("Subscribing server to all group topics");
+        List<Group> groups = groupRepository.findAll();
+        List<String> topicsSubscribedTo = Arrays.asList(mqttAdapter.getTopic());
+        for(Group group: groups){
+            if(!topicsSubscribedTo.contains(group.getUid())){
+                mqttAdapter.addTopic(group.getUid(), 1);
+            }
+        }
+    }
 
-        User user = userRepository.findOneByUid(userUid);
-        Group group = groupRepository.findOneByUid(groupUid);
-
-        GroupChatSettings groupChatSettings = new GroupChatSettings(user, group, active, true, true, true);
-        groupChatSettingsRepository.save(groupChatSettings);
+    @Scheduled(fixedRate = 300000)
+    public void sendPollingMessage(){
+        if (mqttAdapter != null) {
+            List<String> topicsSubscribedTo = Arrays.asList(mqttAdapter.getTopic());
+            if (!topicsSubscribedTo.contains("Grassroot")) {
+                mqttAdapter.addTopic("Grassroot", 1);
+            }
+        }
     }
 
     @Override
@@ -134,7 +148,6 @@ public class GroupChatManager implements GroupChatService {
     }
 
 
-    @Async
     @Override
     public void processCommandMessage(MQTTPayload incoming) {
         Group group = groupRepository.findOneByUid(incoming.getGroupUid());
@@ -150,11 +163,9 @@ public class GroupChatManager implements GroupChatService {
 
     }
 
-
-    @Async
     @Override
     @Transactional
-    public void markMessagesAsRead(String groupUid, String groupName, Set<String> messageUids) {
+    public void markMessagesAsRead(String groupUid, Set<String> messageUids) {
         messageUids.forEach(u -> {
             GroupChatMessageStats stats = groupChatMessageStatsRepository.findByMessageUidAndReadFalse(u);
             if (stats != null) {
@@ -202,14 +213,12 @@ public class GroupChatManager implements GroupChatService {
         }
 
         if(!userInitiated && !active){
-            final MQTTPayload payload = generateUserMutedResponseData(group);
-            final String message;
             try {
+                final MQTTPayload payload = generateUserMutedResponseData(group);
                 ObjectMapper mapper = new ObjectMapper();
                 mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS,true);
-                message = mapper.writeValueAsString(payload);
                 mqttOutboundChannel.send(MessageBuilder
-                        .withPayload(message)
+                        .withPayload(mapper.writeValueAsString(payload))
                         .setHeader(MqttHeaders.TOPIC, user.getPhoneNumber())
                         .build());
             } catch (JsonProcessingException e) {
@@ -221,7 +230,6 @@ public class GroupChatManager implements GroupChatService {
 
     @Override
     @Transactional
-    @Async
     public void createGroupChatMessageStats(MQTTPayload payload) {
         Objects.requireNonNull(payload);
         Group group = groupRepository.findOneByUid(payload.getGroupUid());
@@ -234,17 +242,12 @@ public class GroupChatManager implements GroupChatService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<String> usersMutedInGroup(String groupUid) {
+    public void subscribeServerToGroupTopic(String groupUid) {
         Objects.requireNonNull(groupUid);
-        Group group = groupRepository.findOneByUid(groupUid);
-        List<GroupChatSettings> groupChatSettingses = groupChatSettingsRepository.findByGroupAndActiveTrueAndCanSendFalse(group);
-        List<String> mutedUsersUids = new ArrayList<>();
-        for (GroupChatSettings groupChatSettings : groupChatSettingses) {
-            User user = groupChatSettings.getUser();
-            mutedUsersUids.add(user.getUid());
+        List<String> topicsSubscribeTo = Arrays.asList(mqttAdapter.getTopic());
+        if (!topicsSubscribeTo.contains(groupUid)) {
+            mqttAdapter.addTopic(groupUid, 1);
         }
-        return mutedUsersUids;
     }
 
     private MQTTPayload generateInvalidCommandResponseData(MQTTPayload input, Group group) {

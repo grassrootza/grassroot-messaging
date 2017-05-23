@@ -6,7 +6,6 @@ import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.AmazonSNSClientBuilder;
 import com.amazonaws.services.sns.model.MessageAttributeValue;
 import com.amazonaws.services.sns.model.PublishRequest;
-import com.amazonaws.services.sns.model.PublishResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +44,8 @@ public class AwsSmsSendingManager implements SmsSendingService {
 
     @Override
     public SmsGatewayResponse sendSMS(String message, String destinationNumber) {
-        PublishResult result = snsClient.publish(smsPublishRequest(message, destinationNumber, "Promotional"));
+        // PublishResult result = snsClient.publish(smsPublishRequest(message, destinationNumber, "Promotional"));
+        logger.info("sending an SMS via AWS! looks like: {}, to {}", message, destinationNumber);
         return null;
     }
 

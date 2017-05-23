@@ -11,6 +11,7 @@ import za.org.grassroot.messaging.domain.*;
 import za.org.grassroot.messaging.domain.enums.NotificationType;
 import za.org.grassroot.messaging.domain.enums.UserLogType;
 import za.org.grassroot.messaging.domain.repository.GcmRegistrationRepository;
+import za.org.grassroot.messaging.domain.repository.NotificationRepository;
 import za.org.grassroot.messaging.util.DebugUtil;
 
 import java.util.HashMap;
@@ -27,26 +28,26 @@ public class PushNotificationBrokerImpl implements PushNotificationBroker {
     private static final Logger logger = LoggerFactory.getLogger(PushNotificationBrokerImpl.class);
 
     private final GcmHandlingBroker sendingService;
-    private final GcmRegistrationRepository gcmRegistrationRepository;
+    private final NotificationRepository notificationRepository;
 
     @Autowired
-    public PushNotificationBrokerImpl(GcmHandlingBroker sendingService, GcmRegistrationRepository gcmRegistrationRepository) {
+    public PushNotificationBrokerImpl(GcmHandlingBroker sendingService, GcmRegistrationRepository gcmRegistrationRepository, NotificationRepository notificationRepository) {
         this.sendingService = sendingService;
-        this.gcmRegistrationRepository = gcmRegistrationRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     @Override
     @Transactional(readOnly = true)
     public void sendMessage(Message message) {
         logger.info("sending message via GCM sender ...");
-        sendingService.sendGcmMessage(buildGcmFromNotification((Notification) message.getPayload()));
+        sendingService.sendGcmMessage(buildGcmFromMessagePayload((MessageAndRoutingBundle) message.getPayload()));
     }
 
-    private GcmPayload buildGcmFromNotification(Notification notification) {
+    private GcmPayload buildGcmFromMessagePayload(MessageAndRoutingBundle bundle) {
         DebugUtil.transactionRequired(GcmXmppBrokerImpl.class);
-        GcmRegistration gcmRegistration = gcmRegistrationRepository.findTopByUserOrderByCreationTimeDesc(notification.getTarget());
+        Notification notification = notificationRepository.findOneByUid(bundle.getNotificationUid());
         return new GcmPayload(notification.getUid(),
-                gcmRegistration.getUid(),
+                bundle.getGcmRegistrationId(),
                 generateCollapseKey(notification),
                 generateData(notification), null);
     }

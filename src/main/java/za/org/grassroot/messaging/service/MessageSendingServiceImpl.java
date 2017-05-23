@@ -61,6 +61,11 @@ public class MessageSendingServiceImpl implements MessageSendingService {
     }
 
     @Override
+    public void sendMessage(String destination, String message) {
+        // todo: generate a void SMS?
+    }
+
+    @Override
     public void resendFailedGcmMessage(Notification notification) {
         sendMessage(UserMessagingPreference.SMS.name(), notification);
     }

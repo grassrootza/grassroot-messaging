@@ -1,7 +1,9 @@
 package za.org.grassroot.messaging.config;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jivesoftware.smack.ConnectionConfiguration;
-import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.slf4j.Logger;
@@ -9,12 +11,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.xmpp.config.XmppConnectionFactoryBean;
-import org.springframework.integration.xmpp.outbound.ChatMessageSendingMessageHandler;
-import org.springframework.messaging.MessageChannel;
-import za.org.grassroot.messaging.service.gcm.GcmXmppInboundListener;
 
 import javax.net.ssl.SSLSocketFactory;
 
@@ -43,6 +42,16 @@ public class GcmXmppConfig {
         Roster.setRosterLoadedAtLoginDefault(false);
         logger.info("XMPP connection successfully started up");
         return connectionFactoryBean;
+    }
+
+    @Primary
+    @Bean("gcmObjectMapper")
+    public ObjectMapper gcmObjectMapper() {
+        ObjectMapper payloadMapper = new ObjectMapper();
+        payloadMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        payloadMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
+        payloadMapper.configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false);
+        return payloadMapper;
     }
 
     private XMPPTCPConnectionConfiguration connectionConfiguration() {

@@ -32,7 +32,8 @@ public class JwtAuthInterceptor extends HandlerInterceptorAdapter {
         logger.info("Inside JWT interceptor, checking request ...");
         String authorization = request.getHeader("Authorization");
         if (StringUtils.isEmpty(authorization) || !authorization.startsWith(BEARER_IDENTIFIER)) {
-            logger.info("Error, request with no authorization header");
+            logger.info("Error, request with no authorization header, full header: {}",
+                    request.getHeaderNames());
             throw new UnauthorizedRequestException("Error! No authorization in the request");
         }
 

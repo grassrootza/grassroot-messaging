@@ -5,6 +5,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -35,18 +37,21 @@ import java.time.format.DateTimeFormatter;
 @ComponentScan
 @IntegrationComponentScan
 @EnableIntegration
-@ConditionalOnProperty(name = "mqtt.connection.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "grassroot.mqtt.enabled", havingValue = "true",  matchIfMissing = false)
 public class MQTTConfig {
+
+    private static final Logger logger = LoggerFactory.getLogger(MQTTConfig.class);
 
     private static final DateTimeFormatter CHAT_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
     private static final SimpleDateFormat CHAT_TIME_J7FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
-    @Value("${mqtt.connection.url}")
+    @Value("${grassroot.mqtt.connection.url:tcp://localhost:1883}")
     private String host;
 
     @Bean
     public MqttPahoClientFactory mqttClientFactory() {
         DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
+        logger.info("STARTUP: Mqtt host: {}", host);
         factory.setServerURIs(host);
         factory.setCleanSession(false);
         return factory;
@@ -89,13 +94,6 @@ public class MQTTConfig {
         return new DirectChannel();
     }
 
-    @Bean("payloadMapper")
-    public ObjectMapper payloadMapper() {
-        ObjectMapper payloadMapper = new ObjectMapper();
-        payloadMapper.setDateFormat(CHAT_TIME_J7FORMAT);
-        return payloadMapper;
-    }
-
     @Bean("mqttObjectMapper")
     public ObjectMapper complexMqttPayloadMapper() {
         ObjectMapper payloadMapper = new ObjectMapper();
@@ -114,6 +112,8 @@ public class MQTTConfig {
             }
         });
         payloadMapper.registerModule(ldtModule);
+        payloadMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        payloadMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
         return payloadMapper;
     }
 

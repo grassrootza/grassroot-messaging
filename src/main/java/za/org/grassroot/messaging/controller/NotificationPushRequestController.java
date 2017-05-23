@@ -27,12 +27,19 @@ public class NotificationPushRequestController extends BaseController {
         this.messageSendingService = messageSendingService;
     }
 
+    @RequestMapping(value = "/normal/{phoneNumber}", method = RequestMethod.POST)
+    public @ResponseBody SmsGatewayResponse sendOrdinaryNotification(@PathVariable String phoneNumber,
+                                                                     @RequestParam String message) {
+        messageSendingService.sendMessage(phoneNumber, message);
+        return new MockSmsResponse();
+    }
+
     @RequestMapping(value = "/priority/{phoneNumber}", method = RequestMethod.POST)
     public @ResponseBody SmsGatewayResponse triggerPriorityNotification(@PathVariable String phoneNumber,
                                                    @RequestParam String message,
                                                    @RequestParam(required = false) Integer priorityLevel) {
-        // messageSendingService.sendPriorityMessage(phoneNumber, message, priorityLevel == null ? 0 : priorityLevel);
         logger.info("Sending priority SMS! to : {}", phoneNumber);
+        messageSendingService.sendPriorityMessage(phoneNumber, message, priorityLevel == null ? 0 : priorityLevel);
         return new MockSmsResponse();
     }
 

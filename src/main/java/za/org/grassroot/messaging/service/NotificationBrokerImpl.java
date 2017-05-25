@@ -60,7 +60,6 @@ public class NotificationBrokerImpl implements NotificationBroker {
     @Override
     @Transactional
     public void updateNotificationReadStatus(String notificationUid, boolean read) {
-        logger.debug("Setting notification as read ...");
         Notification notification = notificationRepository.findOneByUid(notificationUid);
         notification.setRead(read);
     }
@@ -93,15 +92,10 @@ public class NotificationBrokerImpl implements NotificationBroker {
         Instant now = Instant.now();
 
         Notification notification = notificationRepository.findOneByUid(notificationUid);
-        logger.info("Sending notification: {}", notification);
+        logger.debug("Sending notification: {}", notification);
 
         notification.incrementAttemptCount();
         notification.setLastAttemptTime(now);
-
-        if (notification.isTaskRelated()) {
-            MessageAndRoutingBundle notificationRoutingObject = getNotificationRouting(notification);
-            logger.info("routing info: {}", notificationRoutingObject);
-        }
 
         try {
             boolean redelivery = notification.getAttemptCount() > 1;
@@ -116,6 +110,14 @@ public class NotificationBrokerImpl implements NotificationBroker {
         } catch (Exception e) {
             logger.error("Failed to send notification " + notification + ": " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void resendFailedGcmMessage(String notificationUid) {
+        logger.info("notification broker, resending SMS");
+        Notification notification = notificationRepository.findOneByUid(notificationUid);
+        requestChannel.send(createMessage(notification, "SMS"));
     }
 
     private MessageAndRoutingBundle getNotificationRouting(Notification notification) {

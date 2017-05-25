@@ -58,7 +58,7 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
 
     @Override
     public void sendStandardSmsNotification(Message message) {
-        logger.info("Handling SMS message, no strategy specified, sending by default ...");
+        logger.debug("Handling SMS message, no strategy specified, sending by default ...");
         MessageAndRoutingBundle messagePayload = (MessageAndRoutingBundle) message.getPayload();
         SmsGatewayResponse response = awsSmsSender != null && messagePayload.isJoinedViaCode() ?
                 awsSmsSender.sendSMS(messagePayload.getMessage(), messagePayload.getPhoneNumber()) :
@@ -68,7 +68,7 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
 
     @Override
     public void sendSmsNotificationByStrategy(Message message, SmsSendingStrategy strategy) {
-        logger.info("Sending with strategy: {}", strategy.name());
+        logger.debug("Sending with strategy: {}", strategy.name());
         Notification notification = (Notification) message.getPayload();
         SmsGatewayResponse response;
         switch (strategy) {
@@ -113,14 +113,14 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
         notificationBroker.markNotificationAsDelivered(notificationUid);
         if (response != null && response.isSuccessful()) {
             notificationBroker.updateNotificationReadStatus(notificationUid, true);
-        } else if (response != null) {
+        } else if (response != null && response.getResponseType() != null) {
             switch (response.getResponseType()) {
-                case MSISDN_INVALID: // todo : record / process / somewhere & somehow
-                    logger.error("invalid number for SMS, marking it as read to prevent looping redelivery");
+                case MSISDN_INVALID:
+                    logger.info("invalid number for SMS, marking it as read to prevent looping redelivery");
                     notificationBroker.updateNotificationReadStatus(notificationUid, true); // to prevent unread trying to send
                     break;
                 case DUPLICATE_MESSAGE:
-                    logger.error("trying to resend message, just set it as read");
+                    logger.info("trying to resend message, just set it as read");
                     notificationBroker.updateNotificationReadStatus(notificationUid, true); // as above, prevents loops
                     break;
                 default:
@@ -129,5 +129,6 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
         } else {
             logger.error("Error delivering SMS, with null response");
         }
+        logger.debug("finished updating read and delivered status");
     }
 }

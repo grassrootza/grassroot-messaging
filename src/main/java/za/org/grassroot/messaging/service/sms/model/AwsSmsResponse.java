@@ -1,6 +1,8 @@
 package za.org.grassroot.messaging.service.sms.model;
 
+import com.amazonaws.services.sns.model.AmazonSNSException;
 import com.amazonaws.services.sns.model.PublishResult;
+import org.springframework.util.StringUtils;
 
 /**
  * Created by luke on 2017/05/19.
@@ -8,17 +10,27 @@ import com.amazonaws.services.sns.model.PublishResult;
 public class AwsSmsResponse implements SmsGatewayResponse {
 
     private final PublishResult publishResult;
+    private final AmazonSNSException error;
     private final boolean successful;
+    private final SmsResponseType responseType;
 
-    // looks like AWS SNS is async so don't know if successful right away
+    // looks like AWS SNS is async so don't know if successful right away, but at least can tell was delivered
     public AwsSmsResponse(PublishResult publishResult) {
         this.publishResult = publishResult;
-        this.successful = true;
+        this.successful = StringUtils.isEmpty(publishResult.getMessageId());
+        this.responseType = successful ? SmsResponseType.ROUTED : SmsResponseType.UNKNOWN_ERROR;
+        this.error = null;
+    }
+
+    public AwsSmsResponse(AmazonSNSException e) {
+        this.successful = false;
+        this.error = e;
+        this.responseType = SmsResponseType.UNKNOWN_ERROR; // todo: extract from exception
+        this.publishResult = null;
     }
 
     @Override
     public SmsResponseType getResponseType() {
-        // AWS does not tell us immediately, hence ..
         return SmsResponseType.ROUTED;
     }
 

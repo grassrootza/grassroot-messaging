@@ -7,8 +7,6 @@ import za.org.grassroot.messaging.domain.Notification;
  */
 public interface MessageSendingService {
 
-	void sendMessage(Notification notification);
-
 	void sendMessage(String destination, Notification notification);
 
 	void sendMessage(String destination, String message);

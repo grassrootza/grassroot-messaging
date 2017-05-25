@@ -6,6 +6,7 @@ import za.org.grassroot.messaging.domain.enums.UserMessagingPreference;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Created by luke on 2017/05/17.
@@ -56,6 +57,15 @@ public class User implements Serializable {
 
     private User() {
         // for JPA
+    }
+
+    // for tests
+    public static User makeDummy(String phoneNumber, String displayName) {
+        User user = new User();
+        user.phoneNumber = phoneNumber;
+        user.displayName = displayName;
+        user.uid = UUID.randomUUID().toString();
+        return user;
     }
 
     public String getUid() { return uid; }

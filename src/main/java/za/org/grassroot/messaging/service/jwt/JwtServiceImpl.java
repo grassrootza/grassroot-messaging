@@ -30,7 +30,7 @@ public class JwtServiceImpl implements JwtService {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtServiceImpl.class);
 
-    @Value("${grassroot.service.key.urls}")
+    @Value("${grassroot.service.key.urls:http://localhost:8080/api/jwt/public/credentials}")
     private String[] authorizedServiceKeyUrls;
 
     private final RestTemplate restTemplate;

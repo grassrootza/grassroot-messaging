@@ -29,7 +29,6 @@ public class GcmXmppInboundListener implements StanzaListener {
     private static final Logger logger = LoggerFactory.getLogger(GcmXmppInboundListener.class);
     private final ObjectMapper objectMapper;
     private final NotificationBroker notificationBroker;
-    private final MessageSendingService messageSendingService;
     private final GcmHandlingBroker gcmHandlingBroker;
 
     @Autowired
@@ -37,7 +36,6 @@ public class GcmXmppInboundListener implements StanzaListener {
                                   GcmHandlingBroker gcmHandlingBroker, XMPPConnection xmppConnection,
                                   @Qualifier("gcmObjectMapper") ObjectMapper objectMapper) {
         this.notificationBroker = notificationBroker;
-        this.messageSendingService = messageSendingService;
         this.gcmHandlingBroker = gcmHandlingBroker;
         this.objectMapper = objectMapper;
 
@@ -110,7 +108,7 @@ public class GcmXmppInboundListener implements StanzaListener {
         Notification notification = notificationBroker.loadNotification(payload.getMessageId());
         if (notification != null) {
             logger.info("Push Notification delivery failed, now sending SMS to  {}", notification.getTarget().getPhoneNumber());
-            messageSendingService.resendFailedGcmMessage(notification);
+            notificationBroker.resendFailedGcmMessage(notification.getUid());
         } else {
             logger.info("Received an upstream message without notification, looks like: {}", payload);
         }

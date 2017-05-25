@@ -48,13 +48,6 @@ public class MessageSendingServiceImpl implements MessageSendingService {
     }
 
     @Override
-    public void sendMessage(Notification notification) {
-        Message<Notification> message = createMessage(notification, null);
-        logger.info("sending message via channel: {}" + message.getHeaders());
-        requestChannel.send(message);
-    }
-
-    @Override
     public void sendMessage(String destination, Notification notification) {
         Message<Notification> message = createMessage(notification, destination);
         requestChannel.send(message);

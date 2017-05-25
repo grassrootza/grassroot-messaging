@@ -11,6 +11,7 @@ import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.channel.MessageChannels;
 import org.springframework.integration.dsl.core.Pollers;
+import org.springframework.integration.handler.LoggingHandler;
 import org.springframework.integration.router.HeaderValueRouter;
 import org.springframework.integration.scheduling.PollerMetadata;
 import org.springframework.integration.xmpp.outbound.ChatMessageSendingMessageHandler;
@@ -37,7 +38,9 @@ public class MessageRoutingConfig {
 
     @Bean(name = PollerMetadata.DEFAULT_POLLER)
     public PollerMetadata poller() {
-        return Pollers.fixedRate(500).get();
+        return Pollers
+                .fixedRate(500)
+                .get();
     }
 
     @Bean
@@ -57,7 +60,6 @@ public class MessageRoutingConfig {
     @Bean
     @ServiceActivator(inputChannel = "gcmXmppOutboundChannel")
     public ChatMessageSendingMessageHandler chatMessageSendingMessageHandler(XMPPConnection connection){
-        logger.info("ROUTING: Setting up gcmXmppOutboundChannel");
         return new ChatMessageSendingMessageHandler(connection);
     }
 
@@ -81,6 +83,7 @@ public class MessageRoutingConfig {
         router.setChannelMapping("SMS_AWS", "smsAwsOutboundChannel");
         router.setChannelMapping(UserMessagingPreference.ANDROID_APP.name(), "gcmOutboundChannel");
         router.setIgnoreSendFailures(true);
+        router.setLoggingEnabled(true);
         router.setResolutionRequired(false); // will route to SMS
         return router;
     }
@@ -88,6 +91,7 @@ public class MessageRoutingConfig {
     @Bean
     public IntegrationFlow smsFlow() {
         return f -> f.channel("smsDefaultOutboundChannel")
+                .log(LoggingHandler.Level.DEBUG)
                 .handle(smsNotificationBroker::sendStandardSmsNotification);
     }
 

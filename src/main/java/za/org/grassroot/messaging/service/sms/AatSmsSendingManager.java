@@ -46,13 +46,16 @@ public class AatSmsSendingManager implements SmsSendingService {
 
     @Override
     public SmsGatewayResponse sendSMS(String message, String destinationNumber) {
+        long startTime = System.currentTimeMillis();
         UriComponentsBuilder gatewayURI = UriComponentsBuilder.newInstance().scheme("https").host(smsGatewayHost);
         gatewayURI.path("send/").queryParam("username", smsGatewayUsername)
                 .queryParam("password", smsGatewayPassword)
                 .queryParam("number", destinationNumber)
                 .queryParam("message", message);
-        return environment.acceptsProfiles("default") ? AatResponseInterpreter.makeDummy() :
+        SmsGatewayResponse response = environment.acceptsProfiles("default") ? AatResponseInterpreter.makeDummy() :
             new AatResponseInterpreter(restTemplate.getForObject(gatewayURI.build().toUri(), AatSmsResponse.class));
+        log.debug("time to execute AAT sms: {} msecs", System.currentTimeMillis() - startTime);
+        return response;
     }
 
     @Override

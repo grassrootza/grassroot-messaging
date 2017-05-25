@@ -22,4 +22,6 @@ public interface NotificationBroker {
 	void markNotificationAsDelivered(String notificationUid);
 
 	void sendNotification(String notificationUid);
+
+	void resendFailedGcmMessage(String notificationUid);
 }

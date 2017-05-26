@@ -19,7 +19,7 @@ import za.org.grassroot.messaging.service.sms.model.SmsGatewayResponse;
  */
 @Primary
 @Service("aatSmsSender")
-@PropertySource(value = "file:${user.home}/grassroot/grassroot-integration.properties", ignoreResourceNotFound = true)
+@PropertySource(value = "file:${grassroot.messaging.properties.path}", ignoreResourceNotFound = true)
 public class AatSmsSendingManager implements SmsSendingService {
 
     private Logger log = LoggerFactory.getLogger(AatSmsSendingManager.class);
@@ -27,15 +27,15 @@ public class AatSmsSendingManager implements SmsSendingService {
     private final Environment environment;
     private final RestTemplate restTemplate;
 
-    @Value("${grassroot.sms.gateway}")
+    @Value("${grassroot.sms.gateway:gateway}")
     private String smsGatewayHost;
-    @Value("${grassroot.sms.gateway.username}")
+    @Value("${grassroot.sms.gateway.username:grassroottest}")
     private String smsGatewayUsername;
-    @Value("${grassroot.sms.gateway.password}")
+    @Value("${grassroot.sms.gateway.password:apassword}")
     private String smsGatewayPassword;
-    @Value("${grassroot.sms.priority.username}")
+    @Value("${grassroot.sms.priority.username:grassroottest2}")
     private String smsPriorityUsername;
-    @Value("${grassroot.sms.priority.password}")
+    @Value("${grassroot.sms.priority.password:anotherpassword}")
     private String smsPriorityPassword;
 
     @Autowired

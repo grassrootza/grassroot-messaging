@@ -23,7 +23,6 @@ import java.util.concurrent.Executors;
  * Created by luke on 2017/05/18.
  */
 @Configuration
-@PropertySource(value = "file:${user.home}/grassroot/grassroot-messaging.properties", ignoreResourceNotFound = true)
 public class SchedulingConfig implements SchedulingConfigurer {
 
     // private static final Logger logger = LoggerFactory.getLogger(GrassrootMessagingConfig.class);

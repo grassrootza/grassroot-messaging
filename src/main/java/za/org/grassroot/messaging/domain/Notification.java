@@ -175,7 +175,7 @@ public class Notification {
     }
 
     public boolean isTaskRelated() {
-        return NotificationType.EVENT.equals(getType()) || NotificationType.TODO.equals(getType());
+        return eventLog != null || todoLog != null;
     }
 
     @Override
@@ -191,5 +191,14 @@ public class Notification {
     @Override
     public int hashCode() {
         return uid != null ? uid.hashCode() : 0;
+    }
+
+    @Override
+    public String toString() {
+        return "Notification{" +
+                "id=" + id +
+                ", target=" + target.getPhoneNumber() +
+                ", message='" + message + '\'' +
+                '}';
     }
 }

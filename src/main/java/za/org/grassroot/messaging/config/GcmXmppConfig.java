@@ -21,7 +21,7 @@ import javax.net.ssl.SSLSocketFactory;
  * Created by luke on 2017/05/19.
  */
 @Configuration
-@PropertySource(value = "file:${user.home}/grassroot/grassroot-integration.properties", ignoreResourceNotFound = true)
+@PropertySource(value = "file:${grassroot.messaging.properties.path}", ignoreResourceNotFound = true)
 public class GcmXmppConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(GcmXmppConfig.class);

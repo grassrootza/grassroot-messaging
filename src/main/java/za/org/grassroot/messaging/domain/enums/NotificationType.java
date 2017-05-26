@@ -38,6 +38,7 @@ public enum NotificationType {
 				return ACCOUNT;
 			case LIVEWIRE_TO_REVIEW:
 			case LIVEWIRE_MADE_CONTACT:
+			case LIVEWIRE_ALERT_RELEASED:
 				return LIVEWIRE;
 			default:
 				return GENERAL;

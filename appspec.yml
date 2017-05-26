@@ -15,9 +15,6 @@ hooks:
     - location: scripts/stopgrassroot.sh
     - location: scripts/clearoldgrassroot.sh
     runas: root
-  AfterInstall:
-    - location: scripts/copyproperties.sh
-      runas: root
   ApplicationStart:
     - location: scripts/startgrassroot.sh
       runas: root

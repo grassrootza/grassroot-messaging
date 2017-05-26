@@ -19,11 +19,15 @@ public class NotificationPushRequestController extends BaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(NotificationPushRequestController.class);
 
-    private final MessageSendingService messageSendingService;
+    private MessageSendingService messageSendingService;
 
     @Autowired
-    public NotificationPushRequestController(JwtService jwtService, MessageSendingService messageSendingService) {
+    public NotificationPushRequestController(JwtService jwtService) {
         super(jwtService);
+    }
+
+    @Autowired
+    public void setMessageSendingService(MessageSendingService messageSendingService) {
         this.messageSendingService = messageSendingService;
     }
 

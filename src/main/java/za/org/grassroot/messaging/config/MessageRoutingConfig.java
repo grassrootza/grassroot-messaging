@@ -30,11 +30,18 @@ public class MessageRoutingConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(MessageRoutingConfig.class);
 
-    @Autowired // leaving it as field injection until sort out circular dependency (setter might fix but obscure a likely deeper problem)
     private SmsNotificationBroker smsNotificationBroker;
+    private PushNotificationBroker pushNotificationBroker;
 
     @Autowired
-    private PushNotificationBroker pushNotificationBroker;
+    public void setSmsNotificationBroker(SmsNotificationBroker smsNotificationBroker) {
+        this.smsNotificationBroker = smsNotificationBroker;
+    }
+
+    @Autowired
+    public void setPushNotificationBroker(PushNotificationBroker pushNotificationBroker) {
+        this.pushNotificationBroker = pushNotificationBroker;
+    }
 
     @Bean(name = PollerMetadata.DEFAULT_POLLER)
     public PollerMetadata poller() {

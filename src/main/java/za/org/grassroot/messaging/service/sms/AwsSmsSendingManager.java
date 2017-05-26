@@ -55,6 +55,8 @@ public class AwsSmsSendingManager implements SmsSendingService {
                     .withProtocol("email")
                     .withEndpoint("contact@grassroot.org.za"));
             logger.info("AWS started up and subscribed to test topic: {}", awsTestTopicArn);
+        } else {
+            logger.info("AWS sending manager started up ...");
         }
     }
 

@@ -27,19 +27,25 @@ public class MessageSendingServiceImpl implements MessageSendingService {
 
     private static final Logger logger = LoggerFactory.getLogger(MessageSendingServiceImpl.class);
 
-    private final MessageChannel requestChannel;
-    private final MessageChannel priorityChannel;
+    private MessageChannel requestChannel;
+    private MessageChannel priorityChannel;
     private final GcmRegistrationRepository gcmRegistrationRepository;
 
     private MqttPahoMessageDrivenChannelAdapter mqttAdapter;
 
     @Autowired
-    public MessageSendingServiceImpl(@Qualifier("outboundRouterChannel") MessageChannel requestChannel,
-                                     @Qualifier("outboundPriorityChannel") MessageChannel priorityChannel,
-                                     GcmRegistrationRepository gcmRegistrationRepository) {
-        this.requestChannel = requestChannel;
-        this.priorityChannel = priorityChannel;
+    public MessageSendingServiceImpl(GcmRegistrationRepository gcmRegistrationRepository) {
         this.gcmRegistrationRepository = gcmRegistrationRepository;
+    }
+
+    @Autowired
+    public void setRequestChannel(@Qualifier("outboundRouterChannel") MessageChannel requestChannel) {
+        this.requestChannel = requestChannel;
+    }
+
+    @Autowired
+    public void setPriorityChannel(@Qualifier("outboundPriorityChannel") MessageChannel priorityChannel) {
+        this.priorityChannel = priorityChannel;
     }
 
     @Autowired(required = false)

@@ -64,6 +64,7 @@ public class AwsSmsSendingManager implements SmsSendingService {
     public SmsGatewayResponse sendSMS(String message, String destinationNumber) {
         long startTime = System.currentTimeMillis();
         try {
+            logger.info("Sending AWS SMS to {}, ...", destinationNumber);
             PublishResult result = snsClient.publish(smsPublishRequest(message, destinationNumber, "Promotional"));
             logger.debug("SMS sent via AWS, result in ms: {}", System.currentTimeMillis() - startTime);
             return new AwsSmsResponse(result);

@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import za.org.grassroot.messaging.domain.Notification;
-import za.org.grassroot.messaging.service.MessageSendingService;
 import za.org.grassroot.messaging.service.NotificationBroker;
 
 /**
@@ -32,9 +31,8 @@ public class GcmXmppInboundListener implements StanzaListener {
     private final GcmHandlingBroker gcmHandlingBroker;
 
     @Autowired
-    public GcmXmppInboundListener(NotificationBroker notificationBroker, MessageSendingService messageSendingService,
-                                  GcmHandlingBroker gcmHandlingBroker, XMPPConnection xmppConnection,
-                                  @Qualifier("gcmObjectMapper") ObjectMapper objectMapper) {
+    public GcmXmppInboundListener(NotificationBroker notificationBroker, GcmHandlingBroker gcmHandlingBroker,
+                                  XMPPConnection xmppConnection, @Qualifier("gcmObjectMapper") ObjectMapper objectMapper) {
         this.notificationBroker = notificationBroker;
         this.gcmHandlingBroker = gcmHandlingBroker;
         this.objectMapper = objectMapper;

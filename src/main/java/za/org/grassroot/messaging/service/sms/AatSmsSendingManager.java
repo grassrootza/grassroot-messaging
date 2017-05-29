@@ -53,6 +53,7 @@ public class AatSmsSendingManager implements SmsSendingService {
                 .queryParam("number", destinationNumber)
                 .queryParam("message", message);
         try {
+            log.info("Sending AAT SMS to {} ...", destinationNumber);
             SmsGatewayResponse response = environment.acceptsProfiles("default") ? AatResponseInterpreter.makeDummy() :
                     new AatResponseInterpreter(restTemplate.getForObject(gatewayURI.build().toUri(), AatSmsResponse.class));
             log.debug("time to execute AAT sms: {} msecs", System.currentTimeMillis() - startTime);

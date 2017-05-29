@@ -73,7 +73,9 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 
 	private Message<MessageAndRoutingBundle> createMessage(Notification notification, String givenRoute) {
 		MessageAndRoutingBundle routingBundle = notificationBroker.loadRoutingBundle(notification.getUid());
-		String route = (givenRoute == null) ? routingBundle.getRoutePreference().name() : givenRoute;
+		String route = (givenRoute != null) ? givenRoute :
+				(routingBundle == null || routingBundle.getRoutePreference() == null) ?
+						"SMS" : routingBundle.getRoutePreference().name();
 		if ("ANDROID_APP".equals(route)) {
 			GcmRegistration registration = gcmRegistrationRepository.findTopByUserOrderByCreationTimeDesc(notification.getTarget());
 			if (registration != null) {

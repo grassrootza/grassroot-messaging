@@ -51,7 +51,7 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 	 * Processed in non-transacted manner because we want to process each notification in separate transaction.
 	 */
 	@Override
-	@Transactional(readOnly = true)
+	@Transactional
 	public void processPendingNotifications() {
 		Instant time = Instant.now();
 		List<Notification> notifications = notificationRepository.findFirst75ByNextAttemptTimeBeforeOrderByNextAttemptTimeAsc(time);
@@ -76,6 +76,7 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 		try {
 			boolean redelivery = notification.getAttemptCount() > 1;
 			if (redelivery) {
+			    logger.info("redelivering a notification, attempt count: {}", notification.getAttemptCount());
 				// notification.setNextAttemptTime(null); // this practically means we try to redeliver only once
 				requestChannel.send(createMessage(notification, "SMS"));
 			} else {
@@ -119,25 +120,34 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 	private MessageAndRoutingBundle getNotificationRouting(Notification notification) {
 		Group group = notification.hasGroupLog() ? notification.getGroupLog().getGroup() :
 				notification.getGroupDescendantLog().getGroupDescendant().getAncestorGroup();
-        TypedQuery<MessageAndRoutingBundle> query = entityManager.createQuery("SELECT NEW za.org.grassroot.messaging.domain.MessageAndRoutingBundle(" +
-				"n.uid, u.phoneNumber, n.message, u.messagingPreference, " +
-				"(case when " +
-				"   sum(case when log.userLogType = 'USED_A_JOIN_CODE' and log.description = :groupUid then 1 else 0 end) " +
-				"> 0 then true else false end))" +
-				"FROM Notification n " +
-				"INNER JOIN n.target u " +
-				"INNER JOIN u.userLogs log " +
-				"WHERE n = :notification " +
-				"GROUP BY n.uid, u.phoneNumber, n.message, u.messagingPreference", MessageAndRoutingBundle.class)
-				.setParameter("groupUid", group.getUid())
-				.setParameter("notification", notification);
-        List<MessageAndRoutingBundle> list = query.getResultList();
-        if (list != null && !list.isEmpty()) {
-            return list.iterator().next();
+        if (group == null) {
+            logger.error("Error! Notification query gave null group, on: {}", notification);
+            return returnDefaultBundle(notification);
         } else {
-            logger.error("Error! The notification routing query returned null");
-            return new MessageAndRoutingBundle(notification.getUid(), notification.getTarget().getPhoneNumber(),
-                    notification.getMessage(), UserMessagingPreference.SMS, false);
+            TypedQuery<MessageAndRoutingBundle> query = entityManager.createQuery("SELECT NEW za.org.grassroot.messaging.domain.MessageAndRoutingBundle(" +
+                    "n.uid, u.phoneNumber, n.message, u.messagingPreference, " +
+                    "(case when " +
+                    "   sum(case when log.userLogType = 'USED_A_JOIN_CODE' and log.description = :groupUid then 1 else 0 end) " +
+                    "> 0 then true else false end))" +
+                    "FROM Notification n " +
+                    "INNER JOIN n.target u " +
+                    "INNER JOIN u.userLogs log " +
+                    "WHERE n = :notification " +
+                    "GROUP BY n.uid, u.phoneNumber, n.message, u.messagingPreference", MessageAndRoutingBundle.class)
+                    .setParameter("groupUid", group.getUid())
+                    .setParameter("notification", notification);
+            List<MessageAndRoutingBundle> list = query.getResultList();
+            if (list != null && !list.isEmpty()) {
+                return list.iterator().next();
+            } else {
+                logger.error("Error! The notification routing query returned null, notification: {}", notification);
+                return returnDefaultBundle(notification);
+            }
         }
 	}
+
+	private MessageAndRoutingBundle returnDefaultBundle(Notification notification) {
+        return new MessageAndRoutingBundle(notification.getUid(), notification.getTarget().getPhoneNumber(),
+                notification.getMessage(), UserMessagingPreference.SMS, false);
+    }
 }

@@ -94,6 +94,10 @@ public class GcmPayload {
         return messageType;
     }
 
+    public String getNotificationUid() {
+        return data != null  ? String.valueOf(getData().get("original_message_id")) : null;
+    }
+
     @Override
     public String toString() {
         return "GcmPayload{" +

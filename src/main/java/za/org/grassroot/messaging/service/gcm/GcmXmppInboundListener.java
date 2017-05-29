@@ -108,7 +108,7 @@ public class GcmXmppInboundListener implements StanzaListener {
         Notification notification = notificationBroker.loadNotification(payload.getMessageId());
         if (notification != null) {
             logger.info("Push Notification delivery failed, should now send SMS to  {}", notification.getTarget().getPhoneNumber());
-            // remove user preference, or other
+            notificationBroker.markNotificationAsFailedGcmDelivery(notification.getUid());
         } else {
             logger.info("Received an upstream message without notification, looks like: {}", payload);
         }

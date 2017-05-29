@@ -60,4 +60,14 @@ public class NotificationBrokerImpl implements NotificationBroker {
         }
     }
 
+    @Override
+    @Transactional
+    public void markNotificationAsFailedGcmDelivery(String notificationUid) {
+        Notification notification = notificationRepository.findOneByUid(notificationUid);
+        if (notification != null) {
+            notification.incrementAttemptCount();
+        } else {
+            logger.info("No notification under UID {}, possibly from another environment", notificationUid);
+        }
+    }
 }

@@ -17,4 +17,6 @@ public interface NotificationBroker {
 
 	void markNotificationAsDelivered(String notificationUid);
 
+	void markNotificationAsFailedGcmDelivery(String notificationUid);
+
 }

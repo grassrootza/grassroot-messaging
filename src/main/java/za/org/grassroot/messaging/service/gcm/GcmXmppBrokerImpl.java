@@ -17,6 +17,7 @@ import za.org.grassroot.messaging.domain.GcmRegistration;
 import za.org.grassroot.messaging.domain.User;
 import za.org.grassroot.messaging.domain.enums.UserMessagingPreference;
 import za.org.grassroot.messaging.domain.repository.GcmRegistrationRepository;
+import za.org.grassroot.messaging.domain.repository.NotificationRepository;
 import za.org.grassroot.messaging.domain.repository.UserRepository;
 import za.org.grassroot.messaging.util.PhoneNumberUtil;
 
@@ -38,7 +39,7 @@ public class GcmXmppBrokerImpl implements GcmHandlingBroker {
 
     @Autowired
     public GcmXmppBrokerImpl(@Qualifier("gcmObjectMapper") ObjectMapper objectMapper, @Qualifier("gcmXmppOutboundChannel") MessageChannel gcmXmppOutboundChannel,
-                             UserRepository userRepository, GcmRegistrationRepository gcmRegistrationRepository) {
+                             UserRepository userRepository, NotificationRepository notificationRepository, GcmRegistrationRepository gcmRegistrationRepository) {
         this.objectMapper = objectMapper;
         this.userRepository = userRepository;
         this.gcmRegistrationRepository = gcmRegistrationRepository;

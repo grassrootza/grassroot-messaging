@@ -20,6 +20,7 @@ import za.org.grassroot.messaging.service.NotificationBrokerImpl;
 import za.org.grassroot.messaging.util.DebugUtil;
 
 import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
@@ -83,7 +84,7 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 				requestChannel.send(createMessage(notification, null));
 			}
 		} catch (Exception e) {
-			logger.error("Failed to send notification " + notification + ": " + e.getMessage(), e);
+			logger.error("Failed to send notification {}, : {}", notification, e);
 		}
 	}
 
@@ -116,8 +117,9 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 	}
 
 	private MessageAndRoutingBundle getNotificationRouting(Notification notification) {
-		Group group = notification.getGroupDescendantLog().getGroupDescendant().getAncestorGroup();
-		return entityManager.createQuery("SELECT NEW za.org.grassroot.messaging.domain.MessageAndRoutingBundle(" +
+		Group group = notification.hasGroupLog() ? notification.getGroupLog().getGroup() :
+				notification.getGroupDescendantLog().getGroupDescendant().getAncestorGroup();
+        TypedQuery<MessageAndRoutingBundle> query = entityManager.createQuery("SELECT NEW za.org.grassroot.messaging.domain.MessageAndRoutingBundle(" +
 				"n.uid, u.phoneNumber, n.message, u.messagingPreference, " +
 				"(case when " +
 				"   sum(case when log.userLogType = 'USED_A_JOIN_CODE' and log.description = :groupUid then 1 else 0 end) " +
@@ -128,7 +130,14 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 				"WHERE n = :notification " +
 				"GROUP BY n.uid, u.phoneNumber, n.message, u.messagingPreference", MessageAndRoutingBundle.class)
 				.setParameter("groupUid", group.getUid())
-				.setParameter("notification", notification)
-				.getResultList().iterator().next();
+				.setParameter("notification", notification);
+        List<MessageAndRoutingBundle> list = query.getResultList();
+        if (list != null && !list.isEmpty()) {
+            return list.iterator().next();
+        } else {
+            logger.error("Error! The notification routing query returned null");
+            return new MessageAndRoutingBundle(notification.getUid(), notification.getTarget().getPhoneNumber(),
+                    notification.getMessage(), UserMessagingPreference.SMS, false);
+        }
 	}
 }

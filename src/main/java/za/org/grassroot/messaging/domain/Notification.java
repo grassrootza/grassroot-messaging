@@ -70,6 +70,10 @@ public class Notification {
     @JoinColumn(name = "user_log_id", foreignKey = @ForeignKey(name = "fk_notification_user_log"))
     private UserLog userLog;
 
+    @ManyToOne
+    @JoinColumn(name = "group_log_id", foreignKey = @ForeignKey(name = "fk_notification_group_log"))
+    private GroupLog groupLog;
+
     // for testing
     public static Notification makeDummy(String message) {
         Notification notification = new Notification();
@@ -164,6 +168,10 @@ public class Notification {
         return userLog;
     }
 
+    public GroupLog getGroupLog() {
+        return groupLog;
+    }
+
     public TaskLog getGroupDescendantLog() {
         if (NotificationType.EVENT.equals(getType())) {
             return eventLog;
@@ -173,6 +181,8 @@ public class Notification {
             throw new IllegalArgumentException("Cannot obtain group descendant log from non-task log");
         }
     }
+
+    public boolean hasGroupLog() { return groupLog != null; }
 
     public boolean isTaskRelated() {
         return eventLog != null || todoLog != null;

@@ -52,10 +52,16 @@ public class AatSmsSendingManager implements SmsSendingService {
                 .queryParam("password", smsGatewayPassword)
                 .queryParam("number", destinationNumber)
                 .queryParam("message", message);
-        SmsGatewayResponse response = environment.acceptsProfiles("default") ? AatResponseInterpreter.makeDummy() :
-            new AatResponseInterpreter(restTemplate.getForObject(gatewayURI.build().toUri(), AatSmsResponse.class));
-        log.debug("time to execute AAT sms: {} msecs", System.currentTimeMillis() - startTime);
-        return response;
+        try {
+            SmsGatewayResponse response = environment.acceptsProfiles("default") ? AatResponseInterpreter.makeDummy() :
+                    new AatResponseInterpreter(restTemplate.getForObject(gatewayURI.build().toUri(), AatSmsResponse.class));
+            log.debug("time to execute AAT sms: {} msecs", System.currentTimeMillis() - startTime);
+            return response;
+        } catch (Exception e) {
+            log.error("Error invoking AAT! : {}", e.getMessage());
+            e.printStackTrace();
+            return AatResponseInterpreter.makeDummy();
+        }
     }
 
     @Override

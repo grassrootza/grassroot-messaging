@@ -1,7 +1,5 @@
 package za.org.grassroot.messaging.service.gcm;
 
-import org.springframework.messaging.Message;
-
 /**
  * Created by luke on 2017/05/19.
  */

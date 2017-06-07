@@ -68,7 +68,7 @@ public class SchedulingConfig implements SchedulingConfigurer {
             @Qualifier("unreadNotificationSenderJobDetail") JobDetail jobDetail) {
         CronTriggerFactoryBean factoryBean = new CronTriggerFactoryBean();
         factoryBean.setJobDetail(jobDetail);
-        factoryBean.setCronExpression("0 0 0/1 * * ?");
+        factoryBean.setCronExpression("0 0/5 * * * ?");
         factoryBean.setMisfireInstruction(CronTrigger.MISFIRE_INSTRUCTION_DO_NOTHING);
         return factoryBean;
     }

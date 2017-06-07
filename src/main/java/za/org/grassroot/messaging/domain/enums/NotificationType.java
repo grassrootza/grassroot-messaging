@@ -31,6 +31,7 @@ public enum NotificationType {
 			case TODO_REMINDER:
 				return TODO;
 			case JOINREQUEST:
+			case JOINREQUEST_RESULT:
 				return USER;
 			case FREE_FORM_MESSAGE:
 				return GENERAL;

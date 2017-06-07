@@ -20,7 +20,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     List<Notification> findByUidIn(Collection<String> uids);
 
-    List<Notification> findFirst75ByNextAttemptTimeBeforeOrderByNextAttemptTimeAsc(Instant time);
+    List<Notification> findFirst100ByNextAttemptTimeBeforeOrderByNextAttemptTimeAsc(Instant time);
 
     @Transactional(readOnly = true)
     List<Notification> findFirst100ByReadFalseAndAttemptCountGreaterThanAndLastAttemptTimeGreaterThan(int minAttemptCount, Instant lastAttemptTime);

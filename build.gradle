@@ -42,7 +42,6 @@ dependencies {
     testCompile group: 'org.springframework.boot', name: 'spring-boot-starter-test', version:libs.springBootVersion
     testCompile group: 'org.springframework.integration', name: 'spring-integration-test', version:libs.springIntegrationVersion
 
-
     compile group: 'org.quartz-scheduler', name: 'quartz', version: '2.3.0'
 
     compile group: 'org.springframework', name: 'spring-context', version:libs.springVersion

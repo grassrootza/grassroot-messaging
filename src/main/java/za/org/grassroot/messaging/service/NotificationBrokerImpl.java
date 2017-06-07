@@ -43,7 +43,7 @@ public class NotificationBrokerImpl implements NotificationBroker {
     @Transactional(readOnly = true)
     public List<Notification> loadNextBatchOfNotificationsToSend() {
         Instant time = Instant.now();
-        return notificationRepository.findFirst75ByNextAttemptTimeBeforeOrderByNextAttemptTimeAsc(time);
+        return notificationRepository.findFirst100ByNextAttemptTimeBeforeOrderByNextAttemptTimeAsc(time);
     }
 
     @Override
@@ -69,12 +69,13 @@ public class NotificationBrokerImpl implements NotificationBroker {
                 logger.error("Error! Notification query gave null group, on: {}", notification);
                 return returnDefaultBundle(notification);
             } else {
-                try {
-                    return notificationRepository.loadMessageAndRoutingBundle(group.getUid(), notification);
-                } catch (Exception e) {
-                    logger.error("Error! The notification routing query returned null, notification: {}", notification);
-                    e.printStackTrace();
+                MessageAndRoutingBundle bundle = notificationRepository.loadMessageAndRoutingBundle(group.getUid(),
+                            notification);
+                if (bundle == null) {
+                    logger.error("Note! The notification routing query returned null, notification: {}", notification);
                     return returnDefaultBundle(notification);
+                } else {
+                    return bundle;
                 }
             }
         }

@@ -4,14 +4,14 @@ group 'grassroot'
 version '1.0-SNAPSHOT'
 
 ext.libs = [
-        springVersion: '4.3.8.RELEASE',
-        springBootVersion: '1.5.3.RELEASE',
-        springIntegrationVersion: '4.3.9.RELEASE'
+        springVersion: '4.3.9.RELEASE',
+        springBootVersion: '1.5.4.RELEASE',
+        springIntegrationVersion: '4.3.10.RELEASE'
 ]
 
 buildscript {
     dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.3.RELEASE")
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.4.RELEASE")
         classpath("io.spring.gradle:dependency-management-plugin:1.0.2.RELEASE")
     }
 

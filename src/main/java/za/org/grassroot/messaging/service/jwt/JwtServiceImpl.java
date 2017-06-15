@@ -46,9 +46,8 @@ public class JwtServiceImpl implements JwtService {
 
     @PostConstruct
     public void init() {
-        PublicCredentials credentials = refreshPublicCredentials();
-        logger.info("refreshed credentials, now adding authorized list, from URLs: {}", Arrays.toString(authorizedServiceKeyUrls));
-        Arrays.asList(authorizedServiceKeyUrls).forEach(this::getAndAddAuthorizedPublicKey);
+        refreshPublicCredentials();
+        refreshTrustedKeys();
     }
 
     private void getAndAddAuthorizedPublicKey(String url) {
@@ -80,7 +79,13 @@ public class JwtServiceImpl implements JwtService {
     }
 
     @Override
-    public PublicCredentials refreshPublicCredentials() {
+    public boolean refreshTrustedKeys() {
+        logger.info("adding authorized list of keys, from URLs: {}", Arrays.toString(authorizedServiceKeyUrls));
+        Arrays.asList(authorizedServiceKeyUrls).forEach(this::getAndAddAuthorizedPublicKey);
+        return true;
+    }
+
+    private PublicCredentials refreshPublicCredentials() {
         keyPair = RsaProvider.generateKeyPair(1024);
         kuid = UUID.randomUUID().toString();
         PublicCredentials publicCredentials = createCredentialEntity(kuid, keyPair.getPublic());
@@ -88,7 +93,7 @@ public class JwtServiceImpl implements JwtService {
         return publicCredentials;
     }
 
-    // should only be called at start up, on the strings provided in the variable
+    // should only be called with the strings provided in the variable (but can be triggered if necessary)
     private void addTrustedCredentials(PublicCredentials publicCredentials) {
         byte[] encoded = TextCodec.BASE64URL.decode(publicCredentials.getB64UrlPublicKey());
         PublicKey publicKey = null;

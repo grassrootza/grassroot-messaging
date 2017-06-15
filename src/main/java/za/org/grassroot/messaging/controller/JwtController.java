@@ -31,6 +31,11 @@ public class JwtController extends BaseController {
         return jwtService.getPublicCredentials();
     }
 
+    @RequestMapping("/public/refresh/trusted")
+    public @ResponseBody boolean refreshPublicCredentials() {
+        return jwtService.refreshTrustedKeys();
+    }
+
     @RequestMapping("/test/parse")
     public JwtResponse testToken(@RequestParam String jwt) {
         return new JwtResponse(Jwts.parser()

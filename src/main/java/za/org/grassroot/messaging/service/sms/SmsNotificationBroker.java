@@ -14,6 +14,8 @@ public interface SmsNotificationBroker {
     @Async
     void sendSmsNotificationByStrategy(Message message, SmsSendingStrategy strategy);
 
+    void sendSmsWithoutNotification(Message message);
+
     void sendPrioritySmsNotification(Message message);
 
     void sendSmsNotificationOnError(Message message);

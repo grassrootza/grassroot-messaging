@@ -10,7 +10,7 @@ import java.security.PrivateKey;
 public interface JwtService {
 
     PublicCredentials getPublicCredentials();
-    PublicCredentials refreshPublicCredentials();
+    boolean refreshTrustedKeys();
     SigningKeyResolver getSigningKeyResolver();
     PrivateKey getPrivateKey();
 

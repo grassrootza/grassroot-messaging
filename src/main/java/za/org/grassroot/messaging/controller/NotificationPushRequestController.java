@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.web.bind.annotation.*;
+import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
 import za.org.grassroot.messaging.domain.PriorityMessage;
 import za.org.grassroot.messaging.service.jwt.JwtService;
 import za.org.grassroot.messaging.service.sms.model.MockSmsResponse;
@@ -31,7 +32,7 @@ public class NotificationPushRequestController extends BaseController {
     }
 
     @Autowired
-    public void setRequestChannel(@Qualifier("outboundRouterChannel") MessageChannel requestChannel) {
+    public void setRequestChannel(@Qualifier("outboundSystemChannel") MessageChannel requestChannel) {
         this.requestChannel = requestChannel;
     }
 
@@ -40,11 +41,14 @@ public class NotificationPushRequestController extends BaseController {
         this.priorityChannel = priorityChannel;
     }
 
-    @RequestMapping(value = "/normal/{phoneNumber}", method = RequestMethod.POST)
-    public @ResponseBody SmsGatewayResponse sendOrdinaryNotification(@PathVariable String phoneNumber,
-                                                                     @RequestParam String message) {
-        // todo : wire this up properly to use request channel
-        return triggerPriorityNotification(phoneNumber, message, null);
+    @RequestMapping(value = "/system/{phoneNumber}", method = RequestMethod.POST)
+    public @ResponseBody SmsGatewayResponse sendSystemMessage(@PathVariable String phoneNumber,
+                                                                     @RequestParam String message,
+                                                                     @RequestParam(required = false) Boolean userRequested) {
+        logger.info("Sending normal system SMS to {}", phoneNumber);
+        requestChannel.send(MessageBuilder
+                .withPayload(new MessageAndRoutingBundle(phoneNumber, message, userRequested)).build());
+        return new MockSmsResponse();
     }
 
     @RequestMapping(value = "/priority/{phoneNumber}", method = RequestMethod.POST)

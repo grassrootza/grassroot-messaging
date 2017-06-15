@@ -98,9 +98,20 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
     }
 
     @Override
+    public void sendSmsWithoutNotification(Message message) {
+        MessageAndRoutingBundle payload = (MessageAndRoutingBundle) message.getPayload();
+        if (awsSmsSender != null && payload.isJoinedViaCode()) {
+            awsSmsSender.sendSMS(payload.getMessage(), payload.getPhoneNumber());
+        }  else {
+            defaultSmsSender.sendSMS(payload.getMessage(), payload.getPhoneNumber());
+        }
+    }
+
+
+    @Override
     public void sendPrioritySmsNotification(Message message) {
         PriorityMessage payload = (PriorityMessage) message.getPayload();
-        logger.info("Inside broker, handling priority message: {}", payload);
+        logger.debug("Inside broker, handling priority message: {}", payload);
         defaultSmsSender.sendPrioritySMS(payload.getMessage(), payload.getPhoneNumber());
     }
 

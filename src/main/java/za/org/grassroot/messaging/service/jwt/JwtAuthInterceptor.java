@@ -29,17 +29,17 @@ public class JwtAuthInterceptor extends HandlerInterceptorAdapter {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        logger.info("Inside JWT interceptor, checking request ...");
+        logger.debug("Inside JWT interceptor, checking request ...");
         String authorization = request.getHeader("Authorization");
         if (StringUtils.isEmpty(authorization) || !authorization.startsWith(BEARER_IDENTIFIER)) {
-            logger.info("Error, request with no authorization header, full header: {}",
+            logger.error("Error, request with no authorization header, full header: {}",
                     request.getHeaderNames());
             throw new UnauthorizedRequestException("Error! No authorization in the request");
         }
 
         String jwt = authorization.substring(BEARER_IDENTIFIER.length());
 
-        logger.info("jwtService null? : {}", jwtService == null);
+        logger.debug("jwtService null? : {}", jwtService == null);
 
         // will throw JWT error if this is not valid, so we just return true if it passes
         Jwts.parser()

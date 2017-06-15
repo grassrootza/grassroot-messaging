@@ -63,6 +63,10 @@ public class MessageRoutingConfig {
     @Bean
     public MessageChannel outboundPriorityChannel() { return MessageChannels.priority().get(); }
 
+    @Bean
+    public MessageChannel outboundSystemChannel() {
+        return MessageChannels.queue().get();
+    }
 
     @Bean
     @ServiceActivator(inputChannel = "gcmXmppOutboundChannel")
@@ -74,6 +78,12 @@ public class MessageRoutingConfig {
     public IntegrationFlow priorityFlow() {
         return f -> f.channel("outboundPriorityChannel")
                 .handle(smsNotificationBroker::sendPrioritySmsNotification);
+    }
+
+    @Bean
+    public IntegrationFlow pushSmsFlow() {
+        return f -> f.channel("outboundSystemChannel")
+                .handle(smsNotificationBroker::sendSmsWithoutNotification);
     }
 
     @Bean

@@ -33,6 +33,12 @@ public class MessageAndRoutingBundle {
         // for JPA
     }
 
+    public MessageAndRoutingBundle(String phoneNumber, String message, Boolean userRequested) {
+        this.phoneNumber = phoneNumber;
+        this.message = message;
+        this.joinedViaCode = userRequested == null ? false : userRequested;
+    }
+
     public MessageAndRoutingBundle(String notificationUid, String phoneNumber, String message,
                                    UserMessagingPreference messagingPreference, boolean joinedViaCode) {
         this.notificationUid = notificationUid;

@@ -19,7 +19,8 @@ public class WebConfig extends WebMvcConfigurerAdapter {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(jwtAuthInterceptor())
-                .addPathPatterns("/**");
+                .addPathPatterns("/**")
+                .excludePathPatterns("/jwt/public/**");
     }
 
     @Bean

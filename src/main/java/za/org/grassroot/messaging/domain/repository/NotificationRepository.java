@@ -23,7 +23,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     List<Notification> findFirst100ByNextAttemptTimeBeforeOrderByNextAttemptTimeAsc(Instant time);
 
     @Transactional(readOnly = true)
-    List<Notification> findFirst100ByReadFalseAndAttemptCountGreaterThanAndLastAttemptTimeGreaterThan(int minAttemptCount, Instant lastAttemptTime);
+    List<Notification> findFirst150ByReadFalseAndAttemptCountGreaterThanAndLastAttemptTimeGreaterThan(int minAttemptCount, Instant lastAttemptTime);
 
     @Query("SELECT NEW za.org.grassroot.messaging.domain.MessageAndRoutingBundle(" +
             "n.uid, u.phoneNumber, n.message, u.messagingPreference, " +

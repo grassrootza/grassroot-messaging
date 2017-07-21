@@ -52,7 +52,7 @@ public class NotificationBrokerImpl implements NotificationBroker {
         // note : do the check on read, not viewed on android, because we want to preserve that as false but mark to read on SMS send (to avoid repeat deliveries)
         Instant timeToCheck = Instant.now().minus(10, ChronoUnit.MINUTES);
         return notificationRepository
-                .findFirst100ByReadFalseAndAttemptCountGreaterThanAndLastAttemptTimeGreaterThan(0, timeToCheck);
+                .findFirst150ByReadFalseAndAttemptCountGreaterThanAndLastAttemptTimeGreaterThan(0, timeToCheck);
     }
 
     @Override

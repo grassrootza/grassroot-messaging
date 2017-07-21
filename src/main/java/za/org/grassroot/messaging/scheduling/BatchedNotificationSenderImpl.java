@@ -57,9 +57,10 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 		Notification notification = notificationBroker.loadNotificationForSending(notificationUid);
 		logger.debug("Sending notification: {}", notification);
 
+		// todo: fix up Android and other routing in general fixes, for now use timeline as key
 		try {
 			boolean redelivery = notification.getAttemptCount() > 1;
-			if (redelivery) {
+			if (redelivery || !notification.isForAndroidTimeline()) {
 			    logger.info("redelivering a notification, attempt count: {}", notification.getAttemptCount());
 				// notification.setNextAttemptTime(null); // this practically means we try to redeliver only once
 				requestChannel.send(createMessage(notification, "SMS"));

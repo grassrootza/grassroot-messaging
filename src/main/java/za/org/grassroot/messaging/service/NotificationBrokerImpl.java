@@ -43,7 +43,7 @@ public class NotificationBrokerImpl implements NotificationBroker {
     @Transactional(readOnly = true)
     public List<Notification> loadNextBatchOfNotificationsToSend() {
         Instant time = Instant.now();
-        return notificationRepository.findFirst100ByNextAttemptTimeBeforeOrderByNextAttemptTimeAsc(time);
+        return notificationRepository.findFirst150ByNextAttemptTimeBeforeOrderByNextAttemptTimeAsc(time);
     }
 
     @Override

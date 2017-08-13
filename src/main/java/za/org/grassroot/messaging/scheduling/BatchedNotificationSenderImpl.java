@@ -1,5 +1,6 @@
 package za.org.grassroot.messaging.scheduling;
 
+import com.codahale.metrics.annotation.Timed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,8 +41,10 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 	}
 
 	/**
-	 * Processed in non-transacted manner because we want to process each notification in separate transaction.
+	 * Processed in non-transacted manner because we want to process each notification in
+	 * separate transaction.
 	 */
+	@Timed
 	@Override
 	public void processPendingNotifications() {
 		List<Notification> notifications = notificationBroker.loadNextBatchOfNotificationsToSend();

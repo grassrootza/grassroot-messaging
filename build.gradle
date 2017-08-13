@@ -71,4 +71,11 @@ dependencies {
     compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '8.4.3'
     compile group: 'io.jsonwebtoken', name: 'jjwt', version: '0.7.0'
 
+    compile 'io.dropwizard.metrics:metrics-core:3.2.4'
+    compile 'io.dropwizard.metrics:metrics-annotation:3.2.4'
+    compile group: 'io.dropwizard.metrics', name: 'metrics-graphite', version: '3.2.4'
+    compile ('com.ryantenney.metrics:metrics-spring:3.1.3') {
+        exclude group: 'com.codahale.metrics'
+        exclude group: 'org.springframework'
+    }
 }

@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 @Profile({ "localpg" })
 @ConditionalOnProperty(name = "grassroot.metrics.enabled", havingValue = "true",  matchIfMissing = false)
 public class LocalMetricsConfiguration extends MetricsConfigurerAdapter {
-    
+
     @Override
     public void configureReporters(MetricRegistry metricRegistry) {
         // registerReporter allows the MetricsConfigurerAdapter to

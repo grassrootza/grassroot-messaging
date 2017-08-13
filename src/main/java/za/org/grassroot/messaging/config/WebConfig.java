@@ -1,5 +1,6 @@
 package za.org.grassroot.messaging.config;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -17,11 +18,16 @@ public class WebConfig extends WebMvcConfigurerAdapter {
     // have auth tokens, so we intercept everything
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new JwtAuthInterceptor())
+        registry.addInterceptor(jwtAuthInterceptor())
                 .addPathPatterns("/**")
                 .excludePathPatterns("/jwt/public/**")
                 .excludePathPatterns("/error")
                 .excludePathPatterns("/metrics");
+    }
+
+    @Bean
+    public JwtAuthInterceptor jwtAuthInterceptor() {
+        return new JwtAuthInterceptor();
     }
 
 }

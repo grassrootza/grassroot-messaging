@@ -8,6 +8,7 @@ import com.ryantenney.metrics.spring.config.annotation.MetricsConfigurerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.PropertySource;
@@ -18,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 @EnableMetrics
 @Profile({"production"})
+@ConditionalOnProperty(name = "grassroot.metrics.enabled", havingValue = "true",  matchIfMissing = false)
 @PropertySource(value = "file:${grassroot.messaging.properties.path}", ignoreResourceNotFound = true)
 public class ProductionMetricsConfiguration extends MetricsConfigurerAdapter {
 

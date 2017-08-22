@@ -48,10 +48,11 @@ public class AatSmsSendingManager implements SmsSendingService {
     public SmsGatewayResponse sendSMS(String message, String destinationNumber) {
         long startTime = System.currentTimeMillis();
         UriComponentsBuilder gatewayURI = UriComponentsBuilder.newInstance().scheme("https").host(smsGatewayHost);
+        String msgToSend = replaceIllegalChars(message);
         gatewayURI.path("send/").queryParam("username", smsGatewayUsername)
                 .queryParam("password", smsGatewayPassword)
                 .queryParam("number", destinationNumber)
-                .queryParam("message", message);
+                .queryParam("message", msgToSend);
         try {
             log.info("Sending AAT SMS to {} ...", destinationNumber);
             SmsGatewayResponse response = environment.acceptsProfiles("default") ? AatResponseInterpreter.makeDummy() :
@@ -65,6 +66,10 @@ public class AatSmsSendingManager implements SmsSendingService {
         }
     }
 
+    private String replaceIllegalChars(String message) {
+        return message.replaceAll("\\s*&\\s*", " and ");
+    }
+
     @Override
     public SmsGatewayResponse sendPrioritySMS(String message, String destinationNumber) {
         log.info("Sending a priority SMS inside AAT sender");
@@ -73,7 +78,7 @@ public class AatSmsSendingManager implements SmsSendingService {
                 .queryParam("username", smsPriorityUsername)
                 .queryParam("password", smsPriorityPassword)
                 .queryParam("number", destinationNumber)
-                .queryParam("message", message);
+                .queryParam("message", replaceIllegalChars(message));
         return new AatResponseInterpreter(restTemplate.getForObject(gatewayURI.build().toUri(), AatSmsResponse.class));
     }
 

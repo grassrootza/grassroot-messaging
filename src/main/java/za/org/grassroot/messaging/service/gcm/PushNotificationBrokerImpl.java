@@ -4,6 +4,7 @@ import org.apache.http.util.TextUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ import java.util.regex.Pattern;
  * Created by luke on 2017/05/19.
  */
 @Service
+@ConditionalOnProperty(value = "grassroot.gcm.enabled", havingValue = "true")
 public class PushNotificationBrokerImpl implements PushNotificationBroker {
 
     private static final Logger logger = LoggerFactory.getLogger(PushNotificationBrokerImpl.class);

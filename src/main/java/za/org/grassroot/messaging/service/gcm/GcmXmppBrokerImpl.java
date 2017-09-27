@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -27,6 +28,7 @@ import java.util.UUID;
  * Restructured and slimmed down, using Smack extensions, etc
  */
 @Service
+@ConditionalOnProperty(value = "grassroot.gcm.enabled", havingValue = "true")
 public class GcmXmppBrokerImpl implements GcmHandlingBroker {
 
     private static final Logger logger = LoggerFactory.getLogger(GcmXmppBrokerImpl.class);

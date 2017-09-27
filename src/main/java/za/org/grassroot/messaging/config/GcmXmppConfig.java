@@ -9,6 +9,7 @@ import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -22,6 +23,7 @@ import javax.net.ssl.SSLSocketFactory;
  */
 @Configuration
 @PropertySource(value = "file:${grassroot.messaging.properties.path}", ignoreResourceNotFound = true)
+@ConditionalOnProperty(value = "grassroot.gcm.enabled", havingValue = "true")
 public class GcmXmppConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(GcmXmppConfig.class);

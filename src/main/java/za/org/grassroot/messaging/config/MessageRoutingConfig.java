@@ -4,6 +4,7 @@ import org.jivesoftware.smack.XMPPConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.annotation.ServiceActivator;
@@ -38,7 +39,7 @@ public class MessageRoutingConfig {
         this.smsNotificationBroker = smsNotificationBroker;
     }
 
-    @Autowired
+    @Autowired(required = false)
     public void setPushNotificationBroker(PushNotificationBroker pushNotificationBroker) {
         this.pushNotificationBroker = pushNotificationBroker;
     }
@@ -69,6 +70,7 @@ public class MessageRoutingConfig {
     }
 
     @Bean
+    @ConditionalOnProperty(value = "grassroot.gcm.enabled", havingValue = "true")
     @ServiceActivator(inputChannel = "gcmXmppOutboundChannel")
     public ChatMessageSendingMessageHandler chatMessageSendingMessageHandler(XMPPConnection connection){
         return new ChatMessageSendingMessageHandler(connection);
@@ -125,6 +127,7 @@ public class MessageRoutingConfig {
     }
 
     @Bean
+    @ConditionalOnProperty(value = "grassroot.gcm.enabled", havingValue = "true")
     public IntegrationFlow gcmOutboundFlow() {
         return f -> f.channel("gcmOutboundChannel")
                 .handle(pushNotificationBroker::sendMessage);

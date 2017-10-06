@@ -1,8 +1,10 @@
-package za.org.grassroot.messaging.service.sms.model;
+package za.org.grassroot.messaging.service.sms.aws;
 
 import com.amazonaws.services.sns.model.AmazonSNSException;
 import com.amazonaws.services.sns.model.PublishResult;
 import org.springframework.util.StringUtils;
+import za.org.grassroot.messaging.service.sms.SmsGatewayResponse;
+import za.org.grassroot.messaging.service.sms.SmsResponseType;
 
 /**
  * Created by luke on 2017/05/19.

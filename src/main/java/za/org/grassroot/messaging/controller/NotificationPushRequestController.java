@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
 import za.org.grassroot.messaging.domain.PriorityMessage;
 import za.org.grassroot.messaging.service.jwt.JwtService;
-import za.org.grassroot.messaging.service.sms.model.MockSmsResponse;
-import za.org.grassroot.messaging.service.sms.model.SmsGatewayResponse;
+import za.org.grassroot.messaging.service.sms.MockSmsResponse;
+import za.org.grassroot.messaging.service.sms.SmsGatewayResponse;
 
 /**
  * Created by luke on 2017/05/20.

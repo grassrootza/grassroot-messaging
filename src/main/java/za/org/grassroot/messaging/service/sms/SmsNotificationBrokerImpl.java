@@ -10,9 +10,9 @@ import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
 import za.org.grassroot.messaging.domain.Notification;
+import za.org.grassroot.messaging.domain.NotificationStatus;
 import za.org.grassroot.messaging.domain.PriorityMessage;
 import za.org.grassroot.messaging.service.NotificationBroker;
-import za.org.grassroot.messaging.service.sms.model.SmsGatewayResponse;
 
 import javax.annotation.PostConstruct;
 
@@ -65,6 +65,7 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
         SmsGatewayResponse response = awsSmsSender != null && messagePayload.isJoinedViaCode() ?
                 awsSmsSender.sendSMS(messagePayload.getMessage(), messagePayload.getPhoneNumber()) :
                 defaultSmsSender.sendSMS(messagePayload.getMessage(), messagePayload.getPhoneNumber());
+
         updateReadAndDeliveredStatus(messagePayload.getNotificationUid(), response);
     }
 
@@ -124,20 +125,23 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
     }
 
     private void updateReadAndDeliveredStatus(String notificationUid, SmsGatewayResponse response) {
-        notificationBroker.markNotificationAsDelivered(notificationUid);
+
+
         if (response != null && response.isSuccessful()) {
-            notificationBroker.updateNotificationReadStatus(notificationUid, true);
+            notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.SENT, null);
         } else if (response != null && response.getResponseType() != null) {
+
             switch (response.getResponseType()) {
                 case MSISDN_INVALID:
                     logger.info("invalid number for SMS, marking it as read to prevent looping redelivery");
-                    notificationBroker.updateNotificationReadStatus(notificationUid, true); // to prevent unread trying to send
+                    notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.UNDELIVERABLE, "Can't send message. Invalid MSISDN.");
                     break;
                 case DUPLICATE_MESSAGE:
                     logger.info("trying to resend message, just set it as read");
-                    notificationBroker.updateNotificationReadStatus(notificationUid, true); // as above, prevents loops
+                    notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.DELIVERED, "Can't send message. Duplicate message"); //todo(beegor), hmm, what to do here ?
                     break;
                 default:
+                    notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.SENDING_FAILED, "Can't send message. Reason: " + response.getResponseType());
                     logger.error("error delivering SMS, response from gateway: {}", response.toString());
             }
         } else {

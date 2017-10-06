@@ -8,13 +8,13 @@ import org.springframework.transaction.annotation.Transactional;
 import za.org.grassroot.messaging.domain.Group;
 import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
 import za.org.grassroot.messaging.domain.Notification;
+import za.org.grassroot.messaging.domain.NotificationStatus;
 import za.org.grassroot.messaging.domain.repository.NotificationRepository;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * Ported to micro project by Luke on 2017/05/18.
@@ -81,16 +81,6 @@ public class NotificationBrokerImpl implements NotificationBroker {
         }
     }
 
-    @Override
-    @Transactional
-    public Notification loadNotificationForSending(String notificationUid) {
-        Notification notification = notificationRepository.findOneByUid(notificationUid);
-        notification.incrementAttemptCount();
-        notification.setLastAttemptTime(Instant.now());
-        // we set next attempt (redelivery) time which will get erased in case delivery gets confirmed in the mean time
-        notification.setNextAttemptTime(Instant.now().plusSeconds(60 * 5));
-        return notification;
-    }
 
     private MessageAndRoutingBundle returnDefaultBundle(Notification notification) {
         return new MessageAndRoutingBundle(notification.getUid(),
@@ -102,38 +92,12 @@ public class NotificationBrokerImpl implements NotificationBroker {
 
     @Override
     @Transactional
-    public void updateNotificationReadStatus(String notificationUid, boolean read) {
+    public void updateNotificationStatus(String notificationUid, NotificationStatus status, String errorMessage) {
         Notification notification = notificationRepository.findOneByUid(notificationUid);
-        notification.setRead(read);
+        if (notification != null)
+            notification.updateStatus(status);
     }
 
-    @Override
-    @Transactional
-    public void updateNotificationsViewedAndRead(Set<String> notificationUids) {
-        List<Notification> notifications = notificationRepository.findByUidIn(notificationUids);
-        notifications.forEach(Notification::markReadAndViewed);
-    }
 
-    @Override
-    @Transactional
-    public void markNotificationAsDelivered(String notificationUid) {
-        Notification notification = notificationRepository.findOneByUid(notificationUid);
-        if (notification != null) {
-            notification.markAsDelivered();
-        } else {
-            logger.info("No notification under UID {}, possibly from another environment", notificationUid);
-        }
-    }
 
-    @Override
-    @Transactional
-    public void markNotificationAsFailedGcmDelivery(String notificationUid) {
-        Notification notification = notificationRepository.findOneByUid(notificationUid);
-        if (notification != null && notification.getAttemptCount() <= 1) {
-            // todo : might want to change user preference, etc
-            notification.incrementAttemptCount();
-        } else {
-            logger.info("No notification under UID {}, possibly from another environment", notificationUid);
-        }
-    }
 }

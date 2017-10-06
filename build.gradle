@@ -78,4 +78,6 @@ dependencies {
         exclude group: 'com.codahale.metrics'
         exclude group: 'org.springframework'
     }
+
+    compile group: 'org.projectlombok', name: 'lombok', version: '1.16.18'
 }

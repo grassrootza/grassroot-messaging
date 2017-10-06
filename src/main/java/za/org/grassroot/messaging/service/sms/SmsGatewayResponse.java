@@ -1,4 +1,4 @@
-package za.org.grassroot.messaging.service.sms.model;
+package za.org.grassroot.messaging.service.sms;
 
 /**
  * Created by luke on 2016/09/19.
@@ -6,7 +6,9 @@ package za.org.grassroot.messaging.service.sms.model;
 public interface SmsGatewayResponse {
 
     SmsResponseType getResponseType();
+
     boolean isSuccessful();
+
     Integer getErrorCode();
 
 }

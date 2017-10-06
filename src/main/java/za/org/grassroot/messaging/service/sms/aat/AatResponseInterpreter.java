@@ -1,4 +1,7 @@
-package za.org.grassroot.messaging.service.sms.model;
+package za.org.grassroot.messaging.service.sms.aat;
+
+import za.org.grassroot.messaging.service.sms.SmsGatewayResponse;
+import za.org.grassroot.messaging.service.sms.SmsResponseType;
 
 /**
  * Created by luke on 2016/09/19.

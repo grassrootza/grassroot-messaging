@@ -1,13 +1,13 @@
-package za.org.grassroot.messaging.service.sms.model;
+package za.org.grassroot.messaging.service.sms.aat;
 
 import javax.annotation.Generated;
 import javax.xml.bind.annotation.*;
 
 /**
  * <p>Java class to interpret response XML from AAT SMS gateway (based on generated xsd)
- * 
+ * <p>
  * <p>The following schema fragment specifies the expected content contained within this class.
- * 
+ * <p>
  * <pre>
  * &lt;complexType>
  *   &lt;complexContent>
@@ -31,12 +31,10 @@ import javax.xml.bind.annotation.*;
  *   &lt;/complexContent>
  * &lt;/complexType>
  * </pre>
- * 
- * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
-    "submitresult"
+        "submitresult"
 })
 @XmlRootElement(name = "aatsms")
 @Generated(value = "com.sun.tools.internal.xjc.Driver", date = "2016-09-19T03:46:30+02:00", comments = "JAXB RI v2.2.8-b130911.1802")
@@ -49,10 +47,8 @@ public class AatSmsResponse {
     /**
      * Gets the value of the submitresult property.
      *
-     * @return
-     *     possible object is
-     *     {@link AatSmsResponse.Submitresult }
-     *
+     * @return possible object is
+     * {@link AatSmsResponse.Submitresult }
      */
     @Generated(value = "com.sun.tools.internal.xjc.Driver", date = "2016-09-19T03:46:30+02:00", comments = "JAXB RI v2.2.8-b130911.1802")
     public AatSmsResponse.Submitresult getSubmitresult() {
@@ -62,10 +58,8 @@ public class AatSmsResponse {
     /**
      * Sets the value of the submitresult property.
      *
-     * @param value
-     *     allowed object is
-     *     {@link AatSmsResponse.Submitresult }
-     *
+     * @param value allowed object is
+     *              {@link AatSmsResponse.Submitresult }
      */
     @Generated(value = "com.sun.tools.internal.xjc.Driver", date = "2016-09-19T03:46:30+02:00", comments = "JAXB RI v2.2.8-b130911.1802")
     public void setSubmitresult(AatSmsResponse.Submitresult value) {
@@ -75,9 +69,9 @@ public class AatSmsResponse {
 
     /**
      * <p>Java class for anonymous complex type.
-     * 
+     * <p>
      * <p>The following schema fragment specifies the expected content contained within this class.
-     * 
+     * <p>
      * <pre>
      * &lt;complexType>
      *   &lt;complexContent>
@@ -91,8 +85,6 @@ public class AatSmsResponse {
      *   &lt;/complexContent>
      * &lt;/complexType>
      * </pre>
-     * 
-     * 
      */
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlType(name = "")
@@ -117,11 +109,9 @@ public class AatSmsResponse {
 
         /**
          * Gets the value of the action property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link String }
-         *     
+         *
+         * @return possible object is
+         * {@link String }
          */
         @Generated(value = "com.sun.tools.internal.xjc.Driver", date = "2016-09-19T03:46:30+02:00", comments = "JAXB RI v2.2.8-b130911.1802")
         public String getAction() {
@@ -130,11 +120,9 @@ public class AatSmsResponse {
 
         /**
          * Sets the value of the action property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link String }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link String }
          */
         @Generated(value = "com.sun.tools.internal.xjc.Driver", date = "2016-09-19T03:46:30+02:00", comments = "JAXB RI v2.2.8-b130911.1802")
         public void setAction(String value) {
@@ -143,11 +131,9 @@ public class AatSmsResponse {
 
         /**
          * Gets the value of the error property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link String }
-         *     
+         *
+         * @return possible object is
+         * {@link String }
          */
         @Generated(value = "com.sun.tools.internal.xjc.Driver", date = "2016-09-19T03:46:30+02:00", comments = "JAXB RI v2.2.8-b130911.1802")
         public Integer getError() {
@@ -156,11 +142,9 @@ public class AatSmsResponse {
 
         /**
          * Sets the value of the error property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link String }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link String }
          */
         @Generated(value = "com.sun.tools.internal.xjc.Driver", date = "2016-09-19T03:46:30+02:00", comments = "JAXB RI v2.2.8-b130911.1802")
         public void setError(Integer value) {
@@ -169,11 +153,9 @@ public class AatSmsResponse {
 
         /**
          * Gets the value of the key property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link Integer }
-         *     
+         *
+         * @return possible object is
+         * {@link Integer }
          */
         @Generated(value = "com.sun.tools.internal.xjc.Driver", date = "2016-09-19T03:46:30+02:00", comments = "JAXB RI v2.2.8-b130911.1802")
         public Integer getKey() {
@@ -182,11 +164,9 @@ public class AatSmsResponse {
 
         /**
          * Sets the value of the key property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link Integer }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link Integer }
          */
         @Generated(value = "com.sun.tools.internal.xjc.Driver", date = "2016-09-19T03:46:30+02:00", comments = "JAXB RI v2.2.8-b130911.1802")
         public void setKey(Integer value) {
@@ -195,11 +175,9 @@ public class AatSmsResponse {
 
         /**
          * Gets the value of the result property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link Integer }
-         *     
+         *
+         * @return possible object is
+         * {@link Integer }
          */
         @Generated(value = "com.sun.tools.internal.xjc.Driver", date = "2016-09-19T03:46:30+02:00", comments = "JAXB RI v2.2.8-b130911.1802")
         public Integer getResult() {
@@ -208,11 +186,9 @@ public class AatSmsResponse {
 
         /**
          * Sets the value of the result property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link Integer }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link Integer }
          */
         @Generated(value = "com.sun.tools.internal.xjc.Driver", date = "2016-09-19T03:46:30+02:00", comments = "JAXB RI v2.2.8-b130911.1802")
         public void setResult(Integer value) {
@@ -221,11 +197,9 @@ public class AatSmsResponse {
 
         /**
          * Gets the value of the number property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link String }
-         *     
+         *
+         * @return possible object is
+         * {@link String }
          */
         @Generated(value = "com.sun.tools.internal.xjc.Driver", date = "2016-09-19T03:46:30+02:00", comments = "JAXB RI v2.2.8-b130911.1802")
         public String getNumber() {
@@ -234,11 +208,9 @@ public class AatSmsResponse {
 
         /**
          * Sets the value of the number property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link String }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link String }
          */
         @Generated(value = "com.sun.tools.internal.xjc.Driver", date = "2016-09-19T03:46:30+02:00", comments = "JAXB RI v2.2.8-b130911.1802")
         public void setNumber(String value) {

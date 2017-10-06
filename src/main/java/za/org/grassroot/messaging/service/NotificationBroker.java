@@ -2,9 +2,9 @@ package za.org.grassroot.messaging.service;
 
 import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
 import za.org.grassroot.messaging.domain.Notification;
+import za.org.grassroot.messaging.domain.NotificationStatus;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by paballo on 2016/04/07.
@@ -19,15 +19,9 @@ public interface NotificationBroker {
 
 	MessageAndRoutingBundle loadRoutingBundle(String notificationUid);
 
-	// increments attempt time while sending
-	Notification loadNotificationForSending(String notificationUid);
+	void updateNotificationStatus(String notificationUid, NotificationStatus status, String errorMessage);
 
-	void updateNotificationReadStatus(String notificationUid, boolean read);
 
-	void updateNotificationsViewedAndRead(Set<String> notificationUids);
 
-	void markNotificationAsDelivered(String notificationUid);
-
-	void markNotificationAsFailedGcmDelivery(String notificationUid);
 
 }

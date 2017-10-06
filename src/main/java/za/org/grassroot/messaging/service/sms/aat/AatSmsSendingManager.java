@@ -1,5 +1,8 @@
-package za.org.grassroot.messaging.service.sms;
+package za.org.grassroot.messaging.service.sms.aat;
 
+import org.dom4j.Document;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,9 +13,16 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-import za.org.grassroot.messaging.service.sms.model.AatResponseInterpreter;
-import za.org.grassroot.messaging.service.sms.model.AatSmsResponse;
-import za.org.grassroot.messaging.service.sms.model.SmsGatewayResponse;
+import za.org.grassroot.messaging.service.sms.SMSSendLog;
+import za.org.grassroot.messaging.service.sms.SentSMSStatus;
+import za.org.grassroot.messaging.service.sms.SmsGatewayResponse;
+import za.org.grassroot.messaging.service.sms.SmsSendingService;
+
+import java.io.StringReader;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by luke on 2015/09/09.
@@ -65,6 +75,31 @@ public class AatSmsSendingManager implements SmsSendingService {
             return AatResponseInterpreter.makeDummy();
         }
     }
+
+
+    public SMSSendLog fetchSendLog(LocalDate startDate, LocalDate endDate) throws Exception {
+
+        UriComponentsBuilder gatewayURI = UriComponentsBuilder.newInstance().scheme("https").host(smsGatewayHost);
+        gatewayURI.path("sendlog/")
+                .queryParam("username", smsGatewayUsername)
+                .queryParam("password", smsGatewayPassword)
+                .queryParam("startdate", DateTimeFormatter.ofPattern("YYYYMMDD").format(startDate))
+                .queryParam("enddate", DateTimeFormatter.ofPattern("YYYYMMDD").format(endDate));
+
+        String response = restTemplate.getForEntity(gatewayURI.build().toUri(), String.class).getBody();
+        Document doc = new SAXReader().read(new StringReader(response));
+
+        List<SentSMSStatus> messageStatuses = new ArrayList<>();
+        for (Object msgObj : doc.getRootElement().elements("message")) {
+            Element msgEl = (Element) msgObj;
+            SentSMSStatus smsStatus = new AatSMSSendStatus(msgEl);
+            messageStatuses.add(smsStatus);
+        }
+
+        return new SMSSendLog(messageStatuses);
+
+    }
+
 
     private String replaceIllegalChars(String message) {
         return message.replaceAll("\\s*&\\s*", " and ");

@@ -1,6 +1,7 @@
 package za.org.grassroot.messaging.domain;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.DynamicUpdate;
 import za.org.grassroot.messaging.domain.enums.NotificationDetailedType;
 import za.org.grassroot.messaging.domain.enums.NotificationType;
@@ -29,6 +30,7 @@ public class Notification {
     @Column(name = "creation_time", insertable = true, updatable = false)
     private Instant createdDateTime;
 
+
     @Column(name = "attempt_count", nullable = false)
     private int sendAttempts = 0;
 
@@ -46,7 +48,9 @@ public class Notification {
 
     @Column(name = "sending_status")
     private NotificationStatus status = NotificationStatus.PENDING;
-    ;
+
+    @Column(name = "send_only_after")
+    private Instant sendOnlyAfter;
 
     @Column(name = "last_status_change")
     private Instant lastStatusChange;
@@ -54,6 +58,7 @@ public class Notification {
     @Column(name = "sending_key")
     protected String sendingKey;
 
+    @Setter
     @Column(name = "delivery_channel")
     public UserMessagingPreference deliveryChannel;
 

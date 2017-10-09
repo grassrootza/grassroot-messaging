@@ -66,7 +66,7 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
                 awsSmsSender.sendSMS(messagePayload.getMessage(), messagePayload.getPhoneNumber()) :
                 defaultSmsSender.sendSMS(messagePayload.getMessage(), messagePayload.getPhoneNumber());
 
-        updateReadAndDeliveredStatus(messagePayload.getNotificationUid(), response);
+        handleSmsGatewayResponse(messagePayload.getNotificationUid(), response);
     }
 
     @Timed
@@ -97,7 +97,7 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
         }
 
         if (response != null) {
-            updateReadAndDeliveredStatus(notification.getUid(), response);
+            handleSmsGatewayResponse(notification.getUid(), response);
         }
     }
 
@@ -124,24 +124,24 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
         logger.info("Should really wire up error handling");
     }
 
-    private void updateReadAndDeliveredStatus(String notificationUid, SmsGatewayResponse response) {
 
+    private void handleSmsGatewayResponse(String notificationUid, SmsGatewayResponse response) {
 
         if (response != null && response.isSuccessful()) {
-            notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.SENT, null);
+            notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.SENT, null, response.getMessageKey());
         } else if (response != null && response.getResponseType() != null) {
 
             switch (response.getResponseType()) {
                 case MSISDN_INVALID:
                     logger.info("invalid number for SMS, marking it as read to prevent looping redelivery");
-                    notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.UNDELIVERABLE, "Can't send message. Invalid MSISDN.");
+                    notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.UNDELIVERABLE, "Can't send message. Invalid MSISDN.", null);
                     break;
                 case DUPLICATE_MESSAGE:
                     logger.info("trying to resend message, just set it as read");
-                    notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.DELIVERED, "Can't send message. Duplicate message"); //todo(beegor), hmm, what to do here ?
+                    notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.DELIVERED, "Can't send message. Duplicate message", null); //todo(beegor), hmm, what to do here ?
                     break;
                 default:
-                    notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.SENDING_FAILED, "Can't send message. Reason: " + response.getResponseType());
+                    notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.SENDING_FAILED, "Can't send message. Reason: " + response.getResponseType(), null);
                     logger.error("error delivering SMS, response from gateway: {}", response.toString());
             }
         } else {

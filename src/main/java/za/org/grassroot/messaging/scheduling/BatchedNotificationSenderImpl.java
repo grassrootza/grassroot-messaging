@@ -47,6 +47,7 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 	@Timed
 	@Override
 	public void processPendingNotifications() {
+
 		List<Notification> notifications = notificationBroker.loadNextBatchOfNotificationsToSend();
 		if (notifications.size() > 0) {
 			logger.info("Sending {} registered notification(s)", notifications.size());
@@ -55,22 +56,14 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 	}
 
 	private void sendNotification(String notificationUid) {
+
 		Objects.requireNonNull(notificationUid);
 
         Notification notification = notificationBroker.loadNotification(notificationUid);
         logger.debug("Sending notification: {}", notification);
-
-		// todo: fix up Android and other routing in general fixes, for now use timeline as key
 		try {
-            boolean redelivery = notification.getSendAttempts() > 1;
-            if (redelivery || !notification.isForAndroidTimeline()) {
-                logger.info("redelivering a notification, attempt count: {}", notification.getSendAttempts());
-                // notification.setNextAttemptTime(null); // this practically means we try to redeliver only once
-				requestChannel.send(createMessage(notification, "SMS"));
-			} else {
-				requestChannel.send(createMessage(notification, null));
-			}
-		} catch (Exception e) {
+            requestChannel.send(createMessage(notification, notification.deliveryChannel.toString()));
+        } catch (Exception e) {
 			logger.error("Failed to send notification {}, : {}", notification, e);
 		}
 	}
@@ -78,10 +71,12 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 	private Message<MessageAndRoutingBundle> createMessage(Notification notification, String givenRoute) {
 
         MessageAndRoutingBundle routingBundle = notificationBroker.loadRoutingBundle(notification.getUid());
-		String route = (givenRoute != null) ? givenRoute :
-				(routingBundle == null || routingBundle.getRoutePreference() == null) ?
+
+        String route = (givenRoute != null) ? givenRoute :
+                (routingBundle == null || routingBundle.getRoutePreference() == null) ?
 						"SMS" : routingBundle.getRoutePreference().name();
-		if ("ANDROID_APP".equals(route)) {
+
+        if ("ANDROID_APP".equals(route)) {
 			GcmRegistration registration = gcmRegistrationRepository.findTopByUserOrderByCreationTimeDesc(notification.getTarget());
 			if (registration != null) {
 				routingBundle.setGcmRegistrationId(registration.getRegistrationId());

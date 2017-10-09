@@ -11,4 +11,6 @@ public interface SmsGatewayResponse {
 
     Integer getErrorCode();
 
+    String getMessageKey();
+
 }

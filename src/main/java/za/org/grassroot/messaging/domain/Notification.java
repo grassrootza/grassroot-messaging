@@ -39,15 +39,12 @@ public class Notification {
     private User target;
 
 
-    @Column(name = "viewed_android")
-    private boolean viewedOnAndroid = false;
-
     @Column(name = "message")
     protected String message;
 
 
     @Column(name = "sending_status")
-    private NotificationStatus status = NotificationStatus.PENDING;
+    private NotificationStatus status = NotificationStatus.READY_TO_SEND;
 
     @Column(name = "send_only_after")
     private Instant sendOnlyAfter;
@@ -55,6 +52,8 @@ public class Notification {
     @Column(name = "last_status_change")
     private Instant lastStatusChange;
 
+
+    @Setter
     @Column(name = "sending_key")
     protected String sendingKey;
 
@@ -98,11 +97,10 @@ public class Notification {
     public void updateStatus(NotificationStatus status) {
         this.status = status;
         this.lastStatusChange = Instant.now();
+        if (status == NotificationStatus.SENT || status == NotificationStatus.SENDING_FAILED)
+            this.sendAttempts++;
     }
 
-    public void incrementAttemptCount() {
-        this.sendAttempts++;
-    }
 
     public NotificationType getType() { return NotificationType.fromDetailedType(detailedType); }
 

@@ -18,8 +18,8 @@ import za.org.grassroot.messaging.domain.GcmRegistration;
 import za.org.grassroot.messaging.domain.User;
 import za.org.grassroot.messaging.domain.enums.UserMessagingPreference;
 import za.org.grassroot.messaging.domain.repository.GcmRegistrationRepository;
-import za.org.grassroot.messaging.domain.repository.NotificationRepository;
 import za.org.grassroot.messaging.domain.repository.UserRepository;
+import za.org.grassroot.messaging.service.NotificationBroker;
 import za.org.grassroot.messaging.util.PhoneNumberUtil;
 
 import java.util.UUID;
@@ -35,15 +35,19 @@ public class GcmXmppBrokerImpl implements GcmHandlingBroker {
 
     private final ObjectMapper objectMapper;
     private final UserRepository userRepository;
+
+    private NotificationBroker notificationBroker;
+
     private final GcmRegistrationRepository gcmRegistrationRepository;
 
     private final MessageChannel gcmXmppOutboundChannel;
 
     @Autowired
     public GcmXmppBrokerImpl(@Qualifier("gcmObjectMapper") ObjectMapper objectMapper, @Qualifier("gcmXmppOutboundChannel") MessageChannel gcmXmppOutboundChannel,
-                             UserRepository userRepository, NotificationRepository notificationRepository, GcmRegistrationRepository gcmRegistrationRepository) {
+                             UserRepository userRepository, NotificationBroker notificationBroker, GcmRegistrationRepository gcmRegistrationRepository) {
         this.objectMapper = objectMapper;
         this.userRepository = userRepository;
+        this.notificationBroker = notificationBroker;
         this.gcmRegistrationRepository = gcmRegistrationRepository;
         this.gcmXmppOutboundChannel = gcmXmppOutboundChannel;
     }
@@ -52,6 +56,8 @@ public class GcmXmppBrokerImpl implements GcmHandlingBroker {
     public void sendGcmMessage(GcmPayload payload) {
         logger.info("sending GCM payload: {}", payload);
         gcmXmppOutboundChannel.send(buildGcmFromPayload(payload));
+
+
     }
 
     @Override

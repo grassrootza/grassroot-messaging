@@ -96,7 +96,7 @@ public class GcmXmppInboundListener implements StanzaListener {
                     break;
                 case "UPDATE_READ":
                     String notificationId = (String) message.getData().get("notificationId");
-                    notificationBroker.updateNotificationStatus(notificationId, NotificationStatus.READ, null);
+                    notificationBroker.updateNotificationStatus(notificationId, NotificationStatus.READ, null, null);
                     break;
                 default: //action unknown ignore
                     break;
@@ -109,7 +109,7 @@ public class GcmXmppInboundListener implements StanzaListener {
         Notification notification = notificationBroker.loadNotification(payload.getMessageId());
         if (notification != null) {
             logger.info("Push Notification delivery failed, should now send SMS to  {}", notification.getTarget().getPhoneNumber());
-            notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.DELIVERY_FAILED, "Push notification delivery failed!");
+            notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.DELIVERY_FAILED, "Push notification delivery failed!", null);
         } else {
             logger.info("Received an upstream message without notification, looks like: {}", payload);
         }
@@ -119,7 +119,7 @@ public class GcmXmppInboundListener implements StanzaListener {
         String messageId = String.valueOf(gcmPayload.getData().get("original_message_id"));
         logger.debug("Message " + messageId + " delivery successful, updating notification to delivered status.");
         // todo(beegor) should we do it or ignore it since Luke said that this is not reliable ?
-        notificationBroker.updateNotificationStatus(messageId, NotificationStatus.DELIVERED, null);
+        notificationBroker.updateNotificationStatus(messageId, NotificationStatus.DELIVERED, null, null);
     }
 
 }

@@ -16,6 +16,7 @@ public class AwsSmsResponse implements SmsGatewayResponse {
     private final boolean successful;
     private final SmsResponseType responseType;
 
+
     // looks like AWS SNS is async so don't know if successful right away, but at least can tell was delivered
     public AwsSmsResponse(PublishResult publishResult) {
         this.publishResult = publishResult;
@@ -44,6 +45,11 @@ public class AwsSmsResponse implements SmsGatewayResponse {
     @Override
     public Integer getErrorCode() {
         return null;
+    }
+
+    @Override
+    public String getMessageKey() {
+        return publishResult.getMessageId();
     }
 
     @Override

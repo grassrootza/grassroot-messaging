@@ -11,6 +11,8 @@ import java.util.List;
  */
 public interface NotificationBroker {
 
+    int MAX_SENDING_ATTEMPTS = 3;
+
 	Notification loadNotification(String uid);
 
 	List<Notification> loadNextBatchOfNotificationsToSend();
@@ -19,7 +21,7 @@ public interface NotificationBroker {
 
 	MessageAndRoutingBundle loadRoutingBundle(String notificationUid);
 
-	void updateNotificationStatus(String notificationUid, NotificationStatus status, String errorMessage);
+    void updateNotificationStatus(String notificationUid, NotificationStatus status, String errorMessage, String messageSendKey);
 
 
 

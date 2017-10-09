@@ -1,11 +1,13 @@
 package za.org.grassroot.messaging.domain.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
 import za.org.grassroot.messaging.domain.Notification;
+import za.org.grassroot.messaging.domain.NotificationStatus;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -14,13 +16,13 @@ import java.util.List;
 /**
  * Created by luke on 2017/05/17.
  */
-public interface NotificationRepository extends JpaRepository<Notification, Long> {
+public interface NotificationRepository extends JpaRepository<Notification, Long>, JpaSpecificationExecutor<Notification> {
 
     Notification findOneByUid(String uid);
 
     List<Notification> findByUidIn(Collection<String> uids);
 
-    List<Notification> findFirst150ByNextAttemptTimeBeforeOrderByNextAttemptTimeAsc(Instant time);
+    List<Notification> findFirst150ByStatusOrderByCreatedDateTimeAsc(NotificationStatus status);
 
     @Transactional(readOnly = true)
     List<Notification> findFirst150ByReadFalseAndAttemptCountGreaterThanAndLastAttemptTimeGreaterThan(int minAttemptCount, Instant lastAttemptTime);

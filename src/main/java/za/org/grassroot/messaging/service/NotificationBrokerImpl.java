@@ -10,9 +10,8 @@ import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
 import za.org.grassroot.messaging.domain.Notification;
 import za.org.grassroot.messaging.domain.NotificationStatus;
 import za.org.grassroot.messaging.domain.repository.NotificationRepository;
+import za.org.grassroot.messaging.domain.repository.NotificationSpecifications;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 
@@ -42,18 +41,17 @@ public class NotificationBrokerImpl implements NotificationBroker {
     @Override
     @Transactional(readOnly = true)
     public List<Notification> loadNextBatchOfNotificationsToSend() {
-        Instant time = Instant.now();
-        return notificationRepository.findFirst150ByNextAttemptTimeBeforeOrderByNextAttemptTimeAsc(time);
+
+        return notificationRepository.findFirst150ByStatusOrderByCreatedDateTimeAsc(NotificationStatus.READY_TO_SEND);
     }
+
 
     @Override
     public List<Notification> loadUnreadNotificationsToSend() {
-        // need to only check for those attempt, else may send before user has chance to view
-        // note : do the check on read, not viewed on android, because we want to preserve that as false but mark to read on SMS send (to avoid repeat deliveries)
-        Instant timeToCheck = Instant.now().minus(10, ChronoUnit.MINUTES);
-        return notificationRepository
-                .findFirst150ByReadFalseAndAttemptCountGreaterThanAndLastAttemptTimeGreaterThan(0, timeToCheck);
+
+        return notificationRepository.findAll(NotificationSpecifications.getUnsuccessfulNotifications());
     }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -92,10 +90,13 @@ public class NotificationBrokerImpl implements NotificationBroker {
 
     @Override
     @Transactional
-    public void updateNotificationStatus(String notificationUid, NotificationStatus status, String errorMessage) {
+    public void updateNotificationStatus(String notificationUid, NotificationStatus status, String errorMessage, String messageSendKey) {
         Notification notification = notificationRepository.findOneByUid(notificationUid);
-        if (notification != null)
+        if (notification != null) {
             notification.updateStatus(status);
+            if (messageSendKey != null)
+                notification.setSendingKey(messageSendKey);
+        }
     }
 
 

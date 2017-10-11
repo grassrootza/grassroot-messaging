@@ -24,6 +24,4 @@ public interface NotificationBroker {
     void updateNotificationStatus(String notificationUid, NotificationStatus status, String errorMessage, String messageSendKey);
 
 
-
-
 }

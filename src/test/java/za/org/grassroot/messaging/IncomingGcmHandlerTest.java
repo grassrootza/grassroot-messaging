@@ -7,7 +7,7 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.junit4.SpringRunner;
-import za.org.grassroot.messaging.domain.User;
+import za.org.grassroot.core.domain.User;
 
 /**
  * Created by paballo on 2016/04/12.
@@ -31,7 +31,7 @@ public class IncomingGcmHandlerTest {
 
     @Test
     public void handleUpstream() throws Exception{
-        User user = User.makeDummy("0616780986", "some name");
+        User user = makeDummy("0616780986", "some name");
         log.info("Constructed user={}", user);
         log.info("Created and saved user={}", user);
       //  gcmService.registerUser(new User("0616780986"),"someRegistrationId");
@@ -40,6 +40,13 @@ public class IncomingGcmHandlerTest {
       //  messageHandler.handleUpstreamMessage(message);
         
     }
+
+    // for tests
+    public User makeDummy(String phoneNumber, String displayName) {
+        User user = new User(phoneNumber, displayName);
+        return user;
+    }
+
 
 
 }

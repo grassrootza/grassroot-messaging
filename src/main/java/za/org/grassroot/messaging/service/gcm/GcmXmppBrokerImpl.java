@@ -14,11 +14,11 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import za.org.grassroot.messaging.domain.GcmRegistration;
-import za.org.grassroot.messaging.domain.User;
-import za.org.grassroot.messaging.domain.enums.UserMessagingPreference;
-import za.org.grassroot.messaging.domain.repository.GcmRegistrationRepository;
-import za.org.grassroot.messaging.domain.repository.UserRepository;
+import za.org.grassroot.core.domain.GcmRegistration;
+import za.org.grassroot.core.domain.User;
+import za.org.grassroot.core.enums.UserMessagingPreference;
+import za.org.grassroot.core.repository.GcmRegistrationRepository;
+import za.org.grassroot.core.repository.UserRepository;
 import za.org.grassroot.messaging.service.NotificationBroker;
 import za.org.grassroot.messaging.util.PhoneNumberUtil;
 
@@ -76,7 +76,7 @@ public class GcmXmppBrokerImpl implements GcmHandlingBroker {
             return;
         }
 
-        User user = userRepository.findOneByPhoneNumber(convertedNumber);
+        User user = userRepository.findByPhoneNumber(convertedNumber);
         if (user == null) {
             logger.warn("received valid phone number, but no user found", convertedNumber);
             return;

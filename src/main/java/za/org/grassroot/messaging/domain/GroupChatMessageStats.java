@@ -1,8 +1,8 @@
 package za.org.grassroot.messaging.domain;
 
 
-import za.org.grassroot.messaging.domain.Group;
-import za.org.grassroot.messaging.domain.User;
+import za.org.grassroot.core.domain.Group;
+import za.org.grassroot.core.domain.User;
 
 import javax.persistence.*;
 import java.time.Instant;

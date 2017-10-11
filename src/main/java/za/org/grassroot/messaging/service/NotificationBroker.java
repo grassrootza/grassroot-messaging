@@ -1,8 +1,8 @@
 package za.org.grassroot.messaging.service;
 
+import za.org.grassroot.core.domain.Notification;
+import za.org.grassroot.core.domain.NotificationStatus;
 import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
-import za.org.grassroot.messaging.domain.Notification;
-import za.org.grassroot.messaging.domain.NotificationStatus;
 
 import java.util.List;
 

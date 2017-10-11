@@ -9,11 +9,11 @@ import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.stereotype.Service;
-import za.org.grassroot.messaging.domain.GcmRegistration;
+import za.org.grassroot.core.domain.GcmRegistration;
+import za.org.grassroot.core.domain.Notification;
+import za.org.grassroot.core.enums.UserMessagingPreference;
+import za.org.grassroot.core.repository.GcmRegistrationRepository;
 import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
-import za.org.grassroot.messaging.domain.Notification;
-import za.org.grassroot.messaging.domain.enums.UserMessagingPreference;
-import za.org.grassroot.messaging.domain.repository.GcmRegistrationRepository;
 import za.org.grassroot.messaging.service.NotificationBroker;
 
 import javax.persistence.EntityManager;

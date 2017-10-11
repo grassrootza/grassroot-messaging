@@ -1,6 +1,6 @@
 package za.org.grassroot.messaging.domain;
 
-import za.org.grassroot.messaging.domain.enums.UserMessagingPreference;
+import za.org.grassroot.core.enums.UserMessagingPreference;
 
 import javax.persistence.*;
 

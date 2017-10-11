@@ -19,16 +19,16 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import za.org.grassroot.messaging.domain.Group;
+import za.org.grassroot.core.domain.Group;
+import za.org.grassroot.core.domain.GroupChatSettings;
+import za.org.grassroot.core.domain.User;
+import za.org.grassroot.core.enums.TaskType;
+import za.org.grassroot.core.repository.GroupChatSettingsRepository;
+import za.org.grassroot.core.repository.GroupRepository;
+import za.org.grassroot.core.repository.UserRepository;
 import za.org.grassroot.messaging.domain.GroupChatMessageStats;
-import za.org.grassroot.messaging.domain.GroupChatSettings;
-import za.org.grassroot.messaging.domain.User;
-import za.org.grassroot.messaging.domain.enums.TaskType;
 import za.org.grassroot.messaging.domain.exception.SeloParseDateTimeFailure;
-import za.org.grassroot.messaging.domain.repository.GroupChatSettingsRepository;
 import za.org.grassroot.messaging.domain.repository.GroupChatStatsRepository;
-import za.org.grassroot.messaging.domain.repository.GroupRepository;
-import za.org.grassroot.messaging.domain.repository.UserRepository;
 import za.org.grassroot.messaging.service.LearningService;
 
 import java.time.Instant;
@@ -233,7 +233,7 @@ public class GroupChatServiceImpl implements GroupChatService {
     public void createGroupChatMessageStats(MQTTPayload payload) {
         Objects.requireNonNull(payload);
         Group group = groupRepository.findOneByUid(payload.getGroupUid());
-        User user = userRepository.findOneByPhoneNumber(payload.getPhoneNumber());
+        User user = userRepository.findByPhoneNumber(payload.getPhoneNumber());
         if(group !=null && user != null) {
             Long numberOfIntendedRecepients = groupChatSettingsRepository.countByGroupAndActiveTrue(group);
             GroupChatMessageStats groupChatMessageStats = new GroupChatMessageStats(payload.getUid(), group, user, numberOfIntendedRecepients, 1L, false);

@@ -2,9 +2,9 @@ package za.org.grassroot.messaging.domain.repository;
 
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.domain.Specifications;
-import za.org.grassroot.messaging.domain.Notification;
-import za.org.grassroot.messaging.domain.NotificationStatus;
-import za.org.grassroot.messaging.domain.enums.UserMessagingPreference;
+import za.org.grassroot.core.domain.Notification;
+import za.org.grassroot.core.domain.NotificationStatus;
+import za.org.grassroot.core.enums.UserMessagingPreference;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

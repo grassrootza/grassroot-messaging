@@ -5,9 +5,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import za.org.grassroot.messaging.domain.Notification;
-import za.org.grassroot.messaging.domain.NotificationStatus;
-import za.org.grassroot.messaging.domain.enums.UserMessagingPreference;
+import za.org.grassroot.core.domain.Notification;
+import za.org.grassroot.core.domain.NotificationStatus;
+import za.org.grassroot.core.enums.UserMessagingPreference;
 import za.org.grassroot.messaging.service.NotificationBroker;
 
 import java.util.List;
@@ -39,7 +39,7 @@ public class UnsuccessfulNotificationHandlerImpl implements UnsuccessfulNotifica
                 if (n.getSendAttempts() < NotificationBroker.MAX_SENDING_ATTEMPTS) {
                     logger.debug("Updating message {} for resend ...", n.getUid());
                     n.setDeliveryChannel(UserMessagingPreference.SMS);
-                    n.updateStatus(NotificationStatus.READY_TO_SEND);
+                    n.updateStatus(NotificationStatus.READY_FOR_SENDING);
                 } else {
                     logger.debug("Max delivery attempts tried for notification {}, time to give up", n.getUid());
                     n.updateStatus(NotificationStatus.UNDELIVERABLE);

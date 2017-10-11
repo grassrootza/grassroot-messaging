@@ -6,7 +6,8 @@ version '1.0-SNAPSHOT'
 ext.libs = [
         springVersion: '4.3.9.RELEASE',
         springBootVersion: '1.5.4.RELEASE',
-        springIntegrationVersion: '4.3.10.RELEASE'
+        springIntegrationVersion: '4.3.10.RELEASE',
+        springSecurityVersion: '4.2.3.RELEASE'
 ]
 
 buildscript {
@@ -41,6 +42,9 @@ dependencies {
     testCompile group: 'org.springframework', name: 'spring-test', version:libs.springVersion
     testCompile group: 'org.springframework.boot', name: 'spring-boot-starter-test', version:libs.springBootVersion
     testCompile group: 'org.springframework.integration', name: 'spring-integration-test', version:libs.springIntegrationVersion
+
+    compile fileTree(include: ['*.jar'], dir: 'lib')
+
 
     compile group: 'org.quartz-scheduler', name: 'quartz', version: '2.3.0'
 
@@ -80,4 +84,8 @@ dependencies {
     }
 
     compile group: 'org.projectlombok', name: 'lombok', version: '1.16.18'
+
+    compile group: 'org.springframework.security', name: 'spring-security-config', version:libs.springSecurityVersion
+    compile group: 'org.springframework.security', name: 'spring-security-web', version: libs.springSecurityVersion
+    compile group: 'net.sf.ehcache', name: 'ehcache', version:'2.10.2.2.21'
 }

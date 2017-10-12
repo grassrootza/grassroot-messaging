@@ -9,4 +9,6 @@ public interface SmsSendingService {
 
     SmsGatewayResponse sendPrioritySMS(String message, String destinationNumber);
 
+    SMSDeliveryReceipt fetchSMSDeliveryStatus(String messageKey) throws Exception;
+
 }

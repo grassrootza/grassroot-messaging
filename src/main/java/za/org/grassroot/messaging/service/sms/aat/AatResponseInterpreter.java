@@ -1,5 +1,6 @@
 package za.org.grassroot.messaging.service.sms.aat;
 
+import za.org.grassroot.core.enums.MessagingProvider;
 import za.org.grassroot.messaging.service.sms.SmsGatewayResponse;
 import za.org.grassroot.messaging.service.sms.SmsResponseType;
 
@@ -81,6 +82,11 @@ public class AatResponseInterpreter implements SmsGatewayResponse {
     @Override
     public String getMessageKey() {
         return messageKey;
+    }
+
+    @Override
+    public MessagingProvider getProvider() {
+        return MessagingProvider.AAT;
     }
 
     public Integer getAatErrorCode() {

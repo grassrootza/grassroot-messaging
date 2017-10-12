@@ -15,6 +15,7 @@ import za.org.grassroot.core.domain.task.EventLog;
 import za.org.grassroot.core.domain.task.Task;
 import za.org.grassroot.core.domain.task.TaskLog;
 import za.org.grassroot.core.domain.task.TodoLog;
+import za.org.grassroot.core.enums.MessagingProvider;
 import za.org.grassroot.core.enums.NotificationType;
 import za.org.grassroot.core.enums.UserLogType;
 import za.org.grassroot.core.repository.GcmRegistrationRepository;
@@ -52,7 +53,8 @@ public class PushNotificationBrokerImpl implements PushNotificationBroker {
         logger.info("sending message via GCM sender ...");
         MessageAndRoutingBundle routingBundle = (MessageAndRoutingBundle) message.getPayload();
         sendingService.sendGcmMessage(buildGcmFromMessagePayload(routingBundle));
-        notificationBroker.updateNotificationStatus(routingBundle.getNotificationUid(), NotificationStatus.SENT, null, routingBundle.getNotificationUid());
+        notificationBroker.updateNotificationStatus(routingBundle.getNotificationUid(), NotificationStatus.SENT, null, true,
+                routingBundle.getNotificationUid(), MessagingProvider.GCM);
 
     }
 

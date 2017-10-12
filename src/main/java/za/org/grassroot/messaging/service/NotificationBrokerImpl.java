@@ -9,6 +9,7 @@ import za.org.grassroot.core.domain.Group;
 import za.org.grassroot.core.domain.Notification;
 import za.org.grassroot.core.domain.NotificationStatus;
 import za.org.grassroot.core.domain.task.TaskLog;
+import za.org.grassroot.core.enums.MessagingProvider;
 import za.org.grassroot.core.enums.NotificationType;
 import za.org.grassroot.core.repository.NotificationRepository;
 import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
@@ -57,6 +58,10 @@ public class NotificationBrokerImpl implements NotificationBroker {
         return notificationRepository.findAll(NotificationSpecifications.getUnsuccessfulNotifications());
     }
 
+    @Override
+    public List<Notification> loadSentNotificationsWithUnknownDeliveryStatus(MessagingProvider messagingProvider) {
+        return notificationRepository.findAll(NotificationSpecifications.getSentNotificationsWithUnknownDeliveryStatus(messagingProvider));
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -114,12 +119,19 @@ public class NotificationBrokerImpl implements NotificationBroker {
 
     @Override
     @Transactional
-    public void updateNotificationStatus(String notificationUid, NotificationStatus status, String errorMessage, String messageSendKey) {
+    public void updateNotificationStatus(String notificationUid, NotificationStatus status, String errorMessage,
+                                         boolean resultOfSendingAttempt, String messageSendKey, MessagingProvider sentViaProvider) {
+
         Notification notification = notificationRepository.findByUid(notificationUid);
+
         if (notification != null) {
-            notification.updateStatus(status);
+
+            notification.updateStatus(status, resultOfSendingAttempt);
+
             if (messageSendKey != null)
                 notification.setSendingKey(messageSendKey);
+            if (sentViaProvider != null)
+                notification.setSentViaProvider(sentViaProvider);
         }
     }
 

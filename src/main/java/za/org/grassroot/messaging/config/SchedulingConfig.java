@@ -5,13 +5,16 @@ import org.quartz.JobDetail;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.CronTask;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.scheduling.quartz.CronTriggerFactoryBean;
 import org.springframework.scheduling.quartz.JobDetailFactoryBean;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 import za.org.grassroot.messaging.scheduling.ApplicationContextAwareQuartzJobBean;
 import za.org.grassroot.messaging.scheduling.BatchedNotificationSenderJob;
+import za.org.grassroot.messaging.scheduling.SMSDeliveryReceiptFetcher;
 import za.org.grassroot.messaging.scheduling.UnreadNotificationSenderJob;
 
 import java.util.Properties;
@@ -26,9 +29,23 @@ public class SchedulingConfig implements SchedulingConfigurer {
 
     // private static final Logger logger = LoggerFactory.getLogger(GrassrootMessagingConfig.class);
 
+
+    private Environment env;
+    private SMSDeliveryReceiptFetcher smsDeliveryReceiptFetcher;
+
+    public SchedulingConfig(Environment env, SMSDeliveryReceiptFetcher smsDeliveryReceiptFetcher) {
+        this.env = env;
+        this.smsDeliveryReceiptFetcher = smsDeliveryReceiptFetcher;
+    }
+
+
     @Override
     public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+
         taskRegistrar.setScheduler(taskExecutor());
+
+        CronTask smsDeliveryFetchCronTask = new CronTask(smsDeliveryReceiptFetcher::fetchDeiveryReceipts, " 0 0/1 * * * ?");
+        taskRegistrar.addCronTask(smsDeliveryFetchCronTask);
     }
 
     @Bean(destroyMethod = "shutdown")
@@ -67,7 +84,8 @@ public class SchedulingConfig implements SchedulingConfigurer {
             @Qualifier("unreadNotificationSenderJobDetail") JobDetail jobDetail) {
         CronTriggerFactoryBean factoryBean = new CronTriggerFactoryBean();
         factoryBean.setJobDetail(jobDetail);
-        factoryBean.setCronExpression("0 0/5 * * * ?");
+        String unsuccessfulNotificationsHandlerCron = env.getProperty("unsuccessful.notifications.handler.cron", "0 0/5 * * * ?");
+        factoryBean.setCronExpression(unsuccessfulNotificationsHandlerCron);
         factoryBean.setMisfireInstruction(CronTrigger.MISFIRE_INSTRUCTION_DO_NOTHING);
         return factoryBean;
     }

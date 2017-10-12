@@ -1,5 +1,11 @@
 package za.org.grassroot.messaging.service.sms.aat;
 
+//import org.dom4j.Document;
+//import org.dom4j.Element;
+//import org.dom4j.io.SAXReader;
+
+import org.jdom2.Document;
+import org.jdom2.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,8 +16,11 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import za.org.grassroot.messaging.service.sms.SMSDeliveryReceipt;
 import za.org.grassroot.messaging.service.sms.SmsGatewayResponse;
 import za.org.grassroot.messaging.service.sms.SmsSendingService;
+
+import java.io.StringReader;
 
 /**
  * Created by luke on 2015/09/09.
@@ -66,6 +75,30 @@ public class AatSmsSendingManager implements SmsSendingService {
     }
 
 
+    public SMSDeliveryReceipt fetchSMSDeliveryStatus(String messageKey) throws Exception {
+
+        UriComponentsBuilder gatewayURI = UriComponentsBuilder.newInstance().scheme("https").host(smsGatewayHost);
+        gatewayURI.path("sendlog/")
+                .queryParam("username", smsGatewayUsername)
+                .queryParam("password", smsGatewayPassword)
+                .queryParam("key", messageKey);
+
+        String response = restTemplate.getForEntity(gatewayURI.build().toUri(), String.class).getBody();
+        response = response.replace("&", "");
+        Document doc = new org.jdom2.input.SAXBuilder().build(new StringReader(response));
+
+
+        Element rootEl = doc.getRootElement();
+
+        Element msgEl = rootEl.getChild("message");
+
+        if (msgEl != null) {
+            SMSDeliveryReceipt smsStatus = new AatSMSDeliveryDeliveryReceipt(msgEl);
+            return smsStatus;
+        }
+
+        return null;
+    }
 
 
     private String replaceIllegalChars(String message) {

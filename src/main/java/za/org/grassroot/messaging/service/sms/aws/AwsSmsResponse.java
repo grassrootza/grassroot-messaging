@@ -3,6 +3,7 @@ package za.org.grassroot.messaging.service.sms.aws;
 import com.amazonaws.services.sns.model.AmazonSNSException;
 import com.amazonaws.services.sns.model.PublishResult;
 import org.springframework.util.StringUtils;
+import za.org.grassroot.core.enums.MessagingProvider;
 import za.org.grassroot.messaging.service.sms.SmsGatewayResponse;
 import za.org.grassroot.messaging.service.sms.SmsResponseType;
 
@@ -50,6 +51,11 @@ public class AwsSmsResponse implements SmsGatewayResponse {
     @Override
     public String getMessageKey() {
         return publishResult.getMessageId();
+    }
+
+    @Override
+    public MessagingProvider getProvider() {
+        return MessagingProvider.AWS;
     }
 
     @Override

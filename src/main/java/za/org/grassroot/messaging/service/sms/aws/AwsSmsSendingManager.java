@@ -13,6 +13,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import za.org.grassroot.messaging.service.sms.SMSDeliveryReceipt;
 import za.org.grassroot.messaging.service.sms.SmsGatewayResponse;
 import za.org.grassroot.messaging.service.sms.SmsSendingService;
 
@@ -76,6 +77,11 @@ public class AwsSmsSendingManager implements SmsSendingService {
 
     @Override
     public SmsGatewayResponse sendPrioritySMS(String message, String destinationNumber) {
+        return null;
+    }
+
+    @Override
+    public SMSDeliveryReceipt fetchSMSDeliveryStatus(String messageKey) {
         return null;
     }
 

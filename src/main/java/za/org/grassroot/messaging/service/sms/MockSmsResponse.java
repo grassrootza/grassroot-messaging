@@ -1,5 +1,7 @@
 package za.org.grassroot.messaging.service.sms;
 
+import za.org.grassroot.core.enums.MessagingProvider;
+
 /**
  * Created by luke on 2017/05/20.
  */
@@ -32,6 +34,11 @@ public class MockSmsResponse implements SmsGatewayResponse {
 
     @Override
     public String getMessageKey() {
+        return null;
+    }
+
+    @Override
+    public MessagingProvider getProvider() {
         return null;
     }
 }

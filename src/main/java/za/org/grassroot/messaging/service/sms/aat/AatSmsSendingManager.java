@@ -70,7 +70,7 @@ public class AatSmsSendingManager implements SmsSendingService {
         } catch (Exception e) {
             log.error("Error invoking AAT! : {}", e.getMessage());
             e.printStackTrace();
-            return AatResponseInterpreter.makeDummy();
+            return null;
         }
     }
 

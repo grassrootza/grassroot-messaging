@@ -141,7 +141,7 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
 
             switch (response.getResponseType()) {
                 case MSISDN_INVALID:
-                    logger.info("invalid number for SMS, marking it as read to prevent looping redelivery");
+                    logger.info("invalid number for SMS, marking it as undeliverable to prevent looping redelivery");
                     notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.UNDELIVERABLE,
                             "Can't send message. Invalid MSISDN.", true, null, response.getProvider());
                     break;

@@ -14,10 +14,12 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import za.org.grassroot.messaging.service.sms.SMSDeliveryReceipt;
 import za.org.grassroot.messaging.service.sms.SmsGatewayResponse;
+import za.org.grassroot.messaging.service.sms.SmsResponseType;
 import za.org.grassroot.messaging.service.sms.SmsSendingService;
 
 import java.io.StringReader;
@@ -54,6 +56,7 @@ public class AatSmsSendingManager implements SmsSendingService {
 
     @Override
     public SmsGatewayResponse sendSMS(String message, String destinationNumber) {
+
         long startTime = System.currentTimeMillis();
         UriComponentsBuilder gatewayURI = UriComponentsBuilder.newInstance().scheme("https").host(smsGatewayHost);
         String msgToSend = replaceIllegalChars(message);
@@ -68,9 +71,10 @@ public class AatSmsSendingManager implements SmsSendingService {
             log.debug("time to execute AAT sms: {} msecs", System.currentTimeMillis() - startTime);
             return response;
         } catch (Exception e) {
-            log.error("Error invoking AAT! : {}", e.getMessage());
-            e.printStackTrace();
-            return AatResponseInterpreter.makeDummy();
+            log.error("Error invoking AAT!", e);
+            SmsResponseType errorType = e instanceof RestClientException ?
+                    SmsResponseType.COMMUNICATION_ERROR : SmsResponseType.UNKNOWN_ERROR;
+            return AatResponseInterpreter.makeErrorResponse(errorType);
         }
     }
 

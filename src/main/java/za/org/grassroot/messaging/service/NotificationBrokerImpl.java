@@ -126,7 +126,7 @@ public class NotificationBrokerImpl implements NotificationBroker {
 
         if (notification != null) {
 
-            notification.updateStatus(status, resultOfSendingAttempt);
+            notification.updateStatus(status, resultOfSendingAttempt, errorMessage);
 
             if (messageSendKey != null)
                 notification.setSendingKey(messageSendKey);

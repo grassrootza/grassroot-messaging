@@ -32,8 +32,8 @@ public class NotificationSpecifications {
         Specification<Notification> sent = (root, query, cb) -> cb.equal(root.get("status"), NotificationStatus.SENT);
         Specification<Notification> providerMatch = (root, query, cb) -> cb.equal(root.get("sentViaProvider"), sentViaProvider);
 
-        Instant tenMinAgo = Instant.now().minus(1, ChronoUnit.MINUTES);
-        Specification<Notification> sentAtLeast10MinAgo = (root, query, cb) -> cb.lessThan(root.get("lastStatusChange"), tenMinAgo);
+        Instant aMinuteAgo = Instant.now().minus(1, ChronoUnit.MINUTES);
+        Specification<Notification> sentAtLeast10MinAgo = (root, query, cb) -> cb.lessThan(root.get("lastStatusChange"), aMinuteAgo);
 
         return Specifications.where(sent).and(providerMatch).and(sentAtLeast10MinAgo);
 

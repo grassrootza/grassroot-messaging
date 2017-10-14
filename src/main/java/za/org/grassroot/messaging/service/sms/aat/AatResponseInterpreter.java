@@ -15,7 +15,6 @@ public class AatResponseInterpreter implements SmsGatewayResponse {
     private SmsResponseType responseType;
     private boolean successful;
     private Integer aatErrorCode;
-
     private String messageKey = null;
 
     public static AatResponseInterpreter makeDummy() {
@@ -26,11 +25,20 @@ public class AatResponseInterpreter implements SmsGatewayResponse {
         return response;
     }
 
+    public static AatResponseInterpreter makeErrorResponse(SmsResponseType responseType) {
+        AatResponseInterpreter response = new AatResponseInterpreter();
+        response.responseType = responseType;
+        response.successful = false;
+        response.aatErrorCode = null;
+        return response;
+    }
+
     private AatResponseInterpreter() {
         // for above
     }
 
     public AatResponseInterpreter(AatSmsResponse rawResponse) {
+
         if (rawResponse.getSubmitresult().getAction().equals(successAction)) {
             this.responseType = SmsResponseType.ROUTED;
             this.successful = true;
@@ -74,10 +82,6 @@ public class AatResponseInterpreter implements SmsGatewayResponse {
         return successful;
     }
 
-    @Override
-    public Integer getErrorCode() {
-        return aatErrorCode;
-    }
 
     @Override
     public String getMessageKey() {
@@ -89,16 +93,12 @@ public class AatResponseInterpreter implements SmsGatewayResponse {
         return MessagingProvider.AAT;
     }
 
-    public Integer getAatErrorCode() {
-        return aatErrorCode;
-    }
 
     @Override
     public String toString() {
         return "AatResponseInterpreter{" +
                 "responseType=" + responseType +
                 ", successful=" + successful +
-                ", errorCode=" + getErrorCode() +
                 '}';
     }
 }

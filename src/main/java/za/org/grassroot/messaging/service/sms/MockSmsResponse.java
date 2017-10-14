@@ -27,10 +27,6 @@ public class MockSmsResponse implements SmsGatewayResponse {
         return successful;
     }
 
-    @Override
-    public Integer getErrorCode() {
-        return null;
-    }
 
     @Override
     public String getMessageKey() {

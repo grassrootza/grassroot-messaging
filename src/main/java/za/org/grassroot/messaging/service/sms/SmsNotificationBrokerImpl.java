@@ -127,12 +127,17 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
 
     private void handleSmsGatewayResponse(String notificationUid, SmsGatewayResponse response) {
 
-        if (response != null && response.isSuccessful()) {
+        if (response == null) {
+            logger.error("Gor null response from send method. This should not happen!");
+            return;
+        }
+
+        if (response.isSuccessful()) {
 
             notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.SENT, null, true,
                     response.getMessageKey(), response.getProvider());
 
-        } else if (response != null && response.getResponseType() != null) {
+        } else {
 
             switch (response.getResponseType()) {
                 case MSISDN_INVALID:
@@ -146,13 +151,18 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
                     notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.SENT,
                             null, true, null, response.getProvider());
                     break;
+
+                case COMMUNICATION_ERROR:
+                    logger.info("communication error happened while sending message");
+                    notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.SENDING_FAILED,
+                            "Can't send message. Could not't access sms gateway", true, null, response.getProvider());
+                    break;
+
                 default:
                     notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.SENDING_FAILED,
                             "Can't send message. Reason: " + response.getResponseType(), true, null, response.getProvider());
                     logger.error("error delivering SMS, response from gateway: {}", response.toString());
             }
-        } else {
-            logger.error("Error delivering SMS, with null response");
         }
         logger.debug("finished updating read and delivered status");
     }

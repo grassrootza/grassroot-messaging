@@ -44,7 +44,7 @@ public class SchedulingConfig implements SchedulingConfigurer {
 
         taskRegistrar.setScheduler(taskExecutor());
 
-        CronTask smsDeliveryFetchCronTask = new CronTask(smsDeliveryReceiptFetcher::fetchDeiveryReceipts, " 0 0/1 * * * ?");
+        CronTask smsDeliveryFetchCronTask = new CronTask(smsDeliveryReceiptFetcher::fetchDeliveryReceipts, " 0 0/1 * * * ?");
         taskRegistrar.addCronTask(smsDeliveryFetchCronTask);
     }
 

@@ -33,7 +33,7 @@ public class SMSDeliveryReceiptFetcherImpl implements SMSDeliveryReceiptFetcher 
     }
 
     @Override
-    public void fetchDeiveryReceipts() {
+    public void fetchDeliveryReceipts() {
 
         // if not running set to running and do the job
         if (running.compareAndSet(false, true)) {

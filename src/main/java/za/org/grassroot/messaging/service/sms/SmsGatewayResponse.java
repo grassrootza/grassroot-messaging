@@ -11,8 +11,6 @@ public interface SmsGatewayResponse {
 
     boolean isSuccessful();
 
-    Integer getErrorCode();
-
     String getMessageKey();
 
     MessagingProvider getProvider();

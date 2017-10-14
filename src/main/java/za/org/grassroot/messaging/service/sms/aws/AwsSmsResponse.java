@@ -44,11 +44,6 @@ public class AwsSmsResponse implements SmsGatewayResponse {
     }
 
     @Override
-    public Integer getErrorCode() {
-        return null;
-    }
-
-    @Override
     public String getMessageKey() {
         return publishResult.getMessageId();
     }

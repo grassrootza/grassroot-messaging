@@ -16,7 +16,7 @@ public interface NotificationBroker {
 
 	Notification loadNotification(String uid);
 
-	List<Notification> loadNextBatchOfNotificationsToSend();
+    List<Notification> loadNextBatchOfNotificationsToSend(int maxCount);
 
 	List<Notification> loadUnreadNotificationsToSend();
 

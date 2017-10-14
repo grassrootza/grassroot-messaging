@@ -3,11 +3,16 @@ package za.org.grassroot.messaging.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import za.org.grassroot.core.domain.Group;
 import za.org.grassroot.core.domain.Notification;
 import za.org.grassroot.core.domain.NotificationStatus;
+import za.org.grassroot.core.domain.Notification_;
 import za.org.grassroot.core.domain.task.TaskLog;
 import za.org.grassroot.core.enums.MessagingProvider;
 import za.org.grassroot.core.enums.NotificationType;
@@ -16,6 +21,7 @@ import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
 import za.org.grassroot.messaging.domain.repository.MessageAndRoutingBundleRepository;
 import za.org.grassroot.messaging.domain.repository.NotificationSpecifications;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -46,9 +52,10 @@ public class NotificationBrokerImpl implements NotificationBroker {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Notification> loadNextBatchOfNotificationsToSend() {
-
-        return notificationRepository.findFirst150ByStatusOrderByCreatedDateTimeAsc(NotificationStatus.READY_FOR_SENDING);
+    public List<Notification> loadNextBatchOfNotificationsToSend(int maxCount) {
+        Pageable pageable = new PageRequest(0, maxCount, Sort.Direction.ASC, Notification_.createdDateTime.getName());
+        Page<Notification> page = notificationRepository.findAll(NotificationSpecifications.getNotificationsReadyForSending(), pageable);
+        return page.hasContent() ? page.getContent() : Collections.emptyList();
     }
 
 

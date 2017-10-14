@@ -48,7 +48,7 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 	@Override
 	public void processPendingNotifications() {
 
-		List<Notification> notifications = notificationBroker.loadNextBatchOfNotificationsToSend();
+		List<Notification> notifications = notificationBroker.loadNextBatchOfNotificationsToSend(150);
 		if (notifications.size() > 0) {
 			logger.info("Sending {} registered notification(s)", notifications.size());
 		}

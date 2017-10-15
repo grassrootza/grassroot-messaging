@@ -21,4 +21,10 @@ public interface GroupChatService {
 
     void subscribeServerToGroupTopic(String groupUid);
 
+    void reactivateMutedUsers();
+
+    void subscribeServerToAllGroupTopics();
+
+    void sendPollingMessage();
+
 }

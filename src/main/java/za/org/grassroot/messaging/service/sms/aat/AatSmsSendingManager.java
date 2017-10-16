@@ -29,7 +29,7 @@ import java.io.StringReader;
  */
 @Primary
 @Service("aatSmsSender")
-@PropertySource(value = "file:${grassroot.messaging.properties.path}", ignoreResourceNotFound = true)
+@PropertySource(value = "file:${grassroot.messaging.properties.path}", ignoreResourceNotFound = false)
 public class AatSmsSendingManager implements SmsSendingService {
 
     private Logger log = LoggerFactory.getLogger(AatSmsSendingManager.class);

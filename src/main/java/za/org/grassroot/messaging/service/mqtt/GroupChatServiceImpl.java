@@ -90,8 +90,9 @@ public class GroupChatServiceImpl implements GroupChatService {
         this.mqttAdapter = mqttAdapter;
     }
 
+    @Override
     @Scheduled(fixedRate = 300000)
-    public void reactivateMutedUsers() throws Exception {
+    public void reactivateMutedUsers() {
         logger.info("Reactivating muted group users ...");
         List<GroupChatSettings> groupChatSettingses = groupChatSettingsRepository
                 .findByActiveFalseAndUserInitiatedFalseAndReactivationTimeBefore(Instant.now());
@@ -106,6 +107,7 @@ public class GroupChatServiceImpl implements GroupChatService {
         }
     }
 
+    @Override
     @Scheduled(cron = "0 0 1 * * *") //runs at 1 am everyday
     public void subscribeServerToAllGroupTopics() {
         logger.info("Subscribing server to all group topics");
@@ -118,6 +120,7 @@ public class GroupChatServiceImpl implements GroupChatService {
         }
     }
 
+    @Override
     @Scheduled(fixedRate = 300000)
     public void sendPollingMessage(){
         if (mqttAdapter != null) {

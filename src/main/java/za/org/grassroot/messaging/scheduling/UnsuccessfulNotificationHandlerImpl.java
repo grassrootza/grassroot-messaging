@@ -37,11 +37,11 @@ public class UnsuccessfulNotificationHandlerImpl implements UnsuccessfulNotifica
             logger.info("Sending {} unread notifications", unreadNotifications.size());
             unreadNotifications.forEach(n -> {
                 if (n.getSendAttempts() < NotificationBroker.MAX_SENDING_ATTEMPTS) {
-                    logger.debug("Updating message {} for resend ...", n.getUid());
+                    logger.info("Updating message {} for resend ...", n.getUid());
                     n.setDeliveryChannel(UserMessagingPreference.SMS);
                     n.updateStatus(NotificationStatus.READY_FOR_SENDING, false, null);
                 } else {
-                    logger.debug("Max delivery attempts tried for notification {}, time to give up", n.getUid());
+                    logger.info("Max delivery attempts tried for notification {}, time to give up", n.getUid());
                     n.updateStatus(NotificationStatus.UNDELIVERABLE, false, null);
                 }
             });

@@ -1,6 +1,7 @@
 package za.org.grassroot.messaging.service.sms.aat;
 
 
+import lombok.extern.slf4j.Slf4j;
 import org.jdom2.Element;
 import za.org.grassroot.messaging.service.sms.SMSDeliveryReceipt;
 import za.org.grassroot.messaging.service.sms.SMSDeliveryStatus;
@@ -8,6 +9,7 @@ import za.org.grassroot.messaging.service.sms.SMSDeliveryStatus;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+@Slf4j
 public class AatSMSDeliveryDeliveryReceipt implements SMSDeliveryReceipt {
 
     private String messageKey;
@@ -34,6 +36,8 @@ public class AatSMSDeliveryDeliveryReceipt implements SMSDeliveryReceipt {
         this.delivered = xml.getAttributeValue("delivered").equals("1");
         int statusCode = Integer.parseInt(xml.getAttributeValue("status"));
         this.status = AatMsgStatus.fromCode(statusCode);
+        if (status == null)
+            log.error("Could not resolve aat message status from code : " + statusCode);
         this.statusDescription = xml.getAttributeValue("statusdescription");
 
     }

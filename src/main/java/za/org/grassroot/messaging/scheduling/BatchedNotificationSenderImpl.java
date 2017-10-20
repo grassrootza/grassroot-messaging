@@ -62,6 +62,7 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
         Notification notification = notificationBroker.loadNotification(notificationUid);
         logger.debug("Sending notification: {}", notification);
 		try {
+			logger.info("sending message via: {}", notification.deliveryChannel);
             requestChannel.send(createMessage(notification, notification.deliveryChannel.toString()));
         } catch (Exception e) {
 			logger.error("Failed to send notification {}, : {}", notification, e);
@@ -77,7 +78,9 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 						"SMS" : routingBundle.getRoutePreference().name();
 
         if ("ANDROID_APP".equals(route)) {
+        	logger.info("sending via Android App route");
 			GcmRegistration registration = gcmRegistrationRepository.findTopByUserOrderByCreationTimeDesc(notification.getTarget());
+			logger.info("gcm registration = {}", registration);
 			if (registration != null) {
 				routingBundle.setGcmRegistrationId(registration.getRegistrationId());
 			} else {
@@ -86,6 +89,7 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 			}
 		}
 
+		logger.info("exiting bundle route = {}", route);
 		return MessageBuilder.withPayload(routingBundle)
 				.setHeader("route", route)
 				.build();

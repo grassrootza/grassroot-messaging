@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import za.org.grassroot.core.domain.GcmRegistration;
 import za.org.grassroot.core.domain.Group;
 import za.org.grassroot.core.domain.Notification;
 import za.org.grassroot.core.domain.NotificationStatus;
@@ -19,7 +20,6 @@ import za.org.grassroot.core.enums.MessagingProvider;
 import za.org.grassroot.core.enums.NotificationType;
 import za.org.grassroot.core.enums.UserLogType;
 import za.org.grassroot.core.repository.GcmRegistrationRepository;
-import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
 import za.org.grassroot.messaging.service.NotificationBroker;
 import za.org.grassroot.messaging.util.DebugUtil;
 
@@ -39,11 +39,15 @@ public class PushNotificationBrokerImpl implements PushNotificationBroker {
 
     private final GcmHandlingBroker sendingService;
 
+    private final GcmRegistrationRepository gcmRegistrationRepository;
+
     private final NotificationBroker notificationBroker;
 
     @Autowired
-    public PushNotificationBrokerImpl(GcmHandlingBroker sendingService, GcmRegistrationRepository gcmRegistrationRepository, NotificationBroker notificationBroker) {
+    public PushNotificationBrokerImpl(GcmHandlingBroker sendingService,
+                                      GcmRegistrationRepository gcmRegistrationRepository, NotificationBroker notificationBroker) {
         this.sendingService = sendingService;
+        this.gcmRegistrationRepository = gcmRegistrationRepository;
         this.notificationBroker = notificationBroker;
     }
 
@@ -51,18 +55,18 @@ public class PushNotificationBrokerImpl implements PushNotificationBroker {
     @Transactional(readOnly = true)
     public void sendMessage(Message message) {
         logger.info("sending message via GCM sender ...");
-        MessageAndRoutingBundle routingBundle = (MessageAndRoutingBundle) message.getPayload();
-        sendingService.sendGcmMessage(buildGcmFromMessagePayload(routingBundle));
-        notificationBroker.updateNotificationStatus(routingBundle.getNotificationUid(), NotificationStatus.SENT, null, true,
-                routingBundle.getNotificationUid(), MessagingProvider.GCM);
+        Notification notification = (Notification) message.getPayload();
+        sendingService.sendGcmMessage(buildGcmFromMessagePayload(notification));
+        notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.SENT, null, true,
+                notification.getUid(), MessagingProvider.GCM);
 
     }
 
-    private GcmPayload buildGcmFromMessagePayload(MessageAndRoutingBundle bundle) {
+    private GcmPayload buildGcmFromMessagePayload(Notification notification) {
         DebugUtil.transactionRequired(GcmXmppBrokerImpl.class);
-        Notification notification = notificationBroker.loadNotification(bundle.getNotificationUid());
+        GcmRegistration registration = gcmRegistrationRepository.findTopByUserOrderByCreationTimeDesc(notification.getTarget());
         return new GcmPayload(notification.getUid(),
-                bundle.getGcmRegistrationId(),
+                registration.getRegistrationId(),
                 generateCollapseKey(notification),
                 generateData(notification), null);
     }

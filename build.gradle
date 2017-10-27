@@ -51,7 +51,7 @@ dependencies {
 //    compile fileTree(include: ['*.jar'], dir: 'lib')
 
 
-    compile group: 'za.org.grassroot', name: 'grassroot-core', version: '1.0.0.RC3'
+    compile group: 'za.org.grassroot', name: 'grassroot-core', version: '1.0.0.RC5'
 
     compile group: 'org.quartz-scheduler', name: 'quartz', version: '2.3.0'
 

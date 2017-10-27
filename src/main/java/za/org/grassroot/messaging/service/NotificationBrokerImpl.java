@@ -9,16 +9,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import za.org.grassroot.core.domain.Group;
 import za.org.grassroot.core.domain.Notification;
 import za.org.grassroot.core.domain.NotificationStatus;
 import za.org.grassroot.core.domain.Notification_;
-import za.org.grassroot.core.domain.task.TaskLog;
 import za.org.grassroot.core.enums.MessagingProvider;
-import za.org.grassroot.core.enums.NotificationType;
 import za.org.grassroot.core.repository.NotificationRepository;
-import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
-import za.org.grassroot.messaging.domain.repository.MessageAndRoutingBundleRepository;
 import za.org.grassroot.messaging.domain.repository.NotificationSpecifications;
 
 import java.util.Collections;
@@ -35,12 +30,10 @@ public class NotificationBrokerImpl implements NotificationBroker {
     private final static Logger logger = LoggerFactory.getLogger(NotificationBrokerImpl.class);
 
     private final NotificationRepository notificationRepository;
-    private final MessageAndRoutingBundleRepository messageAndRoutingBundleRepository;
 
     @Autowired
-    public NotificationBrokerImpl(NotificationRepository notificationRepository, MessageAndRoutingBundleRepository messageAndRoutingBundleRepository) {
+    public NotificationBrokerImpl(NotificationRepository notificationRepository) {
         this.notificationRepository = notificationRepository;
-        this.messageAndRoutingBundleRepository = messageAndRoutingBundleRepository;
     }
 
     @Override
@@ -70,59 +63,6 @@ public class NotificationBrokerImpl implements NotificationBroker {
         return notificationRepository.findAll(NotificationSpecifications.getSentNotificationsWithUnknownDeliveryStatus(messagingProvider));
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public MessageAndRoutingBundle loadRoutingBundle(String notificationUid) {
-        Notification notification = notificationRepository.findByUid(notificationUid);
-        boolean taskRelated = notification.getEventLog() != null || notification.getTodoLog() != null;
-        if (!taskRelated) {
-            // since all user log messages are on request
-            return returnDefaultBundle(notification);
-        } else {
-
-            Group group = notification.getGroupLog() != null ? notification.getGroupLog().getGroup() :
-                    getGroupDescendantLog(notification).getTask().getAncestorGroup();
-            if (group == null) {
-                logger.error("Error! Notification query gave null group, on: {}", notification);
-                return returnDefaultBundle(notification);
-            } else {
-                int userJoinViaCodeInGroupLogCount = messageAndRoutingBundleRepository.getUserLogsWithJoinCode(group.getUid());
-
-                MessageAndRoutingBundle bundle = new MessageAndRoutingBundle(
-                        notification.getUid(),
-                        notification.getTarget().getPhoneNumber(),
-                        notification.getMessage(),
-                        notification.getTarget().getMessagingPreference(),
-                        userJoinViaCodeInGroupLogCount > 0);
-
-                if (bundle == null) {
-                    logger.error("Note! The notification routing query returned null, notification: {}", notification);
-                    return returnDefaultBundle(notification);
-                } else {
-                    return bundle;
-                }
-            }
-        }
-    }
-
-    private TaskLog getGroupDescendantLog(Notification notification) {
-        if (NotificationType.EVENT.equals(notification.getNotificationType())) {
-            return notification.getEventLog();
-        } else if (NotificationType.TODO.equals(notification.getNotificationType())) {
-            return notification.getTodoLog();
-        } else {
-            throw new IllegalArgumentException("Cannot obtain group descendant log from non-task log");
-        }
-    }
-
-
-    private MessageAndRoutingBundle returnDefaultBundle(Notification notification) {
-        return new MessageAndRoutingBundle(notification.getUid(),
-                notification.getTarget().getPhoneNumber(),
-                notification.getMessage(),
-                notification.getTarget().getMessagingPreference(),
-                false);
-    }
 
     @Override
     @Transactional

@@ -3,7 +3,6 @@ package za.org.grassroot.messaging.service;
 import za.org.grassroot.core.domain.Notification;
 import za.org.grassroot.core.domain.NotificationStatus;
 import za.org.grassroot.core.enums.MessagingProvider;
-import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
 
 import java.util.List;
 
@@ -21,8 +20,6 @@ public interface NotificationBroker {
 	List<Notification> loadUnreadNotificationsToSend();
 
     List<Notification> loadSentNotificationsWithUnknownDeliveryStatus(MessagingProvider messagingProvider);
-
-	MessageAndRoutingBundle loadRoutingBundle(String notificationUid);
 
     /**
      * updates notification status

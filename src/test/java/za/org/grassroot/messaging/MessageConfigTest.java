@@ -12,10 +12,11 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import za.org.grassroot.core.domain.Notification;
+import za.org.grassroot.core.domain.User;
 import za.org.grassroot.core.domain.notification.EventInfoNotification;
 import za.org.grassroot.core.enums.UserMessagingPreference;
 import za.org.grassroot.messaging.config.MessageRoutingConfig;
-import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
+import za.org.grassroot.messaging.controller.SimpleNotification;
 import za.org.grassroot.messaging.domain.PriorityMessage;
 import za.org.grassroot.messaging.service.gcm.PushNotificationBroker;
 import za.org.grassroot.messaging.service.sms.SmsNotificationBroker;
@@ -47,9 +48,11 @@ public class MessageConfigTest {
 
     @Test
     public void testSmsChannel() throws InterruptedException {
-        MessageAndRoutingBundle dummy = new MessageAndRoutingBundle("", "27605550000", "Hello World",
-                UserMessagingPreference.SMS, false);
-        Message<MessageAndRoutingBundle> message = MessageBuilder
+
+        User user = new User("27605550000");
+        user.setMessagingPreference(UserMessagingPreference.SMS);
+        Notification dummy = new SimpleNotification(user, "Hello World", false);
+        Message<Notification> message = MessageBuilder
                 .withPayload(dummy)
                 .setHeader("route", UserMessagingPreference.SMS.name())
                 .build();

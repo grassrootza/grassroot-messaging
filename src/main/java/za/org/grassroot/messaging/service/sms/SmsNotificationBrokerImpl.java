@@ -10,7 +10,6 @@ import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import za.org.grassroot.core.domain.Notification;
 import za.org.grassroot.core.domain.NotificationStatus;
-import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
 import za.org.grassroot.messaging.domain.PriorityMessage;
 import za.org.grassroot.messaging.service.NotificationBroker;
 
@@ -61,12 +60,12 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
     @Override
     public void sendStandardSmsNotification(Message message) {
         logger.debug("Handling SMS message, no strategy specified, sending by default ...");
-        MessageAndRoutingBundle messagePayload = (MessageAndRoutingBundle) message.getPayload();
-        SmsGatewayResponse response = awsSmsSender != null && messagePayload.isJoinedViaCode() ?
-                awsSmsSender.sendSMS(messagePayload.getMessage(), messagePayload.getPhoneNumber()) :
-                defaultSmsSender.sendSMS(messagePayload.getMessage(), messagePayload.getPhoneNumber());
+        Notification messagePayload = (Notification) message.getPayload();
+        SmsGatewayResponse response = awsSmsSender != null && messagePayload.isUseOnlyFreeChannels() ?
+                awsSmsSender.sendSMS(messagePayload.getMessage(), messagePayload.getTarget().getPhoneNumber()) :
+                defaultSmsSender.sendSMS(messagePayload.getMessage(), messagePayload.getTarget().getPhoneNumber());
 
-        handleSmsGatewayResponse(messagePayload.getNotificationUid(), response);
+        handleSmsGatewayResponse(messagePayload.getUid(), response);
     }
 
     @Timed
@@ -103,11 +102,11 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
 
     @Override
     public void sendSmsWithoutNotification(Message message) {
-        MessageAndRoutingBundle payload = (MessageAndRoutingBundle) message.getPayload();
-        if (awsSmsSender != null && payload.isJoinedViaCode()) {
-            awsSmsSender.sendSMS(payload.getMessage(), payload.getPhoneNumber());
+        Notification payload = (Notification) message.getPayload();
+        if (awsSmsSender != null && payload.isUseOnlyFreeChannels()) {
+            awsSmsSender.sendSMS(payload.getMessage(), payload.getTarget().getPhoneNumber());
         }  else {
-            defaultSmsSender.sendSMS(payload.getMessage(), payload.getPhoneNumber());
+            defaultSmsSender.sendSMS(payload.getMessage(), payload.getTarget().getPhoneNumber());
         }
     }
 

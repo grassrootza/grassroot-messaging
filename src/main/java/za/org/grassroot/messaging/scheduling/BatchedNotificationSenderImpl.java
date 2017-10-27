@@ -11,9 +11,7 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.stereotype.Service;
 import za.org.grassroot.core.domain.GcmRegistration;
 import za.org.grassroot.core.domain.Notification;
-import za.org.grassroot.core.enums.UserMessagingPreference;
 import za.org.grassroot.core.repository.GcmRegistrationRepository;
-import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
 import za.org.grassroot.messaging.service.NotificationBroker;
 
 import javax.persistence.EntityManager;
@@ -68,25 +66,20 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 		}
 	}
 
-	private Message<MessageAndRoutingBundle> createMessage(Notification notification, String givenRoute) {
+	private Message<Notification> createMessage(Notification notification, String givenRoute) {
 
-        MessageAndRoutingBundle routingBundle = notificationBroker.loadRoutingBundle(notification.getUid());
 
         String route = (givenRoute != null) ? givenRoute :
-                (routingBundle == null || routingBundle.getRoutePreference() == null) ?
-						"SMS" : routingBundle.getRoutePreference().name();
+				(notification.getTarget().getMessagingPreference() == null) ?
+						"SMS" : notification.getTarget().getMessagingPreference().name();
 
         if ("ANDROID_APP".equals(route)) {
 			GcmRegistration registration = gcmRegistrationRepository.findTopByUserOrderByCreationTimeDesc(notification.getTarget());
-			if (registration != null) {
-				routingBundle.setGcmRegistrationId(registration.getRegistrationId());
-			} else {
-				routingBundle.setRoutePreference(UserMessagingPreference.SMS);
+			if (registration == null)
 				route = "SMS";
-			}
 		}
 
-		return MessageBuilder.withPayload(routingBundle)
+		return MessageBuilder.withPayload(notification)
 				.setHeader("route", route)
 				.build();
 	}

@@ -61,7 +61,10 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
     public void sendStandardSmsNotification(Message message) {
         logger.debug("Handling SMS message, no strategy specified, sending by default ...");
         Notification messagePayload = (Notification) message.getPayload();
-        SmsGatewayResponse response = awsSmsSender != null && messagePayload.isUseOnlyFreeChannels() ?
+
+        boolean selfJoined = notificationBroker.isUserSelfJoinedToGroup(messagePayload);
+
+        SmsGatewayResponse response = awsSmsSender != null && selfJoined ?
                 awsSmsSender.sendSMS(messagePayload.getMessage(), messagePayload.getTarget().getPhoneNumber()) :
                 defaultSmsSender.sendSMS(messagePayload.getMessage(), messagePayload.getTarget().getPhoneNumber());
 
@@ -103,7 +106,10 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
     @Override
     public void sendSmsWithoutNotification(Message message) {
         Notification payload = (Notification) message.getPayload();
-        if (awsSmsSender != null && payload.isUseOnlyFreeChannels()) {
+
+        boolean selfJoined = notificationBroker.isUserSelfJoinedToGroup(payload);
+
+        if (awsSmsSender != null && selfJoined) {
             awsSmsSender.sendSMS(payload.getMessage(), payload.getTarget().getPhoneNumber());
         }  else {
             defaultSmsSender.sendSMS(payload.getMessage(), payload.getTarget().getPhoneNumber());
@@ -127,7 +133,7 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
     private void handleSmsGatewayResponse(String notificationUid, SmsGatewayResponse response) {
 
         if (response == null) {
-            logger.error("Gor null response from send method. This should not happen!");
+            logger.error("Got null response from send method. This should not happen!");
             return;
         }
 

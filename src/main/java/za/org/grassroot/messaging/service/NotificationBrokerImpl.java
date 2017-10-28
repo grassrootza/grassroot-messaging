@@ -7,12 +7,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import za.org.grassroot.core.domain.Notification;
-import za.org.grassroot.core.domain.NotificationStatus;
-import za.org.grassroot.core.domain.Notification_;
+import za.org.grassroot.core.domain.*;
 import za.org.grassroot.core.enums.MessagingProvider;
+import za.org.grassroot.core.repository.MembershipRepository;
 import za.org.grassroot.core.repository.NotificationRepository;
 import za.org.grassroot.messaging.domain.repository.NotificationSpecifications;
 
@@ -30,10 +30,12 @@ public class NotificationBrokerImpl implements NotificationBroker {
     private final static Logger logger = LoggerFactory.getLogger(NotificationBrokerImpl.class);
 
     private final NotificationRepository notificationRepository;
+    private final MembershipRepository membershipRepository;
 
     @Autowired
-    public NotificationBrokerImpl(NotificationRepository notificationRepository) {
+    public NotificationBrokerImpl(NotificationRepository notificationRepository, MembershipRepository membershipRepository) {
         this.notificationRepository = notificationRepository;
+        this.membershipRepository = membershipRepository;
     }
 
     @Override
@@ -81,6 +83,21 @@ public class NotificationBrokerImpl implements NotificationBroker {
                 notification.setSentViaProvider(sentViaProvider);
         }
     }
+
+    @Override
+    public boolean isUserSelfJoinedToGroup(Notification notification) {
+        User user = notification.getTarget();
+        Group group = notification.getRelevantGroup();
+        if (group != null) {
+            Specification<Membership> spec = NotificationSpecifications.getMembership(group.getUid(), user.getUid());
+            Membership membership = membershipRepository.findOne(spec);
+            if (membership != null)
+                return membership.getJoinMethod() == GroupJoinMethod.SELF_JOINED;
+        }
+        return false;
+    }
+
+
 
 
 

@@ -36,4 +36,5 @@ public interface NotificationBroker {
                                   String messageSendKey, MessagingProvider sentViaProvider);
 
 
+    boolean isUserSelfJoinedToGroup(Notification notification);
 }

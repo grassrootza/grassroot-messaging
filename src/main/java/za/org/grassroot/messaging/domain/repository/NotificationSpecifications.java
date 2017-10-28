@@ -2,9 +2,7 @@ package za.org.grassroot.messaging.domain.repository;
 
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.domain.Specifications;
-import za.org.grassroot.core.domain.Notification;
-import za.org.grassroot.core.domain.NotificationStatus;
-import za.org.grassroot.core.domain.Notification_;
+import za.org.grassroot.core.domain.*;
 import za.org.grassroot.core.enums.MessagingProvider;
 import za.org.grassroot.core.enums.UserMessagingPreference;
 
@@ -52,5 +50,13 @@ public class NotificationSpecifications {
 
 
         return Specifications.where(readyStatus).and(readyStatus).and(sendOnlyAfterOK);
+    }
+
+    public static Specification<Membership> getMembership(String groupUid, String userUid) {
+
+        Specification<Membership> groupMembership = (root, query, cb) -> cb.equal(root.get(Membership_.group).get(Group_.uid), groupUid);
+        Specification<Membership> userMembership = (root, query, cb) -> cb.equal(root.get(Membership_.user).get(User_.uid), userUid);
+
+        return Specifications.where(groupMembership).and(userMembership);
     }
 }

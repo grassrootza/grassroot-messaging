@@ -36,10 +36,7 @@ public class GcmXmppBrokerImpl implements GcmHandlingBroker {
     private final ObjectMapper objectMapper;
     private final UserRepository userRepository;
 
-    private NotificationBroker notificationBroker;
-
     private final GcmRegistrationRepository gcmRegistrationRepository;
-
     private final MessageChannel gcmXmppOutboundChannel;
 
     @Autowired
@@ -47,7 +44,6 @@ public class GcmXmppBrokerImpl implements GcmHandlingBroker {
                              UserRepository userRepository, NotificationBroker notificationBroker, GcmRegistrationRepository gcmRegistrationRepository) {
         this.objectMapper = objectMapper;
         this.userRepository = userRepository;
-        this.notificationBroker = notificationBroker;
         this.gcmRegistrationRepository = gcmRegistrationRepository;
         this.gcmXmppOutboundChannel = gcmXmppOutboundChannel;
     }
@@ -56,8 +52,6 @@ public class GcmXmppBrokerImpl implements GcmHandlingBroker {
     public void sendGcmMessage(GcmPayload payload) {
         logger.info("sending GCM payload: {}", payload);
         gcmXmppOutboundChannel.send(buildGcmFromPayload(payload));
-
-
     }
 
     @Override

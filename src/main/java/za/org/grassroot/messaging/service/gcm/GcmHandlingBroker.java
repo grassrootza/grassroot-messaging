@@ -11,4 +11,5 @@ public interface GcmHandlingBroker {
 
     void registerUser(String inputNumber, String registrationId);
 
+    void gcmKeepAlive();
 }

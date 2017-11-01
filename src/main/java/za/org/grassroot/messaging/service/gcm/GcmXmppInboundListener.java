@@ -112,7 +112,7 @@ public class GcmXmppInboundListener implements StanzaListener {
             notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.DELIVERY_FAILED,
                     "Push notification delivery failed!", false, null, null);
         } else {
-            logger.info("Received an upstream message without notification, looks like: {}", payload);
+            logger.debug("Received an upstream message without notification, looks like: {}", payload);
         }
     }
 

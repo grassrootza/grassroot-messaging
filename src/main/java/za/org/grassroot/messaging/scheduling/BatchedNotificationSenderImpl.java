@@ -60,6 +60,7 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
         Notification notification = notificationBroker.loadNotification(notificationUid);
         logger.debug("Sending notification: {}", notification);
 		try {
+			logger.info("sending message via: {}", notification.deliveryChannel);
             requestChannel.send(createMessage(notification, notification.deliveryChannel.toString()));
         } catch (Exception e) {
 			logger.error("Failed to send notification {}, : {}", notification, e);
@@ -68,12 +69,12 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 
 	private Message<Notification> createMessage(Notification notification, String givenRoute) {
 
-
-        String route = (givenRoute != null) ? givenRoute :
+		String route = (givenRoute != null) ? givenRoute :
 				(notification.getTarget().getMessagingPreference() == null) ?
 						"SMS" : notification.getTarget().getMessagingPreference().name();
 
         if ("ANDROID_APP".equals(route)) {
+        	logger.info("sending via Android App route");
 			GcmRegistration registration = gcmRegistrationRepository.findTopByUserOrderByCreationTimeDesc(notification.getTarget());
 			if (registration == null)
 				route = "SMS";

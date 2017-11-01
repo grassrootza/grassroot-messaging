@@ -17,7 +17,7 @@ import org.springframework.integration.router.HeaderValueRouter;
 import org.springframework.integration.scheduling.PollerMetadata;
 import org.springframework.integration.xmpp.outbound.ChatMessageSendingMessageHandler;
 import org.springframework.messaging.MessageChannel;
-import za.org.grassroot.messaging.domain.enums.UserMessagingPreference;
+import za.org.grassroot.core.enums.UserMessagingPreference;
 import za.org.grassroot.messaging.service.gcm.PushNotificationBroker;
 import za.org.grassroot.messaging.service.sms.SmsNotificationBroker;
 import za.org.grassroot.messaging.service.sms.SmsSendingStrategy;

@@ -1,6 +1,5 @@
 package za.org.grassroot.messaging.service.gcm;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 

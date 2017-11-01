@@ -15,7 +15,7 @@ public class UnreadNotificationSenderJob extends ApplicationContextAwareQuartzJo
 	protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
 		ApplicationContext applicationContext = getApplicationContext(context);
 
-		UnreadNotificationHandler unreadNotificationHandler = applicationContext.getBean(UnreadNotificationHandler.class);
-		unreadNotificationHandler.processUnreadNotifications();
-	}
+        UnsuccessfulNotificationHandler unsuccessfulNotificationHandler = applicationContext.getBean(UnsuccessfulNotificationHandler.class);
+        unsuccessfulNotificationHandler.processUnreadNotifications();
+    }
 }

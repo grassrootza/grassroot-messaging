@@ -7,11 +7,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.web.bind.annotation.*;
-import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
+import za.org.grassroot.core.domain.Notification;
+import za.org.grassroot.core.domain.User;
+import za.org.grassroot.core.repository.UserRepository;
 import za.org.grassroot.messaging.domain.PriorityMessage;
 import za.org.grassroot.messaging.service.jwt.JwtService;
-import za.org.grassroot.messaging.service.sms.model.MockSmsResponse;
-import za.org.grassroot.messaging.service.sms.model.SmsGatewayResponse;
+import za.org.grassroot.messaging.service.sms.MockSmsResponse;
+import za.org.grassroot.messaging.service.sms.SmsGatewayResponse;
 
 /**
  * Created by luke on 2017/05/20.
@@ -25,10 +27,12 @@ public class NotificationPushRequestController extends BaseController {
 
     private MessageChannel requestChannel;
     private MessageChannel priorityChannel;
+    private UserRepository userRepository;
 
     @Autowired
-    public NotificationPushRequestController(JwtService jwtService) {
+    public NotificationPushRequestController(JwtService jwtService, UserRepository userRepository) {
         super(jwtService);
+        this.userRepository = userRepository;
     }
 
     @Autowired
@@ -46,8 +50,12 @@ public class NotificationPushRequestController extends BaseController {
                                                                      @RequestParam String message,
                                                                      @RequestParam(required = false) Boolean userRequested) {
         logger.info("Sending normal system SMS to {}", phoneNumber);
-        requestChannel.send(MessageBuilder
-                .withPayload(new MessageAndRoutingBundle(phoneNumber, message, userRequested)).build());
+        User user = userRepository.findByPhoneNumber(phoneNumber);
+        if (user != null) {
+            Notification notification = new SimpleNotification(user, message, userRequested != null ? userRequested : false);
+            requestChannel.send(MessageBuilder
+                    .withPayload(notification).build());
+        }
         return new MockSmsResponse();
     }
 
@@ -63,5 +71,6 @@ public class NotificationPushRequestController extends BaseController {
                 .build());
         return new MockSmsResponse();
     }
+
 
 }

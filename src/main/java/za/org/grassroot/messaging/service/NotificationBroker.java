@@ -1,33 +1,40 @@
 package za.org.grassroot.messaging.service;
 
-import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
-import za.org.grassroot.messaging.domain.Notification;
+import za.org.grassroot.core.domain.Notification;
+import za.org.grassroot.core.domain.NotificationStatus;
+import za.org.grassroot.core.enums.MessagingProvider;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by paballo on 2016/04/07.
  */
 public interface NotificationBroker {
 
+    int MAX_SENDING_ATTEMPTS = 3;
+
 	Notification loadNotification(String uid);
 
-	List<Notification> loadNextBatchOfNotificationsToSend();
+    List<Notification> loadNextBatchOfNotificationsToSend(int maxCount);
 
 	List<Notification> loadUnreadNotificationsToSend();
 
-	MessageAndRoutingBundle loadRoutingBundle(String notificationUid);
+    List<Notification> loadSentNotificationsWithUnknownDeliveryStatus(MessagingProvider messagingProvider);
 
-	// increments attempt time while sending
-	Notification loadNotificationForSending(String notificationUid);
+    /**
+     * updates notification status
+     *
+     * @param notificationUid        uid of notification
+     * @param status                 status to be set
+     * @param errorMessage           if status is being set to some type of delivery failure status, error message should be set also
+     * @param resultOfSendingAttempt if this status update is result of sending attempt this should be true, false otherwise
+     * @param messageSendKey         if this status update is result of sending attempt sending provider message identifier should be passed here, null otherwise
+     * @param sentViaProvider        if this status update is result of sending attempt sending provider should be specified, null otherwise
+     */
+    void updateNotificationStatus(String notificationUid, NotificationStatus status,
+                                  String errorMessage, boolean resultOfSendingAttempt,
+                                  String messageSendKey, MessagingProvider sentViaProvider);
 
-	void updateNotificationReadStatus(String notificationUid, boolean read);
 
-	void updateNotificationsViewedAndRead(Set<String> notificationUids);
-
-	void markNotificationAsDelivered(String notificationUid);
-
-	void markNotificationAsFailedGcmDelivery(String notificationUid);
-
+    boolean isUserSelfJoinedToGroup(Notification notification);
 }

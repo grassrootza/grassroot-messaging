@@ -1,4 +1,8 @@
-package za.org.grassroot.messaging.service.sms.model;
+package za.org.grassroot.messaging.service.sms.aat;
+
+import za.org.grassroot.core.enums.MessagingProvider;
+import za.org.grassroot.messaging.service.sms.SmsGatewayResponse;
+import za.org.grassroot.messaging.service.sms.SmsResponseType;
 
 /**
  * Created by luke on 2016/09/19.
@@ -11,6 +15,7 @@ public class AatResponseInterpreter implements SmsGatewayResponse {
     private SmsResponseType responseType;
     private boolean successful;
     private Integer aatErrorCode;
+    private String messageKey = null;
 
     public static AatResponseInterpreter makeDummy() {
         AatResponseInterpreter response = new AatResponseInterpreter();
@@ -20,14 +25,24 @@ public class AatResponseInterpreter implements SmsGatewayResponse {
         return response;
     }
 
+    public static AatResponseInterpreter makeErrorResponse(SmsResponseType responseType) {
+        AatResponseInterpreter response = new AatResponseInterpreter();
+        response.responseType = responseType;
+        response.successful = false;
+        response.aatErrorCode = null;
+        return response;
+    }
+
     private AatResponseInterpreter() {
         // for above
     }
 
     public AatResponseInterpreter(AatSmsResponse rawResponse) {
+
         if (rawResponse.getSubmitresult().getAction().equals(successAction)) {
             this.responseType = SmsResponseType.ROUTED;
             this.successful = true;
+            this.messageKey = rawResponse.submitresult.key.toString();
         } else if (rawResponse.getSubmitresult().error != null) {
             this.successful = false;
             this.aatErrorCode = rawResponse.getSubmitresult().error;
@@ -67,21 +82,23 @@ public class AatResponseInterpreter implements SmsGatewayResponse {
         return successful;
     }
 
+
     @Override
-    public Integer getErrorCode() {
-        return aatErrorCode;
+    public String getMessageKey() {
+        return messageKey;
     }
 
-    public Integer getAatErrorCode() {
-        return aatErrorCode;
+    @Override
+    public MessagingProvider getProvider() {
+        return MessagingProvider.AAT;
     }
+
 
     @Override
     public String toString() {
         return "AatResponseInterpreter{" +
                 "responseType=" + responseType +
                 ", successful=" + successful +
-                ", errorCode=" + getErrorCode() +
                 '}';
     }
 }

@@ -42,11 +42,16 @@ public class JwtAuthInterceptor extends HandlerInterceptorAdapter {
         logger.debug("jwtService null? : {}", jwtService == null);
 
         // will throw JWT error if this is not valid, so we just return true if it passes
-        Jwts.parser()
-                .setSigningKeyResolver(jwtService.getSigningKeyResolver())
-                .parseClaimsJws(jwt);
+        try {
+            Jwts.parser()
+                    .setSigningKeyResolver(jwtService.getSigningKeyResolver())
+                    .parseClaimsJws(jwt);
+            return true;
+        } catch (Exception e) {
+            logger.error("JWT error!", e);
+            return false;
+        }
 
-        return true;
     }
 
 }

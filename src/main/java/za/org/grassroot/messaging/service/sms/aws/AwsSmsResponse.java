@@ -1,8 +1,11 @@
-package za.org.grassroot.messaging.service.sms.model;
+package za.org.grassroot.messaging.service.sms.aws;
 
 import com.amazonaws.services.sns.model.AmazonSNSException;
 import com.amazonaws.services.sns.model.PublishResult;
 import org.springframework.util.StringUtils;
+import za.org.grassroot.core.enums.MessagingProvider;
+import za.org.grassroot.messaging.service.sms.SmsGatewayResponse;
+import za.org.grassroot.messaging.service.sms.SmsResponseType;
 
 /**
  * Created by luke on 2017/05/19.
@@ -13,6 +16,7 @@ public class AwsSmsResponse implements SmsGatewayResponse {
     private final AmazonSNSException error;
     private final boolean successful;
     private final SmsResponseType responseType;
+
 
     // looks like AWS SNS is async so don't know if successful right away, but at least can tell was delivered
     public AwsSmsResponse(PublishResult publishResult) {
@@ -40,8 +44,13 @@ public class AwsSmsResponse implements SmsGatewayResponse {
     }
 
     @Override
-    public Integer getErrorCode() {
-        return null;
+    public String getMessageKey() {
+        return publishResult.getMessageId();
+    }
+
+    @Override
+    public MessagingProvider getProvider() {
+        return MessagingProvider.AWS;
     }
 
     @Override

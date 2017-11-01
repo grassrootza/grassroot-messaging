@@ -1,4 +1,4 @@
-package za.org.grassroot.messaging.service.sms.model;
+package za.org.grassroot.messaging.service.sms;
 
 /**
  * Created by luke on 2016/09/19.
@@ -12,6 +12,7 @@ public enum SmsResponseType {
     DUPLICATE_MESSAGE,
     MSISDN_INVALID,
     INVALID_QUERY,
-    UNKNOWN_ERROR
+    UNKNOWN_ERROR,
+    COMMUNICATION_ERROR
 
 }

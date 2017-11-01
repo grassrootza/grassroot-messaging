@@ -1,4 +1,4 @@
-package za.org.grassroot.messaging.service.sms;
+package za.org.grassroot.messaging.service.sms.aws;
 
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.regions.Regions;
@@ -13,8 +13,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import za.org.grassroot.messaging.service.sms.model.AwsSmsResponse;
-import za.org.grassroot.messaging.service.sms.model.SmsGatewayResponse;
+import za.org.grassroot.messaging.service.sms.SMSDeliveryReceipt;
+import za.org.grassroot.messaging.service.sms.SmsGatewayResponse;
+import za.org.grassroot.messaging.service.sms.SmsSendingService;
 
 import javax.annotation.PostConstruct;
 import java.util.HashMap;
@@ -76,6 +77,11 @@ public class AwsSmsSendingManager implements SmsSendingService {
 
     @Override
     public SmsGatewayResponse sendPrioritySMS(String message, String destinationNumber) {
+        return null;
+    }
+
+    @Override
+    public SMSDeliveryReceipt fetchSMSDeliveryStatus(String messageKey) {
         return null;
     }
 

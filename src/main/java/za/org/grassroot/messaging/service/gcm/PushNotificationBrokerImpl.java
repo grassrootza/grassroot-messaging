@@ -8,11 +8,19 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import za.org.grassroot.messaging.domain.*;
-import za.org.grassroot.messaging.domain.enums.NotificationType;
-import za.org.grassroot.messaging.domain.enums.UserLogType;
-import za.org.grassroot.messaging.domain.repository.GcmRegistrationRepository;
-import za.org.grassroot.messaging.domain.repository.NotificationRepository;
+import za.org.grassroot.core.domain.GcmRegistration;
+import za.org.grassroot.core.domain.Group;
+import za.org.grassroot.core.domain.Notification;
+import za.org.grassroot.core.domain.NotificationStatus;
+import za.org.grassroot.core.domain.task.EventLog;
+import za.org.grassroot.core.domain.task.Task;
+import za.org.grassroot.core.domain.task.TaskLog;
+import za.org.grassroot.core.domain.task.TodoLog;
+import za.org.grassroot.core.enums.MessagingProvider;
+import za.org.grassroot.core.enums.NotificationType;
+import za.org.grassroot.core.enums.UserLogType;
+import za.org.grassroot.core.repository.GcmRegistrationRepository;
+import za.org.grassroot.messaging.service.NotificationBroker;
 import za.org.grassroot.messaging.util.DebugUtil;
 
 import java.util.HashMap;
@@ -30,44 +38,65 @@ public class PushNotificationBrokerImpl implements PushNotificationBroker {
     private static final Logger logger = LoggerFactory.getLogger(PushNotificationBrokerImpl.class);
 
     private final GcmHandlingBroker sendingService;
-    private final NotificationRepository notificationRepository;
+
+    private final GcmRegistrationRepository gcmRegistrationRepository;
+
+    private final NotificationBroker notificationBroker;
 
     @Autowired
-    public PushNotificationBrokerImpl(GcmHandlingBroker sendingService, GcmRegistrationRepository gcmRegistrationRepository, NotificationRepository notificationRepository) {
+    public PushNotificationBrokerImpl(GcmHandlingBroker sendingService,
+                                      GcmRegistrationRepository gcmRegistrationRepository, NotificationBroker notificationBroker) {
         this.sendingService = sendingService;
-        this.notificationRepository = notificationRepository;
+        this.gcmRegistrationRepository = gcmRegistrationRepository;
+        this.notificationBroker = notificationBroker;
     }
 
     @Override
     @Transactional(readOnly = true)
     public void sendMessage(Message message) {
         logger.info("sending message via GCM sender ...");
-        sendingService.sendGcmMessage(buildGcmFromMessagePayload((MessageAndRoutingBundle) message.getPayload()));
+        Notification notification = (Notification) message.getPayload();
+        sendingService.sendGcmMessage(buildGcmFromMessagePayload(notification));
+        notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.SENT, null, true,
+                notification.getUid(), MessagingProvider.GCM);
+
     }
 
-    private GcmPayload buildGcmFromMessagePayload(MessageAndRoutingBundle bundle) {
+    private GcmPayload buildGcmFromMessagePayload(Notification notification) {
         DebugUtil.transactionRequired(GcmXmppBrokerImpl.class);
-        Notification notification = notificationRepository.findOneByUid(bundle.getNotificationUid());
+        GcmRegistration registration = gcmRegistrationRepository.findTopByUserOrderByCreationTimeDesc(notification.getTarget());
         return new GcmPayload(notification.getUid(),
-                bundle.getGcmRegistrationId(),
+                registration.getRegistrationId(),
                 generateCollapseKey(notification),
                 generateData(notification), null);
     }
 
     private String generateCollapseKey(Notification notification) {
-        if (notification.isTaskRelated()) {
-            return notification.getGroupDescendantLog().getGroupDescendant().getUid() + "_" +
-                    notification.getGroupDescendantLog().getGroupDescendant().getAncestorGroup().getGroupName();
+        boolean taskRelated = notification.getEventLog() != null || notification.getTodoLog() != null;
+        if (taskRelated) {
+            return getGroupDescendantLog(notification).getTask().getUid() + "_" +
+                    getGroupDescendantLog(notification).getTask().getAncestorGroup().getGroupName();
         } else {
             // means neither event nor to-do log, but may want to handle this differently in future
             return null;
         }
     }
 
+    private TaskLog getGroupDescendantLog(Notification notification) {
+        if (NotificationType.EVENT.equals(notification.getNotificationType())) {
+            return notification.getEventLog();
+        } else if (NotificationType.TODO.equals(notification.getNotificationType())) {
+            return notification.getTodoLog();
+        } else {
+            throw new IllegalArgumentException("Cannot obtain group descendant log from non-task log");
+        }
+    }
+
     private Map<String, Object> generateData(Notification notification) {
         Map<String, Object> data = new HashMap<>();
-        if (notification.isTaskRelated()) {
-            Task task = notification.getGroupDescendantLog().getGroupDescendant();
+        boolean taskRelated = notification.getEventLog() != null || notification.getTodoLog() != null;
+        if (taskRelated) {
+            Task task = getGroupDescendantLog(notification).getTask();
             Group group = task.getAncestorGroup();
             data = assembleMap(group.getGroupName(),
                     group.getGroupName(),
@@ -75,7 +104,7 @@ public class PushNotificationBrokerImpl implements PushNotificationBroker {
                     task.getUid(),
                     task.getTaskType().name(),
                     notification);
-        } else if (NotificationType.USER.equals(notification.getType())) {
+        } else if (NotificationType.USER.equals(notification.getNotificationType())) {
             return userNotificationData(notification);
         }
         return data;
@@ -95,7 +124,7 @@ public class PushNotificationBrokerImpl implements PushNotificationBroker {
         data.put("body", notification.getMessage());
         data.put("id", entityUid);
         data.put("created_date_time", notification.getCreatedDateTime());
-        data.put("alert_type", notification.getType());
+        data.put("alert_type", notification.getNotificationType());
         data.put("entity_type", entityType);
         data.put("click_action", getActionType(notification));
 
@@ -104,7 +133,7 @@ public class PushNotificationBrokerImpl implements PushNotificationBroker {
 
     private AndroidClickActionType getActionType(Notification notification) {
         AndroidClickActionType actionType;
-        switch (notification.getType()) {
+        switch (notification.getNotificationType()) {
             case EVENT:
                 EventLog eventLog = notification.getEventLog();
                 actionType = AndroidClickActionType.fromEventLog(eventLog);
@@ -124,7 +153,7 @@ public class PushNotificationBrokerImpl implements PushNotificationBroker {
 
     private Map<String, Object> userNotificationData(Notification notification) {
         final UserLogType type = notification.getUserLog().getUserLogType();
-        if (notification.getUserLog().isJoinRequestRelated()) {
+        if (isJoinRequestRelated(type)) {
             return assembleMap(
                     getGroupNameFromUserNotification(notification),
                     getGroupUidFromJoinRequestNotification(notification),
@@ -138,6 +167,11 @@ public class PushNotificationBrokerImpl implements PushNotificationBroker {
                     type.name(),
                     notification);
         }
+    }
+
+    private boolean isJoinRequestRelated(UserLogType userLogType) {
+        return UserLogType.JOIN_REQUEST.equals(userLogType) || UserLogType.JOIN_REQUEST_REMINDER.equals(userLogType)
+                || UserLogType.JOIN_REQUEST_APPROVED.equals(userLogType) || UserLogType.JOIN_REQUEST_DENIED.equals(userLogType);
     }
 
     private String getGroupNameFromUserNotification(Notification notification) {

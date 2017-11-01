@@ -2,9 +2,9 @@ version: 1.0
 os: linux
 files:
   - source: /
-    destination: /var/grassroot
+    destination: /var/grassroot-messaging
 permissions:
-  - object: /var/grassroot
+  - object: /var/grassroot-messaging
     pattern: "**"
     owner: root
     group: root

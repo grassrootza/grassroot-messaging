@@ -9,11 +9,9 @@ import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.stereotype.Service;
-import za.org.grassroot.messaging.domain.GcmRegistration;
-import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
-import za.org.grassroot.messaging.domain.Notification;
-import za.org.grassroot.messaging.domain.enums.UserMessagingPreference;
-import za.org.grassroot.messaging.domain.repository.GcmRegistrationRepository;
+import za.org.grassroot.core.domain.GcmRegistration;
+import za.org.grassroot.core.domain.Notification;
+import za.org.grassroot.core.repository.GcmRegistrationRepository;
 import za.org.grassroot.messaging.service.NotificationBroker;
 
 import javax.persistence.EntityManager;
@@ -47,7 +45,8 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 	@Timed
 	@Override
 	public void processPendingNotifications() {
-		List<Notification> notifications = notificationBroker.loadNextBatchOfNotificationsToSend();
+
+		List<Notification> notifications = notificationBroker.loadNextBatchOfNotificationsToSend(150);
 		if (notifications.size() > 0) {
 			logger.info("Sending {} registered notification(s)", notifications.size());
 		}
@@ -55,42 +54,32 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 	}
 
 	private void sendNotification(String notificationUid) {
+
 		Objects.requireNonNull(notificationUid);
 
-		Notification notification = notificationBroker.loadNotificationForSending(notificationUid);
-		logger.debug("Sending notification: {}", notification);
-
-		// todo: fix up Android and other routing in general fixes, for now use timeline as key
+        Notification notification = notificationBroker.loadNotification(notificationUid);
+        logger.debug("Sending notification: {}", notification);
 		try {
-			boolean redelivery = notification.getAttemptCount() > 1;
-			if (redelivery || !notification.isForAndroidTimeline()) {
-			    logger.info("redelivering a notification, attempt count: {}", notification.getAttemptCount());
-				// notification.setNextAttemptTime(null); // this practically means we try to redeliver only once
-				requestChannel.send(createMessage(notification, "SMS"));
-			} else {
-				requestChannel.send(createMessage(notification, null));
-			}
-		} catch (Exception e) {
+            requestChannel.send(createMessage(notification, notification.deliveryChannel.toString()));
+        } catch (Exception e) {
 			logger.error("Failed to send notification {}, : {}", notification, e);
 		}
 	}
 
-	private Message<MessageAndRoutingBundle> createMessage(Notification notification, String givenRoute) {
-		MessageAndRoutingBundle routingBundle = notificationBroker.loadRoutingBundle(notification.getUid());
-		String route = (givenRoute != null) ? givenRoute :
-				(routingBundle == null || routingBundle.getRoutePreference() == null) ?
-						"SMS" : routingBundle.getRoutePreference().name();
-		if ("ANDROID_APP".equals(route)) {
+	private Message<Notification> createMessage(Notification notification, String givenRoute) {
+
+
+        String route = (givenRoute != null) ? givenRoute :
+				(notification.getTarget().getMessagingPreference() == null) ?
+						"SMS" : notification.getTarget().getMessagingPreference().name();
+
+        if ("ANDROID_APP".equals(route)) {
 			GcmRegistration registration = gcmRegistrationRepository.findTopByUserOrderByCreationTimeDesc(notification.getTarget());
-			if (registration != null) {
-				routingBundle.setGcmRegistrationId(registration.getRegistrationId());
-			} else {
-				routingBundle.setRoutePreference(UserMessagingPreference.SMS);
+			if (registration == null)
 				route = "SMS";
-			}
 		}
 
-		return MessageBuilder.withPayload(routingBundle)
+		return MessageBuilder.withPayload(notification)
 				.setHeader("route", route)
 				.build();
 	}

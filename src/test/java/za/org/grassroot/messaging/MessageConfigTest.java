@@ -11,11 +11,13 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import za.org.grassroot.core.domain.Notification;
+import za.org.grassroot.core.domain.User;
+import za.org.grassroot.core.domain.notification.EventInfoNotification;
+import za.org.grassroot.core.enums.UserMessagingPreference;
 import za.org.grassroot.messaging.config.MessageRoutingConfig;
-import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
-import za.org.grassroot.messaging.domain.Notification;
+import za.org.grassroot.messaging.controller.SimpleNotification;
 import za.org.grassroot.messaging.domain.PriorityMessage;
-import za.org.grassroot.messaging.domain.enums.UserMessagingPreference;
 import za.org.grassroot.messaging.service.gcm.PushNotificationBroker;
 import za.org.grassroot.messaging.service.sms.SmsNotificationBroker;
 
@@ -46,9 +48,11 @@ public class MessageConfigTest {
 
     @Test
     public void testSmsChannel() throws InterruptedException {
-        MessageAndRoutingBundle dummy = new MessageAndRoutingBundle("", "27605550000", "Hello World",
-                UserMessagingPreference.SMS, false);
-        Message<MessageAndRoutingBundle> message = MessageBuilder
+
+        User user = new User("27605550000");
+        user.setMessagingPreference(UserMessagingPreference.SMS);
+        Notification dummy = new SimpleNotification(user, "Hello World", false);
+        Message<Notification> message = MessageBuilder
                 .withPayload(dummy)
                 .setHeader("route", UserMessagingPreference.SMS.name())
                 .build();
@@ -58,7 +62,7 @@ public class MessageConfigTest {
 
     @Test
     public void testAwsChannel() {
-        Notification dummy = Notification.makeDummy("Hello AWS");
+        Notification dummy = makeDummy("Hello AWS");
         Message<Notification> message = MessageBuilder
                 .withPayload(dummy)
                 .setHeader("route", "SMS_AWS")
@@ -68,7 +72,7 @@ public class MessageConfigTest {
 
     @Test
     public void testAatChannel() {
-        Notification dummy = Notification.makeDummy("Hello AAT");
+        Notification dummy = makeDummy("Hello AAT");
         Message<Notification> message = MessageBuilder
                 .withPayload(dummy)
                 .setHeader("route", "SMS_AAT")
@@ -87,5 +91,11 @@ public class MessageConfigTest {
           //      .thenReturn(MockSmsResponse.make(SmsResponseType.DELIVERED, true));
         priorityChannel.send(message);
     }
+
+    public static Notification makeDummy(String message) {
+        Notification notification = new EventInfoNotification(null, message, null);
+        return notification;
+    }
+
 
 }

@@ -17,7 +17,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import za.org.grassroot.messaging.domain.Notification;
+import za.org.grassroot.core.domain.Notification;
+import za.org.grassroot.core.domain.NotificationStatus;
 import za.org.grassroot.messaging.service.NotificationBroker;
 
 /**
@@ -95,7 +96,7 @@ public class GcmXmppInboundListener implements StanzaListener {
                     break;
                 case "UPDATE_READ":
                     String notificationId = (String) message.getData().get("notificationId");
-                    notificationBroker.updateNotificationReadStatus(notificationId, true);
+                    notificationBroker.updateNotificationStatus(notificationId, NotificationStatus.READ, null, false, null, null);
                     break;
                 default: //action unknown ignore
                     break;
@@ -108,7 +109,8 @@ public class GcmXmppInboundListener implements StanzaListener {
         Notification notification = notificationBroker.loadNotification(payload.getMessageId());
         if (notification != null) {
             logger.info("Push Notification delivery failed, should now send SMS to  {}", notification.getTarget().getPhoneNumber());
-            notificationBroker.markNotificationAsFailedGcmDelivery(notification.getUid());
+            notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.DELIVERY_FAILED,
+                    "Push notification delivery failed!", false, null, null);
         } else {
             logger.info("Received an upstream message without notification, looks like: {}", payload);
         }
@@ -117,7 +119,8 @@ public class GcmXmppInboundListener implements StanzaListener {
     private void handleDeliveryReceipts(GcmPayload gcmPayload) {
         String messageId = String.valueOf(gcmPayload.getData().get("original_message_id"));
         logger.debug("Message " + messageId + " delivery successful, updating notification to delivered status.");
-        notificationBroker.markNotificationAsDelivered(messageId);
+        // todo(beegor) should we do it or ignore it since Luke said that this is not reliable ?
+        notificationBroker.updateNotificationStatus(messageId, NotificationStatus.DELIVERED, null, false, null, null);
     }
 
 }

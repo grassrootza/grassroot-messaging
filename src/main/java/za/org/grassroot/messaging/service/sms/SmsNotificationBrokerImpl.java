@@ -8,11 +8,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
-import za.org.grassroot.messaging.domain.MessageAndRoutingBundle;
-import za.org.grassroot.messaging.domain.Notification;
+import za.org.grassroot.core.domain.Notification;
+import za.org.grassroot.core.domain.NotificationStatus;
 import za.org.grassroot.messaging.domain.PriorityMessage;
 import za.org.grassroot.messaging.service.NotificationBroker;
-import za.org.grassroot.messaging.service.sms.model.SmsGatewayResponse;
 
 import javax.annotation.PostConstruct;
 
@@ -61,11 +60,15 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
     @Override
     public void sendStandardSmsNotification(Message message) {
         logger.debug("Handling SMS message, no strategy specified, sending by default ...");
-        MessageAndRoutingBundle messagePayload = (MessageAndRoutingBundle) message.getPayload();
-        SmsGatewayResponse response = awsSmsSender != null && messagePayload.isJoinedViaCode() ?
-                awsSmsSender.sendSMS(messagePayload.getMessage(), messagePayload.getPhoneNumber()) :
-                defaultSmsSender.sendSMS(messagePayload.getMessage(), messagePayload.getPhoneNumber());
-        updateReadAndDeliveredStatus(messagePayload.getNotificationUid(), response);
+        Notification messagePayload = (Notification) message.getPayload();
+
+        boolean selfJoined = notificationBroker.isUserSelfJoinedToGroup(messagePayload);
+
+        SmsGatewayResponse response = awsSmsSender != null && selfJoined ?
+                awsSmsSender.sendSMS(messagePayload.getMessage(), messagePayload.getTarget().getPhoneNumber()) :
+                defaultSmsSender.sendSMS(messagePayload.getMessage(), messagePayload.getTarget().getPhoneNumber());
+
+        handleSmsGatewayResponse(messagePayload.getUid(), response);
     }
 
     @Timed
@@ -96,17 +99,20 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
         }
 
         if (response != null) {
-            updateReadAndDeliveredStatus(notification.getUid(), response);
+            handleSmsGatewayResponse(notification.getUid(), response);
         }
     }
 
     @Override
     public void sendSmsWithoutNotification(Message message) {
-        MessageAndRoutingBundle payload = (MessageAndRoutingBundle) message.getPayload();
-        if (awsSmsSender != null && payload.isJoinedViaCode()) {
-            awsSmsSender.sendSMS(payload.getMessage(), payload.getPhoneNumber());
+        Notification payload = (Notification) message.getPayload();
+
+        boolean selfJoined = notificationBroker.isUserSelfJoinedToGroup(payload);
+
+        if (awsSmsSender != null && selfJoined) {
+            awsSmsSender.sendSMS(payload.getMessage(), payload.getTarget().getPhoneNumber());
         }  else {
-            defaultSmsSender.sendSMS(payload.getMessage(), payload.getPhoneNumber());
+            defaultSmsSender.sendSMS(payload.getMessage(), payload.getTarget().getPhoneNumber());
         }
     }
 
@@ -123,25 +129,45 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
         logger.info("Should really wire up error handling");
     }
 
-    private void updateReadAndDeliveredStatus(String notificationUid, SmsGatewayResponse response) {
-        notificationBroker.markNotificationAsDelivered(notificationUid);
-        if (response != null && response.isSuccessful()) {
-            notificationBroker.updateNotificationReadStatus(notificationUid, true);
-        } else if (response != null && response.getResponseType() != null) {
+
+    private void handleSmsGatewayResponse(String notificationUid, SmsGatewayResponse response) {
+
+        if (response == null) {
+            logger.error("Got null response from send method. This should not happen!");
+            return;
+        }
+
+        if (response.isSuccessful()) {
+
+            notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.SENT, null, true,
+                    response.getMessageKey(), response.getProvider());
+
+        } else {
+
             switch (response.getResponseType()) {
                 case MSISDN_INVALID:
-                    logger.info("invalid number for SMS, marking it as read to prevent looping redelivery");
-                    notificationBroker.updateNotificationReadStatus(notificationUid, true); // to prevent unread trying to send
+                    logger.info("invalid number for SMS, marking it as undeliverable to prevent looping redelivery");
+                    notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.UNDELIVERABLE,
+                            "Can't send message. Invalid MSISDN.", true, null, response.getProvider());
                     break;
+
                 case DUPLICATE_MESSAGE:
-                    logger.info("trying to resend message, just set it as read");
-                    notificationBroker.updateNotificationReadStatus(notificationUid, true); // as above, prevents loops
+                    logger.info("trying to resend already sent message, just set it as sent");
+                    notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.SENT,
+                            null, true, null, response.getProvider());
                     break;
+
+                case COMMUNICATION_ERROR:
+                    logger.info("communication error happened while sending message");
+                    notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.SENDING_FAILED,
+                            "Can't send message. Could not't access sms gateway", true, null, response.getProvider());
+                    break;
+
                 default:
+                    notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.SENDING_FAILED,
+                            "Can't send message. Reason: " + response.getResponseType(), true, null, response.getProvider());
                     logger.error("error delivering SMS, response from gateway: {}", response.toString());
             }
-        } else {
-            logger.error("Error delivering SMS, with null response");
         }
         logger.debug("finished updating read and delivered status");
     }

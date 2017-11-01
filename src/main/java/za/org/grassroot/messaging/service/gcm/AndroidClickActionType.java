@@ -1,8 +1,8 @@
 package za.org.grassroot.messaging.service.gcm;
 
-import za.org.grassroot.messaging.domain.EventLog;
-import za.org.grassroot.messaging.domain.TodoLog;
-import za.org.grassroot.messaging.domain.UserLog;
+import za.org.grassroot.core.domain.UserLog;
+import za.org.grassroot.core.domain.task.EventLog;
+import za.org.grassroot.core.domain.task.TodoLog;
 
 /**
  * Created by luke on 2016/07/27.

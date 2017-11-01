@@ -1,6 +1,6 @@
 package za.org.grassroot.messaging.service.mqtt;
 
-import za.org.grassroot.messaging.domain.GroupChatSettings;
+import za.org.grassroot.core.domain.GroupChatSettings;
 
 import java.util.Set;
 
@@ -20,5 +20,11 @@ public interface GroupChatService {
     void createGroupChatMessageStats(MQTTPayload payload);
 
     void subscribeServerToGroupTopic(String groupUid);
+
+    void reactivateMutedUsers();
+
+    void subscribeServerToAllGroupTopics();
+
+    void sendPollingMessage();
 
 }

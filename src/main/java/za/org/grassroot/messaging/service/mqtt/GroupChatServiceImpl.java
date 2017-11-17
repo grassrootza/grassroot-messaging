@@ -16,7 +16,6 @@ import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannel
 import org.springframework.integration.mqtt.support.MqttHeaders;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.MessageChannel;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import za.org.grassroot.core.domain.Group;
@@ -31,7 +30,6 @@ import za.org.grassroot.messaging.domain.exception.SeloParseDateTimeFailure;
 import za.org.grassroot.messaging.domain.repository.GroupChatStatsRepository;
 import za.org.grassroot.messaging.service.LearningService;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -88,47 +86,6 @@ public class GroupChatServiceImpl implements GroupChatService {
     @Autowired
     private void setMqttAdapter(MqttPahoMessageDrivenChannelAdapter mqttAdapter) {
         this.mqttAdapter = mqttAdapter;
-    }
-
-    @Override
-    @Scheduled(fixedRate = 300000)
-    public void reactivateMutedUsers() {
-        logger.info("Reactivating muted group users ...");
-        List<GroupChatSettings> groupChatSettingses = groupChatSettingsRepository
-                .findByActiveFalseAndUserInitiatedFalseAndReactivationTimeBefore(Instant.now());
-        for (GroupChatSettings messengerSetting : groupChatSettingses) {
-            String userUid = messengerSetting.getUser().getUid();
-            String groupUid = messengerSetting.getGroup().getUid();
-            try {
-                updateActivityStatus(userUid, groupUid, true, false);
-            } catch (IllegalArgumentException e) {
-                logger.error("Error while trying un-mute user with " + userUid);
-            }
-        }
-    }
-
-    @Override
-    @Scheduled(cron = "0 0 1 * * *") //runs at 1 am everyday
-    public void subscribeServerToAllGroupTopics() {
-        logger.info("Subscribing server to all group topics");
-        List<Group> groups = groupRepository.findAll();
-        List<String> topicsSubscribedTo = Arrays.asList(mqttAdapter.getTopic());
-        for(Group group: groups){
-            if(!topicsSubscribedTo.contains(group.getUid())){
-                mqttAdapter.addTopic(group.getUid(), 1);
-            }
-        }
-    }
-
-    @Override
-    @Scheduled(fixedRate = 300000)
-    public void sendPollingMessage(){
-        if (mqttAdapter != null) {
-            List<String> topicsSubscribedTo = Arrays.asList(mqttAdapter.getTopic());
-            if (!topicsSubscribedTo.contains("Grassroot")) {
-                mqttAdapter.addTopic("Grassroot", 1);
-            }
-        }
     }
 
     @Override

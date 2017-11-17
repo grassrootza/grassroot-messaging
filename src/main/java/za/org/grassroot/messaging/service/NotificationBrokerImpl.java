@@ -61,6 +61,7 @@ public class NotificationBrokerImpl implements NotificationBroker {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Notification> loadSentNotificationsWithUnknownDeliveryStatus(MessagingProvider messagingProvider) {
         return notificationRepository.findAll(NotificationSpecifications.getSentNotificationsWithUnknownDeliveryStatus(messagingProvider));
     }

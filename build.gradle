@@ -34,6 +34,9 @@ repositories {
     maven {
         url  "https://dl.bintray.com/grassrootza/grassroot-platform"
     }
+    maven {
+        url "http://optimizely.bintray.com/optimizely"
+    }
 }
 
 dependencyManagement {
@@ -51,7 +54,7 @@ dependencies {
 //    compile fileTree(include: ['*.jar'], dir: 'lib')
 
 
-    compile group: 'za.org.grassroot', name: 'grassroot-core', version: '1.1.0.3'
+    compile group: 'za.org.grassroot', name: 'grassroot-core', version: '1.1.1.0'
 
     compile group: 'org.quartz-scheduler', name: 'quartz', version: '2.3.0'
 

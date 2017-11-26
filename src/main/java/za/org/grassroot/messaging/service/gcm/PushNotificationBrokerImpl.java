@@ -118,12 +118,12 @@ public class PushNotificationBrokerImpl implements PushNotificationBroker {
             data.put("group", group);
         }
         if (!TextUtils.isEmpty(groupUid)) {
-            data.put("groupUid", groupUid);
+            data.put("group_uid", groupUid);
         }
-        data.put("notificationUid", notification.getUid());
+        data.put("notification_uid", notification.getUid());
         data.put("body", notification.getMessage());
-        data.put("id", entityUid);
-        data.put("created_date_time", notification.getCreatedDateTime());
+        data.put("entity_uid", entityUid);
+        data.put("created_date_time", notification.getCreatedDateTime().toEpochMilli());
         data.put("alert_type", notification.getNotificationType());
         data.put("entity_type", entityType);
         data.put("click_action", getActionType(notification));

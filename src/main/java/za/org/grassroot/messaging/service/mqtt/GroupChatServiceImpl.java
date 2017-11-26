@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.MessageSource;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter;
@@ -19,10 +18,7 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import za.org.grassroot.core.domain.Group;
-import za.org.grassroot.core.domain.GroupChatSettings;
-import za.org.grassroot.core.domain.User;
 import za.org.grassroot.core.enums.TaskType;
-import za.org.grassroot.core.repository.GroupChatSettingsRepository;
 import za.org.grassroot.core.repository.GroupRepository;
 import za.org.grassroot.core.repository.UserRepository;
 import za.org.grassroot.messaging.domain.GroupChatMessageStats;
@@ -51,7 +47,6 @@ public class GroupChatServiceImpl implements GroupChatService {
 
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
-    private final GroupChatSettingsRepository groupChatSettingsRepository;
     private final GroupChatStatsRepository groupChatMessageStatsRepository;
 
     private final LearningService learningService;
@@ -62,12 +57,10 @@ public class GroupChatServiceImpl implements GroupChatService {
     private MqttPahoMessageDrivenChannelAdapter mqttAdapter;
 
     @Autowired
-    public GroupChatServiceImpl(UserRepository userRepository, GroupRepository groupRepository, GroupChatSettingsRepository groupChatSettingsRepository,
-                                LearningService learningService, GroupChatStatsRepository groupChatMessageStatsRepository,
+    public GroupChatServiceImpl(UserRepository userRepository, GroupRepository groupRepository, LearningService learningService, GroupChatStatsRepository groupChatMessageStatsRepository,
                                 MessageSource messageSource) {
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
-        this.groupChatSettingsRepository = groupChatSettingsRepository;
         this.learningService = learningService;
         this.groupChatMessageStatsRepository = groupChatMessageStatsRepository;
         this.messageSourceAccessor = new MessageSourceAccessor(messageSource);
@@ -87,26 +80,6 @@ public class GroupChatServiceImpl implements GroupChatService {
     private void setMqttAdapter(MqttPahoMessageDrivenChannelAdapter mqttAdapter) {
         this.mqttAdapter = mqttAdapter;
     }
-
-    @Override
-    @Transactional(readOnly = true)
-    @Cacheable(value = "groupChatSettings", key = "userUid + '_'+ groupUid")
-    public GroupChatSettings load(String userUid, String groupUid) {
-        Objects.requireNonNull(userUid);
-        Objects.requireNonNull(groupUid);
-
-        User user = userRepository.findOneByUid(userUid);
-        Group group = groupRepository.findOneByUid(groupUid);
-
-        GroupChatSettings groupChatSettings = groupChatSettingsRepository.findTopByUserAndGroupOrderByCreatedDateTimeDesc(user, group);
-
-        if (groupChatSettings == null) {
-            throw new IllegalArgumentException("Group chat setting not found found for user with uid " + userUid);
-        }
-
-        return groupChatSettings;
-    }
-
 
     @Override
     public void processCommandMessage(MQTTPayload incoming) {
@@ -157,49 +130,6 @@ public class GroupChatServiceImpl implements GroupChatService {
         }
     }
 
-    @Override
-    @Transactional
-    public void updateActivityStatus(String userUid, String groupUid, boolean active, boolean userInitiated) {
-        GroupChatSettings groupChatSettings = load(userUid, groupUid);
-        User user = userRepository.findOneByUid(userUid);
-        Group group = groupRepository.findOneByUid(groupUid);
-
-        groupChatSettings.setActive(active);
-        groupChatSettings.setUserInitiated(userInitiated);
-        groupChatSettings.setCanSend(active);
-
-        if (userInitiated) {
-            groupChatSettings.setCanReceive(active);
-        }
-
-        if(!userInitiated && !active){
-            try {
-                final MQTTPayload payload = generateUserMutedResponseData(group);
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS,true);
-                mqttOutboundChannel.send(MessageBuilder
-                        .withPayload(mapper.writeValueAsString(payload))
-                        .setHeader(MqttHeaders.TOPIC, user.getPhoneNumber())
-                        .build());
-            } catch (JsonProcessingException e) {
-                logger.debug("Error parsing message");
-            }
-
-        }
-    }
-
-    @Override
-    @Transactional
-    public void createGroupChatMessageStats(MQTTPayload payload) {
-        Objects.requireNonNull(payload);
-        Group group = groupRepository.findOneByUid(payload.getGroupUid());
-        User user = userRepository.findByPhoneNumber(payload.getPhoneNumber());
-        if(group !=null && user != null) {
-            Long numberOfIntendedRecepients = groupChatSettingsRepository.countByGroupAndActiveTrue(group);
-            GroupChatMessageStats groupChatMessageStats = new GroupChatMessageStats(payload.getUid(), group, user, numberOfIntendedRecepients, 1L, false);
-            groupChatMessageStatsRepository.save(groupChatMessageStats);
-        }
-    }
 
     @Override
     public void subscribeServerToGroupTopic(String groupUid) {

@@ -66,6 +66,6 @@ public class AatSMSDeliveryDeliveryReceipt implements SMSDeliveryReceipt {
 
     @Override
     public SMSDeliveryStatus getDeliveryStatus() {
-        return this.status.toSMSDeliveryStatus();
+        return this.status != null ? this.status.toSMSDeliveryStatus() : SMSDeliveryStatus.DELIVERY_IN_PROGRESS;
     }
 }

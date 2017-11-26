@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ -f /var/grassroot/.pid ]]; then
+if [[ -f /var/grassroot-messaging/.pid ]]; then
         #kill -TERM `cat /var/grassroot/.pid`;
         kill `cat /var/grassroot-messaging/.pid`;
 	mypid=`cat /var/grassroot-messaging/.pid`;

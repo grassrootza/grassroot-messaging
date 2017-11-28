@@ -1,10 +1,13 @@
 description 'Grassroot Messaging Microservice'
 
-group 'grassroot'
-version '1.0-SNAPSHOT'
+
+allprojects  {
+    group 'grassroot'
+    version '1.0.0.8'
+}
 
 ext.libs = [
-        springVersion: '4.3.9.RELEASE',
+        springVersion: '4.3.13.RELEASE',
         springBootVersion: '1.5.4.RELEASE',
         springIntegrationVersion: '4.3.10.RELEASE',
         springSecurityVersion: '4.2.3.RELEASE'
@@ -21,7 +24,6 @@ buildscript {
 
     }
 }
-
 
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
@@ -52,6 +54,8 @@ dependencies {
     testCompile group: 'org.springframework.integration', name: 'spring-integration-test', version:libs.springIntegrationVersion
 
 //    compile fileTree(include: ['*.jar'], dir: 'lib')
+
+    compile project(':grassroot-messaging-dto')
 
 
     compile group: 'za.org.grassroot', name: 'grassroot-core', version: '1.1.1.0'
@@ -99,4 +103,6 @@ dependencies {
     compile group: 'org.springframework.security', name: 'spring-security-web', version: libs.springSecurityVersion
     compile group: 'net.sf.ehcache', name: 'ehcache', version:'2.10.2.2.21'
     compile group: 'org.jdom', name: 'jdom', version: '2.0.2'
+
+
 }

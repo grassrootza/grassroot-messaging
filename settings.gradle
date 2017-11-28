@@ -1,1 +1,3 @@
 rootProject.name = 'grassroot-messaging'
+include 'grassroot-messaging-dto'
+

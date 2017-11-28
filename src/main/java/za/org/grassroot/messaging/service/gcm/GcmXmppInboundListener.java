@@ -56,7 +56,7 @@ public class GcmXmppInboundListener implements StanzaListener {
                 } else {
                     switch (messageType) {
                         case "ack":
-                            logger.debug("Gcm acknowledges receipt of message {}, with payload {}", gcmPayload.getMessageId(), gcmPayload.getData());;
+                            logger.debug("Gcm acknowledges receipt of message {}, with payload {}", gcmPayload.getMessageId(), gcmPayload.getData());
                             break;
                         case "nack":
                             handleNotAcknowledged(gcmPayload);
@@ -87,21 +87,21 @@ public class GcmXmppInboundListener implements StanzaListener {
         String messageId = message.getMessageId();
         String from = message.getFrom();
 
-        String action = String.valueOf(message.getData().get("action"));
-        if (action != null) {
-            switch (action) {
-                case "REGISTER":
-                    String phoneNumber = (String) message.getData().get("phoneNumber");
-                    gcmHandlingBroker.registerUser(phoneNumber, from);
-                    break;
-                case "UPDATE_READ":
-                    String notificationId = (String) message.getData().get("notificationId");
-                    notificationBroker.updateNotificationStatus(notificationId, NotificationStatus.READ, null, false, null, null);
-                    break;
-                default: //action unknown ignore
-                    break;
-            }
-        }
+//        String action = String.valueOf(message.getData().get("action"));
+//        if (action != null) {
+//            switch (action) {
+//                case "REGISTER":
+//                    String phoneNumber = (String) message.getData().get("phoneNumber");
+//                    gcmHandlingBroker.registerUser(phoneNumber, from);
+//                    break;
+//                case "UPDATE_READ":
+//                    String notificationId = (String) message.getData().get("notificationId");
+//                    notificationBroker.updateNotificationStatus(notificationId, NotificationStatus.READ, null, false, null, null);
+//                    break;
+//                default: //action unknown ignore
+//                    break;
+//            }
+//        }
         gcmHandlingBroker.sendGcmAcknowledgement(from, messageId);
     }
 
@@ -117,10 +117,10 @@ public class GcmXmppInboundListener implements StanzaListener {
     }
 
     private void handleDeliveryReceipts(GcmPayload gcmPayload) {
-        String messageId = String.valueOf(gcmPayload.getData().get("original_message_id"));
-        logger.debug("Message " + messageId + " delivery successful, updating notification to delivered status.");
+//        String messageId = String.valueOf(gcmPayload.getData().get("original_message_id"));
+//        logger.debug("Message " + messageId + " delivery successful, updating notification to delivered status.");
         // todo(beegor) should we do it or ignore it since Luke said that this is not reliable ?
-        notificationBroker.updateNotificationStatus(messageId, NotificationStatus.DELIVERED, null, false, null, null);
+//        notificationBroker.updateNotificationStatus(messageId, NotificationStatus.DELIVERED, null, false, null, null);
     }
 
 }

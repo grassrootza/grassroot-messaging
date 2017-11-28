@@ -3,6 +3,7 @@ package za.org.grassroot.messaging.service.gcm;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -32,6 +33,7 @@ public class GcmPayload {
 
     private Map<String,Object> data;
 
+
     @JsonProperty("message_type")
     private String messageType;
 
@@ -45,11 +47,11 @@ public class GcmPayload {
         this.messageType = messageType;
     }
 
-    public GcmPayload(String messageId, String to, String collapseKey, Map<String,Object> data, Map<String,Object> notification) {
+    public GcmPayload(String messageId, String to, String collapseKey, String dataBody) {
         this(messageId, to, null);
         this.collapseKey = collapseKey;
-        this.data = data;
-        this.notification=notification;
+        this.data = new HashMap<>();
+        this.data.put("body", dataBody);
     }
 
 
@@ -93,9 +95,6 @@ public class GcmPayload {
         return messageType;
     }
 
-    public String getNotificationUid() {
-        return data != null  ? String.valueOf(getData().get("original_message_id")) : null;
-    }
 
     @Override
     public String toString() {

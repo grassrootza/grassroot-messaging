@@ -7,7 +7,7 @@ allprojects  {
 }
 
 ext.libs = [
-        springVersion: '4.3.13.RELEASE',
+        springVersion: '4.3.9.RELEASE',
         springBootVersion: '1.5.4.RELEASE',
         springIntegrationVersion: '4.3.10.RELEASE',
         springSecurityVersion: '4.2.3.RELEASE'

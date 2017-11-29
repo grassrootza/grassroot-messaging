@@ -87,21 +87,21 @@ public class GcmXmppInboundListener implements StanzaListener {
         String messageId = message.getMessageId();
         String from = message.getFrom();
 
-//        String action = String.valueOf(message.getData().get("action"));
-//        if (action != null) {
-//            switch (action) {
-//                case "REGISTER":
-//                    String phoneNumber = (String) message.getData().get("phoneNumber");
-//                    gcmHandlingBroker.registerUser(phoneNumber, from);
-//                    break;
-//                case "UPDATE_READ":
-//                    String notificationId = (String) message.getData().get("notificationId");
-//                    notificationBroker.updateNotificationStatus(notificationId, NotificationStatus.READ, null, false, null, null);
-//                    break;
-//                default: //action unknown ignore
-//                    break;
-//            }
-//        }
+        String action = String.valueOf(message.getData().get("action"));
+        if (action != null) {
+            switch (action) {
+                case "REGISTER":
+                    String phoneNumber = (String) message.getData().get("phoneNumber");
+                    gcmHandlingBroker.registerUser(phoneNumber, from);
+                    break;
+                case "UPDATE_READ":
+                    String notificationId = (String) message.getData().get("notificationId");
+                    notificationBroker.updateNotificationStatus(notificationId, NotificationStatus.READ, null, false, null, null);
+                    break;
+                default: //action unknown ignore
+                    break;
+            }
+        }
         gcmHandlingBroker.sendGcmAcknowledgement(from, messageId);
     }
 

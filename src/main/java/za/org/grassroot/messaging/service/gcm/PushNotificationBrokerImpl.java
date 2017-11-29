@@ -46,7 +46,7 @@ public class PushNotificationBrokerImpl implements PushNotificationBroker {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public void sendMessage(Message message) {
         logger.info("sending message via GCM sender ...");
         Notification notification = (Notification) message.getPayload();

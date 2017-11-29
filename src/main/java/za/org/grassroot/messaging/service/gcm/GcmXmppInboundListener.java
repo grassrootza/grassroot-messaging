@@ -117,10 +117,10 @@ public class GcmXmppInboundListener implements StanzaListener {
     }
 
     private void handleDeliveryReceipts(GcmPayload gcmPayload) {
-//        String messageId = String.valueOf(gcmPayload.getData().get("original_message_id"));
-//        logger.debug("Message " + messageId + " delivery successful, updating notification to delivered status.");
+        String messageId = String.valueOf(gcmPayload.getData().get("original_message_id"));
+        logger.debug("Message " + messageId + " delivery successful, updating notification to delivered status.");
         // todo(beegor) should we do it or ignore it since Luke said that this is not reliable ?
-//        notificationBroker.updateNotificationStatus(messageId, NotificationStatus.DELIVERED, null, false, null, null);
+        notificationBroker.updateNotificationStatus(messageId, NotificationStatus.DELIVERED, null, false, null, null);
     }
 
 }

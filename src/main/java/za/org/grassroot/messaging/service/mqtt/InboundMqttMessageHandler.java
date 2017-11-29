@@ -47,8 +47,6 @@ public class InboundMqttMessageHandler {
                 String topic = String.valueOf(message.getHeaders().get(MqttHeaders.TOPIC));
                 if (topic.equals("Grassroot")) {
                     groupChatService.processCommandMessage(payload);
-                } else {
-                    groupChatService.createGroupChatMessageStats(payload);
                 }
             } catch (IOException e) {
                 logger.info("Error receiving message over mqtt");

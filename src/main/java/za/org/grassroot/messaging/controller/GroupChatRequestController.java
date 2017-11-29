@@ -35,7 +35,6 @@ public class GroupChatRequestController extends BaseController {
     @RequestMapping(value = "/update_activity/{userUid}", method = RequestMethod.POST)
     public ResponseEntity updateActivityStatus(@PathVariable String userUid, @RequestParam String groupUid,
                                                @RequestParam boolean setActive, @RequestParam boolean selfInitiated) {
-        groupChatService.updateActivityStatus(userUid, groupUid, setActive, selfInitiated);
         return ResponseEntity.ok().build();
     }
 

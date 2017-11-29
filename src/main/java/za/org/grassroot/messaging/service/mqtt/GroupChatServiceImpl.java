@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.MessageSource;
@@ -17,7 +18,6 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import za.org.grassroot.core.domain.Group;
-import za.org.grassroot.core.domain.User;
 import za.org.grassroot.core.enums.TaskType;
 import za.org.grassroot.core.repository.GroupRepository;
 import za.org.grassroot.core.repository.UserRepository;
@@ -52,13 +52,12 @@ public class GroupChatServiceImpl implements GroupChatService {
     private final LearningService learningService;
     private final MessageSourceAccessor messageSourceAccessor;
 
-    //    private ObjectMapper payloadMapper;
+    private ObjectMapper payloadMapper;
     private MessageChannel mqttOutboundChannel;
     private MqttPahoMessageDrivenChannelAdapter mqttAdapter;
 
     @Autowired
-    public GroupChatServiceImpl(UserRepository userRepository, GroupRepository groupRepository,
-                                LearningService learningService, GroupChatStatsRepository groupChatMessageStatsRepository,
+    public GroupChatServiceImpl(UserRepository userRepository, GroupRepository groupRepository, LearningService learningService, GroupChatStatsRepository groupChatMessageStatsRepository,
                                 MessageSource messageSource) {
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
@@ -72,25 +71,28 @@ public class GroupChatServiceImpl implements GroupChatService {
         this.mqttOutboundChannel = mqttOutboundChannel;
     }
 
+    @Autowired
+    private void setPayloadMapper(@Qualifier("mqttObjectMapper") ObjectMapper payloadMapper) {
+        this.payloadMapper = payloadMapper;
+    }
 
     @Autowired
     private void setMqttAdapter(MqttPahoMessageDrivenChannelAdapter mqttAdapter) {
         this.mqttAdapter = mqttAdapter;
     }
 
-
     @Override
     public void processCommandMessage(MQTTPayload incoming) {
         Group group = groupRepository.findOneByUid(incoming.getGroupUid());
-//        MQTTPayload payload = generateCommandResponseMessage(incoming, group);
-//        try {
-//            final String message = payloadMapper.writeValueAsString(payload);
-//            mqttOutboundChannel.send(MessageBuilder.withPayload(message).
-//                    setHeader(MqttHeaders.TOPIC, incoming.getPhoneNumber()).build());
-//        } catch (JsonProcessingException e) {
-//            // todo : send back a "sorry we couldn't handle it" message
-//            logger.debug("Message conversion failed with error ={}", e.getMessage());
-//        }
+        MQTTPayload payload = generateCommandResponseMessage(incoming, group);
+        try {
+            final String message = payloadMapper.writeValueAsString(payload);
+            mqttOutboundChannel.send(MessageBuilder.withPayload(message).
+                    setHeader(MqttHeaders.TOPIC, incoming.getPhoneNumber()).build());
+        } catch (JsonProcessingException e) {
+            // todo : send back a "sorry we couldn't handle it" message
+            logger.debug("Message conversion failed with error ={}", e.getMessage());
+        }
 
     }
 
@@ -128,40 +130,6 @@ public class GroupChatServiceImpl implements GroupChatService {
         }
     }
 
-    @Override
-    @Transactional
-    public void updateActivityStatus(String userUid, String groupUid, boolean active, boolean userInitiated) {
-        User user = userRepository.findOneByUid(userUid);
-        Group group = groupRepository.findOneByUid(groupUid);
-
-
-        if(!userInitiated && !active){
-            try {
-                final MQTTPayload payload = generateUserMutedResponseData(group);
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS,true);
-                mqttOutboundChannel.send(MessageBuilder
-                        .withPayload(mapper.writeValueAsString(payload))
-                        .setHeader(MqttHeaders.TOPIC, user.getPhoneNumber())
-                        .build());
-            } catch (JsonProcessingException e) {
-                logger.debug("Error parsing message");
-            }
-
-        }
-    }
-
-    @Override
-    @Transactional
-    public void createGroupChatMessageStats(MQTTPayload payload) {
-        Objects.requireNonNull(payload);
-        Group group = groupRepository.findOneByUid(payload.getGroupUid());
-        User user = userRepository.findByPhoneNumber(payload.getPhoneNumber());
-        if(group !=null && user != null) {
-            GroupChatMessageStats groupChatMessageStats = new GroupChatMessageStats(payload.getUid(), group, user, 0L, 1L, false);
-            groupChatMessageStatsRepository.save(groupChatMessageStats);
-        }
-    }
 
     @Override
     public void subscribeServerToGroupTopic(String groupUid) {

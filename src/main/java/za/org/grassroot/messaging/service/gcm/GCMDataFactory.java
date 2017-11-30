@@ -1,6 +1,5 @@
 package za.org.grassroot.messaging.service.gcm;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import za.org.grassroot.core.domain.Group;
 import za.org.grassroot.core.domain.Notification;
 import za.org.grassroot.core.domain.task.Task;
@@ -77,28 +76,6 @@ public class GCMDataFactory {
         }
     }
 
-
-    public static void main(String[] args) {
-        try {
-            UserLogDTO dto = new UserLogDTO("naslov", "texts", "kewjhklej", 645324L, "klejrl");
-//
-//
-            ObjectMapper mapper = new ObjectMapper();
-//
-            String json = mapper.writeValueAsString(dto);
-
-//            String json = "{\"type\":\"nestoNovo\",\"tritle\":\"naslov\",\"text\":\"texts\",\"notificationUid\":\"kewjhklej\",\"notificationCreationTime\":645324,\"userLogType\":\"klejrl\"}";
-
-            MessageDTO msg = mapper.readValue(json, MessageDTO.class);
-
-            System.out.println("Msg: " + msg);
-
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
 
 
     private static TaskLog getGroupDescendantLog(Notification notification) {

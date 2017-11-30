@@ -1,15 +1,12 @@
 package za.org.grassroot.messaging.dto;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type", defaultImpl = DefaultMessageDTO.class)
-@JsonSubTypes({
-        @JsonSubTypes.Type(value = EventNotificationDTO.class, name = "eventNotification"),
-        @JsonSubTypes.Type(value = DefaultMessageDTO.class, name = "defaultMessage"),
-        @JsonSubTypes.Type(value = JoinRequestDTO.class, name = "joinReqNotification"),
-        @JsonSubTypes.Type(value = UserLogDTO.class, name = "userLogNotification"),
-})
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class", defaultImpl = DefaultMessageDTO.class)
 public abstract class MessageDTO {
 
     private String title;

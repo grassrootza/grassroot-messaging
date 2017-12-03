@@ -56,13 +56,13 @@ public class GcmXmppInboundListener implements StanzaListener {
                 } else {
                     switch (messageType) {
                         case "ack":
-                            logger.debug("Gcm acknowledges receipt of message {}, with payload {}", gcmPayload.getMessageId(), gcmPayload.getData());;
+                            logger.debug("Gcm acknowledges receipt of message {}, with payload {}", gcmPayload.getMessageId(), gcmPayload.getData());
                             break;
                         case "nack":
                             handleNotAcknowledged(gcmPayload);
                             break;
                         case "receipt":
-                            handleDeliveryReceipts(gcmPayload);
+                            // not using this since it proved to be unreliable, using custom upstream message for delivery receipt
                             break;
                         case "control":
                             break;
@@ -94,6 +94,10 @@ public class GcmXmppInboundListener implements StanzaListener {
                     String phoneNumber = (String) message.getData().get("phoneNumber");
                     gcmHandlingBroker.registerUser(phoneNumber, from);
                     break;
+                case "DELIVERY_RECEIPT":
+                    String deliveredMsgId = String.valueOf(message.getData().get("delivered_message_id"));
+                    handleDeliveryReceipt(deliveredMsgId);
+                    break;
                 case "UPDATE_READ":
                     String notificationId = (String) message.getData().get("notificationId");
                     notificationBroker.updateNotificationStatus(notificationId, NotificationStatus.READ, null, false, null, null);
@@ -116,10 +120,8 @@ public class GcmXmppInboundListener implements StanzaListener {
         }
     }
 
-    private void handleDeliveryReceipts(GcmPayload gcmPayload) {
-        String messageId = String.valueOf(gcmPayload.getData().get("original_message_id"));
+    private void handleDeliveryReceipt(String messageId) {
         logger.debug("Message " + messageId + " delivery successful, updating notification to delivered status.");
-        // todo(beegor) should we do it or ignore it since Luke said that this is not reliable ?
         notificationBroker.updateNotificationStatus(messageId, NotificationStatus.DELIVERED, null, false, null, null);
     }
 

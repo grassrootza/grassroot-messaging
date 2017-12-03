@@ -1,7 +1,10 @@
 description 'Grassroot Messaging Microservice'
 
-group 'grassroot'
-version '1.0-SNAPSHOT'
+
+allprojects  {
+    group 'grassroot'
+    version '1.0.0.9'
+}
 
 ext.libs = [
         springVersion: '4.3.9.RELEASE',
@@ -22,7 +25,6 @@ buildscript {
     }
 }
 
-
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
@@ -33,6 +35,9 @@ repositories {
     mavenCentral()
     maven {
         url  "https://dl.bintray.com/grassrootza/grassroot-platform"
+    }
+    maven {
+        url "http://optimizely.bintray.com/optimizely"
     }
 }
 
@@ -49,6 +54,8 @@ dependencies {
     testCompile group: 'org.springframework.integration', name: 'spring-integration-test', version:libs.springIntegrationVersion
 
 //    compile fileTree(include: ['*.jar'], dir: 'lib')
+
+    compile project(':grassroot-messaging-dto')
 
 
     compile group: 'za.org.grassroot', name: 'grassroot-core', version: '1.1.1.1a'

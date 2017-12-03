@@ -9,6 +9,8 @@ import java.util.Set;
 
 public enum AatMsgStatus {
 
+
+    WAITING_FOR_RECEIPT(-1),
     EN_ROUTE(1),
     DELIVERED(0, 2),
     EXPIRED(3),
@@ -56,7 +58,7 @@ public enum AatMsgStatus {
 
     private Set<Integer> codes;
 
-    private static List<AatMsgStatus> deliveryInProgressStatuses = Arrays.asList(EN_ROUTE, ACCEPTED_FOR_DELIVERY, WAITING_TO_BE_QUEUED, WAITING_AT_SMSC, WAITING_FOR_RESEND,
+    private static List<AatMsgStatus> deliveryInProgressStatuses = Arrays.asList(EN_ROUTE, WAITING_FOR_RECEIPT, ACCEPTED_FOR_DELIVERY, WAITING_TO_BE_QUEUED, WAITING_AT_SMSC, WAITING_FOR_RESEND,
             CONGESTED_WILL_RETRY, BUSY_WILL_RETRY, NO_RESPONSE_WILL_RETRY, REJECTED_WILL_RETRY, LOW_SIGNAL_WILL_RETRY);
 
 

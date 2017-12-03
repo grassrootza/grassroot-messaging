@@ -92,10 +92,12 @@ public class GcmXmppBrokerImpl implements GcmHandlingBroker {
         gcmXmppOutboundChannel.send(buildGcmFromPayload(gcmPayload));
     }
 
+    private ObjectMapper mapper = new ObjectMapper();
     private Message<org.jivesoftware.smack.packet.Message> buildGcmFromPayload(GcmPayload gcmPayload) {
         try {
             org.jivesoftware.smack.packet.Message xmppMessage = new org.jivesoftware.smack.packet.Message();
-            xmppMessage.addExtension(new GcmPacketExtension(objectMapper.writeValueAsString(gcmPayload)));
+            String payloadJson = mapper.writeValueAsString(gcmPayload);
+            xmppMessage.addExtension(new GcmPacketExtension(payloadJson));
             return MessageBuilder.withPayload(xmppMessage).build();
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Badly formed GcmMessage passed as payload");

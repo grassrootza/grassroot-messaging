@@ -18,6 +18,7 @@ import org.springframework.integration.scheduling.PollerMetadata;
 import org.springframework.integration.xmpp.outbound.ChatMessageSendingMessageHandler;
 import org.springframework.messaging.MessageChannel;
 import za.org.grassroot.core.enums.UserMessagingPreference;
+import za.org.grassroot.messaging.service.email.EmailSendingBroker;
 import za.org.grassroot.messaging.service.gcm.PushNotificationBroker;
 import za.org.grassroot.messaging.service.sms.SmsNotificationBroker;
 import za.org.grassroot.messaging.service.sms.SmsSendingStrategy;
@@ -33,6 +34,7 @@ public class MessageRoutingConfig {
 
     private SmsNotificationBroker smsNotificationBroker;
     private PushNotificationBroker pushNotificationBroker;
+    private EmailSendingBroker emailSendingBroker;
 
     @Autowired
     public void setSmsNotificationBroker(SmsNotificationBroker smsNotificationBroker) {
@@ -42,6 +44,11 @@ public class MessageRoutingConfig {
     @Autowired(required = false)
     public void setPushNotificationBroker(PushNotificationBroker pushNotificationBroker) {
         this.pushNotificationBroker = pushNotificationBroker;
+    }
+
+    @Autowired(required = false)
+    public void setEmailSendingBroker(EmailSendingBroker emailSendingBroker) {
+        this.emailSendingBroker = emailSendingBroker;
     }
 
     @Bean(name = PollerMetadata.DEFAULT_POLLER)
@@ -101,6 +108,7 @@ public class MessageRoutingConfig {
         router.setChannelMapping(UserMessagingPreference.SMS.name(), "smsDefaultOutboundChannel");
         router.setChannelMapping("SMS_AWS", "smsAwsOutboundChannel");
         router.setChannelMapping(UserMessagingPreference.ANDROID_APP.name(), "gcmOutboundChannel");
+        router.setChannelMapping(UserMessagingPreference.EMAIL.name(), "emailOutboundChannel");
         router.setIgnoreSendFailures(true);
         router.setLoggingEnabled(true);
         router.setResolutionRequired(false); // will route to SMS
@@ -131,6 +139,13 @@ public class MessageRoutingConfig {
     public IntegrationFlow gcmOutboundFlow() {
         return f -> f.channel("gcmOutboundChannel")
                 .handle(pushNotificationBroker::sendMessage);
+    }
+
+    @Bean
+    @ConditionalOnProperty(value = "grassroot.email.enabled", havingValue = "true")
+    public IntegrationFlow emailOutboundFlow() {
+        return f -> f.channel("emailOutboundChannel")
+                .handle(emailSendingBroker::sendNotificationByEmail);
     }
 
 }

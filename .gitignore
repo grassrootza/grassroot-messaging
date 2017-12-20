@@ -69,3 +69,6 @@ gradle-app.setting
 .idea/vcs.xml 
 
 **/application-production.properties
+.idea/
+grassroot-messaging-dto/build/
+grassroot-messaging-dto/out/

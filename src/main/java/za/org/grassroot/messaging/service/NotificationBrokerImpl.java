@@ -14,7 +14,7 @@ import za.org.grassroot.core.domain.*;
 import za.org.grassroot.core.enums.MessagingProvider;
 import za.org.grassroot.core.repository.MembershipRepository;
 import za.org.grassroot.core.repository.NotificationRepository;
-import za.org.grassroot.messaging.domain.repository.NotificationSpecifications;
+import za.org.grassroot.messaging.domain.NotificationSpecifications;
 
 import java.util.Collections;
 import java.util.List;

@@ -1,4 +1,4 @@
-package za.org.grassroot.messaging.domain.repository;
+package za.org.grassroot.messaging.domain;
 
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.domain.Specifications;

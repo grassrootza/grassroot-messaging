@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import za.org.grassroot.core.domain.GcmRegistration;
 import za.org.grassroot.core.domain.User;
-import za.org.grassroot.core.enums.UserMessagingPreference;
+import za.org.grassroot.core.enums.DeliveryRoute;
 import za.org.grassroot.core.repository.GcmRegistrationRepository;
 import za.org.grassroot.core.repository.UserRepository;
 import za.org.grassroot.messaging.service.NotificationBroker;
@@ -83,7 +83,7 @@ public class GcmXmppBrokerImpl implements GcmHandlingBroker {
         } else {
             gcmRegistrationRepository.save(new GcmRegistration(user, registrationId));
         }
-        user.setMessagingPreference(UserMessagingPreference.ANDROID_APP);
+        user.setMessagingPreference(DeliveryRoute.ANDROID_APP);
     }
 
     @Scheduled(fixedRate = 300000) // runs every five minutes

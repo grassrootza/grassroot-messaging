@@ -55,7 +55,7 @@ dependencies {
     testCompile group: 'org.springframework.integration', name: 'spring-integration-test', version:libs.springIntegrationVersion
 
     compile project(':grassroot-messaging-dto')
-    compile group: 'za.org.grassroot', name: 'grassroot-core', version: '1.1.1.3'
+    compile group: 'za.org.grassroot', name: 'grassroot-core', version: '1.1.1.4'
 
     compile group: 'org.quartz-scheduler', name: 'quartz', version: '2.3.0'
 
@@ -95,6 +95,8 @@ dependencies {
     }
 
     compile group: 'org.projectlombok', name: 'lombok', version: '1.16.18'
+
+    compile 'com.vdurmont:emoji-java:4.0.0'
 
     compile group: 'org.springframework.security', name: 'spring-security-config', version:libs.springSecurityVersion
     compile group: 'org.springframework.security', name: 'spring-security-web', version: libs.springSecurityVersion

@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
+import java.util.Objects;
 
 @Builder @Getter @Setter
 public class GrassrootEmail {
@@ -15,7 +16,7 @@ public class GrassrootEmail {
     private String toAddress;
     private String subject;
     private String content;
-    private String htmlContent;
+    private String plainTextContent;
 
     private File attachment;
     private String attachmentName;
@@ -24,8 +25,8 @@ public class GrassrootEmail {
         return attachment != null;
     }
 
-    public boolean hasHtmlContent() {
-        return !StringUtils.isEmpty(htmlContent);
+    public boolean hasPlainText() {
+        return !StringUtils.isEmpty(plainTextContent);
     }
 
     @Override
@@ -34,8 +35,24 @@ public class GrassrootEmail {
                 "fromName='" + fromName + '\'' +
                 ", address='" + toAddress + '\'' +
                 ", subject='" + subject + '\'' +
-                ", content='" + content + '\'' +
+//                ", content='" + content + '\'' +
                 ", attachmentName='" + attachmentName + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GrassrootEmail that = (GrassrootEmail) o;
+        return Objects.equals(toAddress, that.toAddress) &&
+                Objects.equals(subject, that.subject) &&
+                Objects.equals(content, that.content);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(toAddress, subject, content);
     }
 }

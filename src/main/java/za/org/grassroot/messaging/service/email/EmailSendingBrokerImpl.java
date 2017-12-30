@@ -9,6 +9,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.messaging.Message;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import za.org.grassroot.core.domain.Notification;
 import za.org.grassroot.core.domain.NotificationStatus;
 import za.org.grassroot.core.enums.MessagingProvider;
@@ -25,8 +26,11 @@ import java.util.Set;
 @ConditionalOnProperty(value = "grassroot.email.enabled", havingValue = "true")
 public class EmailSendingBrokerImpl implements EmailSendingBroker {
 
-    @Value("${grassroot.notifications.email.from:notifications@grassroot}")
+    @Value("${grassroot.notifications.email.from:notifications@grassroot.org.za}")
     private String fromAddress;
+
+    @Value("${grassroot.email.default.name:Grassroot}")
+    private String defaultFromName;
 
     private final JavaMailSender javaMailSender;
     private final NotificationBroker notificationBroker;
@@ -70,7 +74,8 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
     @Async
     @Override
     public void sendNonNotificationEmails(Set<GrassrootEmail> emails) {
-        // todo: handle queues, blocking, etc., in here
+        // todo: consider handling queues in here
+        log.info("trying to send out a queue of {} emails", emails.size());
         emails.stream()
                 .map(this::transformEmail)
                 .filter(Objects::nonNull)
@@ -87,15 +92,13 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
     private MimeMessage transformEmail(GrassrootEmail email) {
         try {
             MimeMessage javaMail = javaMailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(javaMail, email.hasAttachment() || email.hasHtmlContent());
-            helper.setFrom(email.getFromAddress(), email.getFromName());
+            MimeMessageHelper helper = new MimeMessageHelper(javaMail, true);
+            helper.setFrom(StringUtils.isEmpty(email.getFromAddress()) ? fromAddress : email.getFromAddress(),
+                    StringUtils.isEmpty(email.getFromName()) ? defaultFromName : email.getFromName());
             helper.setSubject(email.getSubject());
             helper.setTo(email.getToAddress());
-            if (email.hasHtmlContent()) {
-                helper.setText(email.getContent(), email.getHtmlContent());
-            } else {
-                helper.setText(email.getContent());
-            }
+            // note: we assume default is html content
+            helper.setText(email.hasPlainText() ? email.getPlainTextContent() : email.getContent(), email.getContent());
             if (email.hasAttachment()) {
                 helper.addAttachment(email.getAttachmentName(), email.getAttachment());
             }

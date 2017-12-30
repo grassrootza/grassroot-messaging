@@ -60,8 +60,8 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
         Notification notification = notificationBroker.loadNotification(notificationUid);
         logger.debug("Sending notification: {}", notification);
 		try {
-			logger.info("sending message via: {}", notification.deliveryChannel);
-            requestChannel.send(createMessage(notification, notification.deliveryChannel.toString()));
+			logger.info("sending message via: {}", notification.getDeliveryChannel());
+            requestChannel.send(createMessage(notification, notification.getDeliveryChannel().toString()));
         } catch (Exception e) {
 			logger.error("Failed to send notification {}, : {}", notification, e);
 		}

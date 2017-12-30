@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import za.org.grassroot.core.domain.Notification;
 import za.org.grassroot.core.domain.NotificationStatus;
-import za.org.grassroot.core.enums.UserMessagingPreference;
+import za.org.grassroot.core.enums.DeliveryRoute;
 import za.org.grassroot.messaging.service.NotificationBroker;
 
 import java.util.List;
@@ -38,7 +38,7 @@ public class UnsuccessfulNotificationHandlerImpl implements UnsuccessfulNotifica
             unreadNotifications.forEach(n -> {
                 if (n.getSendAttempts() < NotificationBroker.MAX_SENDING_ATTEMPTS) {
                     logger.info("Updating message {} for resend ...", n.getUid());
-                    n.setDeliveryChannel(UserMessagingPreference.SMS);
+                    n.setDeliveryChannel(DeliveryRoute.SMS);
                     n.updateStatus(NotificationStatus.READY_FOR_SENDING, false, null);
                 } else {
                     logger.info("Max delivery attempts tried for notification {}, time to give up", n.getUid());

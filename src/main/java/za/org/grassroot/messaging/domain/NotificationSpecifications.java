@@ -3,8 +3,8 @@ package za.org.grassroot.messaging.domain;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.domain.Specifications;
 import za.org.grassroot.core.domain.*;
+import za.org.grassroot.core.enums.DeliveryRoute;
 import za.org.grassroot.core.enums.MessagingProvider;
-import za.org.grassroot.core.enums.UserMessagingPreference;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -16,7 +16,7 @@ public class NotificationSpecifications {
         Specification<Notification> sendFailed = (root, query, cb) -> cb.equal(root.get("status"), NotificationStatus.SENDING_FAILED);
         Specification<Notification> deliveryFailed = (root, query, cb) -> cb.equal(root.get("status"), NotificationStatus.DELIVERY_FAILED);
         Specification<Notification> messageSent = (root, query, cb) -> cb.equal(root.get("status"), NotificationStatus.SENT);
-        Specification<Notification> androidChannel = (root, query, cb) -> cb.equal(root.get("deliveryChannel"), UserMessagingPreference.ANDROID_APP);
+        Specification<Notification> androidChannel = (root, query, cb) -> cb.equal(root.get("deliveryChannel"), DeliveryRoute.ANDROID_APP);
         Instant tenMinAgo = Instant.now().minus(10, ChronoUnit.MINUTES);
         Specification<Notification> sentAtLeast10MinAgo = (root, query, cb) -> cb.lessThan(root.get("lastStatusChange"), tenMinAgo);
 

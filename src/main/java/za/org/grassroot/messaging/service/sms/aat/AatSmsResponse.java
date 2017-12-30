@@ -1,5 +1,7 @@
 package za.org.grassroot.messaging.service.sms.aat;
 
+import lombok.ToString;
+
 import javax.annotation.Generated;
 import javax.xml.bind.annotation.*;
 
@@ -36,7 +38,7 @@ import javax.xml.bind.annotation.*;
 @XmlType(name = "", propOrder = {
         "submitresult"
 })
-@XmlRootElement(name = "aatsms")
+@XmlRootElement(name = "aatsms") @ToString
 @Generated(value = "com.sun.tools.internal.xjc.Driver", date = "2016-09-19T03:46:30+02:00", comments = "JAXB RI v2.2.8-b130911.1802")
 public class AatSmsResponse {
 

@@ -1,8 +1,6 @@
 package za.org.grassroot.messaging.config;
 
 import org.jivesoftware.smack.XMPPConnection;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -17,7 +15,7 @@ import org.springframework.integration.router.HeaderValueRouter;
 import org.springframework.integration.scheduling.PollerMetadata;
 import org.springframework.integration.xmpp.outbound.ChatMessageSendingMessageHandler;
 import org.springframework.messaging.MessageChannel;
-import za.org.grassroot.core.enums.UserMessagingPreference;
+import za.org.grassroot.core.enums.DeliveryRoute;
 import za.org.grassroot.messaging.service.email.EmailSendingBroker;
 import za.org.grassroot.messaging.service.gcm.PushNotificationBroker;
 import za.org.grassroot.messaging.service.sms.SmsNotificationBroker;
@@ -29,8 +27,6 @@ import za.org.grassroot.messaging.service.sms.SmsSendingStrategy;
 @Configuration
 @SuppressWarnings("SpringJavaAutowiringInspection")
 public class MessageRoutingConfig {
-
-    private static final Logger logger = LoggerFactory.getLogger(MessageRoutingConfig.class);
 
     private SmsNotificationBroker smsNotificationBroker;
     private PushNotificationBroker pushNotificationBroker;
@@ -105,10 +101,10 @@ public class MessageRoutingConfig {
     public HeaderValueRouter headerRouter() {
         HeaderValueRouter router = new HeaderValueRouter("route");
         router.setDefaultOutputChannelName("smsDefaultOutboundChannel");
-        router.setChannelMapping(UserMessagingPreference.SMS.name(), "smsDefaultOutboundChannel");
+        router.setChannelMapping(DeliveryRoute.SMS.name(), "smsDefaultOutboundChannel");
         router.setChannelMapping("SMS_AWS", "smsAwsOutboundChannel");
-        router.setChannelMapping(UserMessagingPreference.ANDROID_APP.name(), "gcmOutboundChannel");
-        router.setChannelMapping(UserMessagingPreference.EMAIL.name(), "emailOutboundChannel");
+        router.setChannelMapping(DeliveryRoute.ANDROID_APP.name(), "gcmOutboundChannel");
+        router.setChannelMapping(DeliveryRoute.EMAIL_GRASSROOT.name(), "emailNotificationChannel");
         router.setIgnoreSendFailures(true);
         router.setLoggingEnabled(true);
         router.setResolutionRequired(false); // will route to SMS
@@ -143,8 +139,8 @@ public class MessageRoutingConfig {
 
     @Bean
     @ConditionalOnProperty(value = "grassroot.email.enabled", havingValue = "true")
-    public IntegrationFlow emailOutboundFlow() {
-        return f -> f.channel("emailOutboundChannel")
+    public IntegrationFlow emailNotificationFlow() {
+        return f -> f.channel("emailNotificationChannel")
                 .handle(emailSendingBroker::sendNotificationByEmail);
     }
 

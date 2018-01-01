@@ -11,13 +11,16 @@ import java.util.List;
  */
 public interface NotificationBroker {
 
-    int MAX_SENDING_ATTEMPTS = 3;
+    int MAX_SENDING_ATTEMPTS = 2;
 
 	Notification loadNotification(String uid);
 
     List<Notification> loadNextBatchOfNotificationsToSend(int maxCount);
 
-	List<Notification> loadUnreadNotificationsToSend();
+	List<Notification> loadUnreadGcmNotificationsToSend();
+
+	// todo : use this somewhere (but also, make sure there's a window within which to retry - 48 hours)
+	List<Notification> loadFailedShortMessagesToTryAgain();
 
     List<Notification> loadSentNotificationsWithUnknownDeliveryStatus(MessagingProvider messagingProvider);
 

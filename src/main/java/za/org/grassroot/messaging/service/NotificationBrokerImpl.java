@@ -55,9 +55,13 @@ public class NotificationBrokerImpl implements NotificationBroker {
 
 
     @Override
-    public List<Notification> loadUnreadNotificationsToSend() {
+    public List<Notification> loadUnreadGcmNotificationsToSend() {
+        return notificationRepository.findAll(NotificationSpecifications.getUnreadAndroidNotifications());
+    }
 
-        return notificationRepository.findAll(NotificationSpecifications.getUnsuccessfulNotifications());
+    @Override
+    public List<Notification> loadFailedShortMessagesToTryAgain() {
+        return notificationRepository.findAll(NotificationSpecifications.getUnsuccessfulSmsNotifications());
     }
 
     @Override

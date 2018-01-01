@@ -43,6 +43,7 @@ public class EmailController {
         GrassrootEmail.GrassrootEmailBuilder baseBuilder = GrassrootEmail.builder();
 
         log.info("do we have an attachment? {}", attachment != null);
+        log.info("and how about the from name = {}, and address = {}", fromName, fromAddress);
 
         // email builder will use defaults if any of these are null
         baseBuilder.subject(subject)

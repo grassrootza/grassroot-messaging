@@ -32,7 +32,7 @@ public class UnsuccessfulNotificationHandlerImpl implements UnsuccessfulNotifica
     @Transactional
     public void processUnreadNotifications() {
         logger.info("Processing unread notifications ...");
-        List<Notification> unreadNotifications = notificationBroker.loadUnreadNotificationsToSend();
+        List<Notification> unreadNotifications = notificationBroker.loadUnreadGcmNotificationsToSend();
         if (unreadNotifications.size() > 0) {
             logger.info("Sending {} unread notifications", unreadNotifications.size());
             unreadNotifications.forEach(n -> {

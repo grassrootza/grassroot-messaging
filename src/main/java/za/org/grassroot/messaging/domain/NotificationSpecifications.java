@@ -11,19 +11,33 @@ import java.time.temporal.ChronoUnit;
 
 public class NotificationSpecifications {
 
-    public static Specifications<Notification> getUnsuccessfulNotifications() {
+    public static Specifications<Notification> getUnreadAndroidNotifications() {
 
-        Specification<Notification> sendFailed = (root, query, cb) -> cb.equal(root.get("status"), NotificationStatus.SENDING_FAILED);
-        Specification<Notification> deliveryFailed = (root, query, cb) -> cb.equal(root.get("status"), NotificationStatus.DELIVERY_FAILED);
-        Specification<Notification> messageSent = (root, query, cb) -> cb.equal(root.get("status"), NotificationStatus.SENT);
+        Specification<Notification> messageNotRead = (root, query, cb) -> cb.notEqual(root.get("status"), NotificationStatus.READ);
         Specification<Notification> androidChannel = (root, query, cb) -> cb.equal(root.get("deliveryChannel"), DeliveryRoute.ANDROID_APP);
-        Instant tenMinAgo = Instant.now().minus(10, ChronoUnit.MINUTES);
-        Specification<Notification> sentAtLeast10MinAgo = (root, query, cb) -> cb.lessThan(root.get("lastStatusChange"), tenMinAgo);
 
-        Specifications<Notification> unreadMessageOnAndroid = Specifications.where(messageSent).and(androidChannel).and(sentAtLeast10MinAgo);
+        return Specifications
+                .where(messageNotRead)
+                .and(androidChannel)
+                .and(sentAtLeastXMinsAgo(10));
+    }
 
-        return unreadMessageOnAndroid.or(sendFailed).or(deliveryFailed);
+    public static Specifications<Notification> getUnsuccessfulSmsNotifications() {
+        Specification<Notification> shortMessageOrGcm = (root, query, cb) -> root.get("deliveryChannel").in(
+                DeliveryRoute.SHORT_MESSAGE, DeliveryRoute.SMS, DeliveryRoute.WHATSAPP, DeliveryRoute.ANDROID_APP
+        );
+        Specification<Notification> sendFailedOrDeliveryFailed = (root, query, cb) -> root.get("status").in(
+                NotificationStatus.SENDING_FAILED, NotificationStatus.DELIVERY_FAILED);
 
+        return Specifications
+                .where(shortMessageOrGcm)
+                .and(sendFailedOrDeliveryFailed)
+                .and(sentAtLeastXMinsAgo(15));
+    }
+
+    private static Specification<Notification> sentAtLeastXMinsAgo(int X) {
+        Instant tenMinAgo = Instant.now().minus(X, ChronoUnit.MINUTES);
+        return (root, query, cb) -> cb.lessThan(root.get("lastStatusChange"), tenMinAgo);
     }
 
     public static Specifications<Notification> getSentNotificationsWithUnknownDeliveryStatus(MessagingProvider sentViaProvider) {

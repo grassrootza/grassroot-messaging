@@ -6,6 +6,6 @@ package za.org.grassroot.messaging.scheduling;
  * note: all sms notifications are automatically marked "read", as that is most secure/reliable message sending mechanism.
  * so this is primarily for handling Android messages that are not read.
  */
-public interface UnsuccessfulNotificationHandler {
-    void processUnreadNotifications();
+public interface UnsuccessfulSmsHandler {
+    void processUnsuccessfulSmsMessages();
 }

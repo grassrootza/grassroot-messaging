@@ -94,19 +94,15 @@ public class AatSmsSendingManager implements SmsSendingService {
         response = response.replace("&", "");
         Document doc = new org.jdom2.input.SAXBuilder().build(new StringReader(response));
 
-
         Element rootEl = doc.getRootElement();
-
         Element msgEl = rootEl.getChild("message");
 
         if (msgEl != null) {
-            SMSDeliveryReceipt smsStatus = new AatSMSDeliveryDeliveryReceipt(msgEl);
-            return smsStatus;
+            return new AatSMSDeliveryDeliveryReceipt(msgEl);
+        } else {
+            return null;
         }
-
-        return null;
     }
-
 
     private String replaceIllegalChars(String message) {
         String messageEmojiStripped = EmojiParser.removeAllEmojis(message).replaceAll("[<=_]", "");

@@ -12,6 +12,7 @@ import java.util.List;
 public interface NotificationBroker {
 
     int MAX_SENDING_ATTEMPTS = 2;
+    int MAX_AGE_TO_RETRY_DAYS = 2;
 
 	Notification loadNotification(String uid);
 

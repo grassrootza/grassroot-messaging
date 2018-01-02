@@ -29,7 +29,7 @@ public class AwsSmsResponse implements SmsGatewayResponse {
     public AwsSmsResponse(AmazonSNSException e) {
         this.successful = false;
         this.error = e;
-        this.responseType = SmsResponseType.UNKNOWN_ERROR; // todo: extract from exception
+        this.responseType = SmsResponseType.UNKNOWN_ERROR;
         this.publishResult = null;
     }
 

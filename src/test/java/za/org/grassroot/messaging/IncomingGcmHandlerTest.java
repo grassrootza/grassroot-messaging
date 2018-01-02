@@ -43,8 +43,7 @@ public class IncomingGcmHandlerTest {
 
     // for tests
     public User makeDummy(String phoneNumber, String displayName) {
-        User user = new User(phoneNumber, displayName);
-        return user;
+        return new User(phoneNumber, displayName, null);
     }
 
 

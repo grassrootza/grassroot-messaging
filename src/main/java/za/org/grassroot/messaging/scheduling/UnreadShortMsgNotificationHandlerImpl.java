@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import za.org.grassroot.core.domain.Notification;
 import za.org.grassroot.core.domain.NotificationStatus;
-import za.org.grassroot.core.enums.UserMessagingPreference;
+import za.org.grassroot.core.enums.DeliveryRoute;
 import za.org.grassroot.messaging.service.NotificationBroker;
 
 import java.util.List;
@@ -16,14 +16,14 @@ import java.util.List;
  * Ported by luke on 2017/05/19.
  */
 @Service
-public class UnsuccessfulNotificationHandlerImpl implements UnsuccessfulNotificationHandler {
+public class UnreadShortMsgNotificationHandlerImpl implements UnreadShortMsgNotificationHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(UnsuccessfulNotificationHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(UnreadShortMsgNotificationHandler.class);
 
     private final NotificationBroker notificationBroker;
 
     @Autowired
-    public UnsuccessfulNotificationHandlerImpl(NotificationBroker notificationBroker) {
+    public UnreadShortMsgNotificationHandlerImpl(NotificationBroker notificationBroker) {
         this.notificationBroker = notificationBroker;
     }
 
@@ -32,13 +32,13 @@ public class UnsuccessfulNotificationHandlerImpl implements UnsuccessfulNotifica
     @Transactional
     public void processUnreadNotifications() {
         logger.info("Processing unread notifications ...");
-        List<Notification> unreadNotifications = notificationBroker.loadUnreadNotificationsToSend();
+        List<Notification> unreadNotifications = notificationBroker.loadUnreadGcmNotificationsToSend();
         if (unreadNotifications.size() > 0) {
             logger.info("Sending {} unread notifications", unreadNotifications.size());
             unreadNotifications.forEach(n -> {
                 if (n.getSendAttempts() < NotificationBroker.MAX_SENDING_ATTEMPTS) {
-                    logger.info("Updating message {} for resend ...", n.getUid());
-                    n.setDeliveryChannel(UserMessagingPreference.SMS);
+                    logger.info("Updating previously failed GCM message {} for resend ...", n.getUid());
+                    n.setDeliveryChannel(DeliveryRoute.SMS);
                     n.updateStatus(NotificationStatus.READY_FOR_SENDING, false, null);
                 } else {
                     logger.info("Max delivery attempts tried for notification {}, time to give up", n.getUid());

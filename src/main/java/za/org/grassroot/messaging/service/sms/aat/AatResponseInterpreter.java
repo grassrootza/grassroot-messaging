@@ -1,5 +1,6 @@
 package za.org.grassroot.messaging.service.sms.aat;
 
+import lombok.extern.slf4j.Slf4j;
 import za.org.grassroot.core.enums.MessagingProvider;
 import za.org.grassroot.messaging.service.sms.SmsGatewayResponse;
 import za.org.grassroot.messaging.service.sms.SmsResponseType;
@@ -8,6 +9,7 @@ import za.org.grassroot.messaging.service.sms.SmsResponseType;
  * Created by luke on 2016/09/19.
  * utility class to turn the JAXB-interpreted AAT response into something more abstract and usable
  */
+@Slf4j
 public class AatResponseInterpreter implements SmsGatewayResponse {
 
     private static final String successAction = "enqueued";

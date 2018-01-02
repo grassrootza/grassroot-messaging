@@ -11,15 +11,21 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import za.org.grassroot.core.domain.Group;
 import za.org.grassroot.core.domain.Notification;
 import za.org.grassroot.core.domain.User;
 import za.org.grassroot.core.domain.notification.EventInfoNotification;
-import za.org.grassroot.core.enums.UserMessagingPreference;
+import za.org.grassroot.core.domain.task.EventLog;
+import za.org.grassroot.core.domain.task.Meeting;
+import za.org.grassroot.core.enums.DeliveryRoute;
+import za.org.grassroot.core.enums.EventLogType;
 import za.org.grassroot.messaging.config.MessageRoutingConfig;
 import za.org.grassroot.messaging.controller.SimpleNotification;
 import za.org.grassroot.messaging.domain.PriorityMessage;
 import za.org.grassroot.messaging.service.gcm.PushNotificationBroker;
 import za.org.grassroot.messaging.service.sms.SmsNotificationBroker;
+
+import java.time.Instant;
 
 /**
  * Created by luke on 2017/05/18.
@@ -49,12 +55,12 @@ public class MessageConfigTest {
     @Test
     public void testSmsChannel() throws InterruptedException {
 
-        User user = new User("27605550000");
-        user.setMessagingPreference(UserMessagingPreference.SMS);
+        User user = new User("27605550000", "Someone", null);
+        user.setMessagingPreference(DeliveryRoute.SMS);
         Notification dummy = new SimpleNotification(user, "Hello World", false);
         Message<Notification> message = MessageBuilder
                 .withPayload(dummy)
-                .setHeader("route", UserMessagingPreference.SMS.name())
+                .setHeader("route", DeliveryRoute.SMS.name())
                 .build();
         requestChannel.send(message);
         // verify(smsNotificationBroker, times(1)).sendStandardSmsNotification(message);
@@ -93,7 +99,11 @@ public class MessageConfigTest {
     }
 
     public static Notification makeDummy(String message) {
-        Notification notification = new EventInfoNotification(null, message, null);
+        User testUser = new User("0505550000", "Test", null);
+        Group testGroup = new Group("test", testUser);
+        Meeting testMtg = new Meeting("test mtg", Instant.now(), testUser, testGroup, "somewhere");
+        EventLog eventLog = new EventLog(testUser, testMtg, EventLogType.CREATED);
+        Notification notification = new EventInfoNotification(testUser, message, eventLog);
         return notification;
     }
 

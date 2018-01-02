@@ -10,12 +10,12 @@ import org.springframework.context.ApplicationContext;
  * we have to extract required dependencies from Spring's ApplicationContext.
  */
 @DisallowConcurrentExecution
-public class UnreadNotificationSenderJob extends ApplicationContextAwareQuartzJobBean {
+public class UnsuccessfulSmsHandlerJob extends ApplicationContextAwareQuartzJobBean {
 	@Override
 	protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
 		ApplicationContext applicationContext = getApplicationContext(context);
 
-        UnreadShortMsgNotificationHandler unreadShortMsgNotificationHandler = applicationContext.getBean(UnreadShortMsgNotificationHandler.class);
-        unreadShortMsgNotificationHandler.processUnreadNotifications();
+        UnsuccessfulSmsHandler unsuccessfulSmsHandler = applicationContext.getBean(UnsuccessfulSmsHandler.class);
+        unsuccessfulSmsHandler.processUnsuccessfulSmsMessages();
     }
 }

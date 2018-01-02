@@ -12,10 +12,7 @@ import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.scheduling.quartz.CronTriggerFactoryBean;
 import org.springframework.scheduling.quartz.JobDetailFactoryBean;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
-import za.org.grassroot.messaging.scheduling.ApplicationContextAwareQuartzJobBean;
-import za.org.grassroot.messaging.scheduling.BatchedNotificationSenderJob;
-import za.org.grassroot.messaging.scheduling.SMSDeliveryReceiptFetcher;
-import za.org.grassroot.messaging.scheduling.UnreadNotificationSenderJob;
+import za.org.grassroot.messaging.scheduling.*;
 
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -84,7 +81,26 @@ public class SchedulingConfig implements SchedulingConfigurer {
             @Qualifier("unreadNotificationSenderJobDetail") JobDetail jobDetail) {
         CronTriggerFactoryBean factoryBean = new CronTriggerFactoryBean();
         factoryBean.setJobDetail(jobDetail);
-        String unsuccessfulNotificationsHandlerCron = env.getProperty("unsuccessful.notifications.handler.cron", "0 0/5 * * * ?");
+        String unreadNotificationsHandlerCron = env.getProperty("unread.notifications.handler.cron", "0 0/5 * * * ?");
+        factoryBean.setCronExpression(unreadNotificationsHandlerCron);
+        factoryBean.setMisfireInstruction(CronTrigger.MISFIRE_INSTRUCTION_DO_NOTHING);
+        return factoryBean;
+    }
+
+    @Bean
+    public JobDetailFactoryBean unsuccessfulSmsHandlerJobDetail() {
+        JobDetailFactoryBean factoryBean = new JobDetailFactoryBean();
+        factoryBean.setJobClass(UnsuccessfulSmsHandlerJob.class);
+        factoryBean.setDurability(false);
+        return factoryBean;
+    }
+
+    @Bean
+    public CronTriggerFactoryBean unsuccessfulSmsHandlerCronTrigger(
+            @Qualifier("unsuccessfulSmsHandlerJobDetail") JobDetail jobDetail) {
+        CronTriggerFactoryBean factoryBean = new CronTriggerFactoryBean();
+        factoryBean.setJobDetail(jobDetail);
+        String unsuccessfulNotificationsHandlerCron = env.getProperty("unsuccessful.notifications.handler.cron", "0 0/15 * * * ?");
         factoryBean.setCronExpression(unsuccessfulNotificationsHandlerCron);
         factoryBean.setMisfireInstruction(CronTrigger.MISFIRE_INSTRUCTION_DO_NOTHING);
         return factoryBean;
@@ -92,7 +108,8 @@ public class SchedulingConfig implements SchedulingConfigurer {
 
     @Bean
     public SchedulerFactoryBean schedulerFactoryBean(@Qualifier("batchedNotificationSenderCronTrigger") CronTrigger sendTrigger,
-                                                     @Qualifier("unreadNotificationSenderCronTrigger") CronTrigger unreadTrigger) {
+                                                     @Qualifier("unreadNotificationSenderCronTrigger") CronTrigger unreadTrigger,
+                                                     @Qualifier("unsuccessfulSmsHandlerCronTrigger") CronTrigger failedSendTrigger) {
         Properties quartzProperties = new Properties();
 
         SchedulerFactoryBean factory = new SchedulerFactoryBean();
@@ -102,7 +119,7 @@ public class SchedulingConfig implements SchedulingConfigurer {
         factory.setQuartzProperties(quartzProperties);
         factory.setStartupDelay(0);
         factory.setApplicationContextSchedulerContextKey(ApplicationContextAwareQuartzJobBean.APPLICATION_CONTEXT_KEY);
-        factory.setTriggers(sendTrigger, unreadTrigger);
+        factory.setTriggers(sendTrigger, unreadTrigger, failedSendTrigger);
 
         return factory;
     }

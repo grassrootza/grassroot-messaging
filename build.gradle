@@ -8,20 +8,20 @@ allprojects  {
 
 ext.libs = [
         springVersion: '4.3.9.RELEASE',
-        springBootVersion: '1.5.4.RELEASE',
+        springBootVersion: '1.5.9.RELEASE',
         springIntegrationVersion: '4.3.10.RELEASE',
         springSecurityVersion: '4.2.3.RELEASE'
 ]
 
 buildscript {
     dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.4.RELEASE")
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.9.RELEASE")
         classpath("io.spring.gradle:dependency-management-plugin:1.0.2.RELEASE")
     }
 
     repositories {
+        mavenLocal()
         mavenCentral()
-
     }
 }
 
@@ -32,6 +32,7 @@ apply plugin: 'io.spring.dependency-management'
 sourceCompatibility = 1.8
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven {
         url  "https://dl.bintray.com/grassrootza/grassroot-platform"
@@ -53,12 +54,8 @@ dependencies {
     testCompile group: 'org.springframework.boot', name: 'spring-boot-starter-test', version:libs.springBootVersion
     testCompile group: 'org.springframework.integration', name: 'spring-integration-test', version:libs.springIntegrationVersion
 
-//    compile fileTree(include: ['*.jar'], dir: 'lib')
-
     compile project(':grassroot-messaging-dto')
-
-
-    compile group: 'za.org.grassroot', name: 'grassroot-core', version: '1.1.1.2'
+    compile group: 'za.org.grassroot', name: 'grassroot-core', version: '1.1.1.4'
 
     compile group: 'org.quartz-scheduler', name: 'quartz', version: '2.3.0'
 
@@ -69,11 +66,11 @@ dependencies {
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa', version:libs.springBootVersion
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-undertow', version:libs.springBootVersion
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-integration', version:libs.springBootVersion
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-mail', version: libs.springBootVersion
 
     compile group: 'org.springframework.boot', name: 'spring-boot-actuator', version:libs.springBootVersion
 
     compile group: 'org.springframework.integration', name: 'spring-integration-xmpp', version: libs.springIntegrationVersion
-    compile group: 'org.springframework.integration', name: 'spring-integration-mqtt', version:  libs.springIntegrationVersion
 
     compile group: 'org.springframework', name: 'spring-web', version: libs.springVersion
 
@@ -98,6 +95,8 @@ dependencies {
     }
 
     compile group: 'org.projectlombok', name: 'lombok', version: '1.16.18'
+
+    compile 'com.vdurmont:emoji-java:4.0.0'
 
     compile group: 'org.springframework.security', name: 'spring-security-config', version:libs.springSecurityVersion
     compile group: 'org.springframework.security', name: 'spring-security-web', version: libs.springSecurityVersion

@@ -45,7 +45,7 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
         log.info("sending a notification by email ...");
         Notification notification = (Notification) message.getPayload();
         // since email sending may take time, especially if there's a queue, mark it as sending until we know it failed
-        notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.SENDING, null, true, null,
+        notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.SENDING, null, true, false, null,
                 MessagingProvider.EMAIL);
 
         try {
@@ -60,13 +60,13 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
             // note: docs state Gmail can set header in way that makes getMessageId return wrong value, so recommended is following way
             String messageId = mail.getHeader("Message-ID", "");
             mail.setText("Mail is sent! message Id = {}", messageId);
-            notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.SENT, null, true, messageId,
+            notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.SENT, null, true, false, messageId,
                     MessagingProvider.EMAIL);
         } catch (MessagingException|UnsupportedEncodingException|MailException e) {
             // todo : better handle / distinguish failed sends (and how to check for undeliverable exceptions)
             log.error("Error sending a notification mail1", e);
             notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.DELIVERY_FAILED,
-                    "Error sending message via email", true, null, MessagingProvider.EMAIL);
+                    "Error sending message via email", true, false, null, MessagingProvider.EMAIL);
         }
 
     }

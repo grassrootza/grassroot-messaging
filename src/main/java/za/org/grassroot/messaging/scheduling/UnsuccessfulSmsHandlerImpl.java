@@ -41,10 +41,10 @@ public class UnsuccessfulSmsHandlerImpl implements UnsuccessfulSmsHandler {
             if (n.getSendAttempts() < NotificationBroker.MAX_SENDING_ATTEMPTS && threshold.isAfter(maxAgeForRetry)) {
                 logger.info("Trying once more to resend message ... {}", n.getUid());
                 n.setDeliveryChannel(DeliveryRoute.SMS);
-                n.updateStatus(NotificationStatus.READY_FOR_SENDING, false, null);
+                n.updateStatus(NotificationStatus.READY_FOR_SENDING, false, false, null);
             } else {
                 logger.info("Max delivery attempts tried for notification {}, time to give up", n.getUid());
-                n.updateStatus(NotificationStatus.UNDELIVERABLE, false, null);
+                n.updateStatus(NotificationStatus.UNDELIVERABLE, false, false, null);
             }
         });
     }

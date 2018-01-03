@@ -39,10 +39,10 @@ public class UnreadShortMsgNotificationHandlerImpl implements UnreadShortMsgNoti
                 if (n.getSendAttempts() < NotificationBroker.MAX_SENDING_ATTEMPTS) {
                     logger.info("Updating previously failed GCM message {} for resend ...", n.getUid());
                     n.setDeliveryChannel(DeliveryRoute.SMS);
-                    n.updateStatus(NotificationStatus.READY_FOR_SENDING, false, null);
+                    n.updateStatus(NotificationStatus.READY_FOR_SENDING, false, false, null);
                 } else {
                     logger.info("Max delivery attempts tried for notification {}, time to give up", n.getUid());
-                    n.updateStatus(NotificationStatus.UNDELIVERABLE, false, null);
+                    n.updateStatus(NotificationStatus.UNDELIVERABLE, false, false, null);
                 }
             });
         }

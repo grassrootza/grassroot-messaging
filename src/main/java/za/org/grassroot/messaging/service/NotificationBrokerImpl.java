@@ -74,18 +74,28 @@ public class NotificationBrokerImpl implements NotificationBroker {
     @Override
     @Transactional
     public void updateNotificationStatus(String notificationUid, NotificationStatus status, String errorMessage,
-                                         boolean resultOfSendingAttempt, String messageSendKey, MessagingProvider sentViaProvider) {
+                                         boolean resultOfSendingAttempt, boolean resultOfReceiptFetch, String messageSendKey, MessagingProvider sentViaProvider) {
 
         Notification notification = notificationRepository.findByUid(notificationUid);
 
         if (notification != null) {
 
-            notification.updateStatus(status, resultOfSendingAttempt, errorMessage);
+            notification.updateStatus(status, resultOfSendingAttempt, resultOfReceiptFetch, errorMessage);
 
             if (messageSendKey != null)
                 notification.setSendingKey(messageSendKey);
             if (sentViaProvider != null)
                 notification.setSentViaProvider(sentViaProvider);
+            notificationRepository.save(notification);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void incrementReceiptFetchCount(String notificationUid) {
+        Notification notification = notificationRepository.findByUid(notificationUid);
+        if (notification != null) {
+            notification.incrementReceiptFetchCount();
             notificationRepository.save(notification);
         }
     }

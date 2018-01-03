@@ -28,7 +28,7 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 	private MessageChannel requestChannel;
 
 	@Autowired
-	public BatchedNotificationSenderImpl(NotificationBroker notificationBroker, EntityManager entityManager, GcmRegistrationRepository gcmRegistrationRepository) {
+	public BatchedNotificationSenderImpl(NotificationBroker notificationBroker, GcmRegistrationRepository gcmRegistrationRepository) {
 		this.notificationBroker = notificationBroker;
 		this.gcmRegistrationRepository = gcmRegistrationRepository;
 	}

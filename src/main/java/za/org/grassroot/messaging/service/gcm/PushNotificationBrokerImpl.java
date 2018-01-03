@@ -53,7 +53,7 @@ public class PushNotificationBrokerImpl implements PushNotificationBroker {
         GcmPayload payload = buildGcmFromMessagePayload(notification);
         sendingService.sendGcmMessage(payload);
         notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.SENT, null, true,
-                notification.getUid(), MessagingProvider.GCM);
+                false, notification.getUid(), MessagingProvider.GCM);
 
     }
 

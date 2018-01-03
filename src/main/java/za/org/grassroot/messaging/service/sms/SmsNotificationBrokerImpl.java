@@ -140,7 +140,7 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
         if (response.isSuccessful()) {
 
             notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.SENT, null, true,
-                    response.getMessageKey(), response.getProvider());
+                    false, response.getMessageKey(), response.getProvider());
 
         } else {
 
@@ -148,24 +148,24 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
                 case MSISDN_INVALID:
                     logger.info("invalid number for SMS, marking it as undeliverable to prevent looping redelivery");
                     notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.UNDELIVERABLE,
-                            "Can't send message. Invalid MSISDN.", true, null, response.getProvider());
+                            "Can't send message. Invalid MSISDN.", true, false, null, response.getProvider());
                     break;
 
                 case DUPLICATE_MESSAGE:
                     logger.info("trying to resend already sent message, just set it as sent");
                     notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.SENT,
-                            null, true, null, response.getProvider());
+                            null, true, false, null, response.getProvider());
                     break;
 
                 case COMMUNICATION_ERROR:
                     logger.info("communication error happened while sending message");
                     notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.SENDING_FAILED,
-                            "Can't send message. Could not't access sms gateway", true, null, response.getProvider());
+                            "Can't send message. Could not't access sms gateway", true, false, null, response.getProvider());
                     break;
 
                 default:
                     notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.SENDING_FAILED,
-                            "Can't send message. Reason: " + response.getResponseType(), true, null, response.getProvider());
+                            "Can't send message. Reason: " + response.getResponseType(), true, false, null, response.getProvider());
                     logger.error("error delivering SMS, response from gateway: {}", response.toString());
             }
         }

@@ -5,6 +5,7 @@ import org.springframework.data.jpa.domain.Specifications;
 import za.org.grassroot.core.domain.*;
 import za.org.grassroot.core.enums.DeliveryRoute;
 import za.org.grassroot.core.enums.MessagingProvider;
+import za.org.grassroot.messaging.service.NotificationBroker;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -44,11 +45,13 @@ public class NotificationSpecifications {
 
         Specification<Notification> sent = (root, query, cb) -> cb.equal(root.get(Notification_.status), NotificationStatus.SENT);
         Specification<Notification> providerMatch = (root, query, cb) -> cb.equal(root.get(Notification_.sentViaProvider), sentViaProvider);
+        Specification<Notification> lowFetches = (root, query, cb)
+                -> cb.lessThan(root.get(Notification_.readReceiptFetchAttempts), NotificationBroker.MAX_RECEIPT_FETCHES);
 
         Instant tenMinutesAgo = Instant.now().minus(1, ChronoUnit.MINUTES);
         Specification<Notification> sentAtLeast10MinAgo = (root, query, cb) -> cb.lessThan(root.get(Notification_.lastStatusChange), tenMinutesAgo);
 
-        return Specifications.where(sent).and(providerMatch).and(sentAtLeast10MinAgo);
+        return Specifications.where(sent).and(providerMatch).and(sentAtLeast10MinAgo).and(lowFetches);
 
     }
 

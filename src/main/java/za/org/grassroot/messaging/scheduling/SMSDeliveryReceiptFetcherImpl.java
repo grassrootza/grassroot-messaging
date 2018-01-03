@@ -49,12 +49,13 @@ public class SMSDeliveryReceiptFetcherImpl implements SMSDeliveryReceiptFetcher 
                             if (receipt != null) {
                                 SMSDeliveryStatus deliveryStatus = receipt.getDeliveryStatus();
                                 if (deliveryStatus == SMSDeliveryStatus.DELIVERED)
-                                    notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.DELIVERED, null, false, null, null);
+                                    notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.DELIVERED, null, false, true, null, null);
                                 else if (deliveryStatus == SMSDeliveryStatus.DELIVERY_FAILED)
-                                    notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.DELIVERY_FAILED, receipt.getDescription(), false, null, null);
-                            } else
+                                    notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.DELIVERY_FAILED, receipt.getDescription(), false, true, null, null);
+                            } else {
                                 log.warn("No delivery receipt returned by provider for notification uid {}, sendingKey: {}", notification.getUid(), notification.getSendingKey());
-
+                                notificationBroker.incrementReceiptFetchCount(notification.getUid());
+                            }
                         } catch (Exception e) {
                             log.error("Failed to fetch delivery receipt for notification with uid" + notification.getUid(), e);
                         }

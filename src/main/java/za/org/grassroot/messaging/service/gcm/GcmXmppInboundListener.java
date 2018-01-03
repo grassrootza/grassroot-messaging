@@ -100,7 +100,7 @@ public class GcmXmppInboundListener implements StanzaListener {
                     break;
                 case "UPDATE_READ":
                     String notificationId = (String) message.getData().get("notificationId");
-                    notificationBroker.updateNotificationStatus(notificationId, NotificationStatus.READ, null, false, null, null);
+                    notificationBroker.updateNotificationStatus(notificationId, NotificationStatus.READ, null, false, false, null, null);
                     break;
                 default: //action unknown ignore
                     break;
@@ -114,7 +114,7 @@ public class GcmXmppInboundListener implements StanzaListener {
         if (notification != null) {
             logger.info("Push Notification delivery failed, should now send SMS to  {}", notification.getTarget().getPhoneNumber());
             notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.DELIVERY_FAILED,
-                    "Push notification delivery failed!", false, null, null);
+                    "Push notification delivery failed!", false, false, null, null);
         } else {
             logger.debug("Received an upstream message without notification, looks like: {}", payload);
         }
@@ -122,7 +122,7 @@ public class GcmXmppInboundListener implements StanzaListener {
 
     private void handleDeliveryReceipt(String messageId) {
         logger.debug("Message " + messageId + " delivery successful, updating notification to delivered status.");
-        notificationBroker.updateNotificationStatus(messageId, NotificationStatus.DELIVERED, null, false, null, null);
+        notificationBroker.updateNotificationStatus(messageId, NotificationStatus.DELIVERED, null, false, false, null, null);
     }
 
 }

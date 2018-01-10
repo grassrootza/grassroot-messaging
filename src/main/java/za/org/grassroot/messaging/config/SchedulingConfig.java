@@ -1,5 +1,6 @@
 package za.org.grassroot.messaging.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.quartz.CronTrigger;
 import org.quartz.JobDetail;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,28 +22,30 @@ import java.util.concurrent.Executors;
 /**
  * Created by luke on 2017/05/18.
  */
-@Configuration
+@Configuration @Slf4j
 public class SchedulingConfig implements SchedulingConfigurer {
-
-    // private static final Logger logger = LoggerFactory.getLogger(GrassrootMessagingConfig.class);
-
 
     private Environment env;
     private SMSDeliveryReceiptFetcher smsDeliveryReceiptFetcher;
 
     public SchedulingConfig(Environment env, SMSDeliveryReceiptFetcher smsDeliveryReceiptFetcher) {
+        log.info("Constructing scheduling config");
         this.env = env;
         this.smsDeliveryReceiptFetcher = smsDeliveryReceiptFetcher;
     }
 
-
     @Override
     public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-
+        log.info("Setting standard scheduled tasks");
         taskRegistrar.setScheduler(taskExecutor());
-
-        CronTask smsDeliveryFetchCronTask = new CronTask(smsDeliveryReceiptFetcher::fetchDeliveryReceipts, " 0 0/1 * * * ?");
-        taskRegistrar.addCronTask(smsDeliveryFetchCronTask);
+        CronTask smsDeliveryFetchCronTask = new CronTask(smsDeliveryReceiptFetcher::fetchDeliveryReceiptsFromApiLog, " 0 0/1 * * * ?");
+        if (env.getProperty("grassroot.smsfetcher.enabled", Boolean.class)) {
+            taskRegistrar.addCronTask(smsDeliveryFetchCronTask);
+        }
+        if (env.getProperty("grassroot.callbackq.enabled", Boolean.class)) {
+            taskRegistrar.addFixedRateTask(smsDeliveryReceiptFetcher::clearCallBackQueue,
+                    env.getProperty("grassroot.callbackq.interval", Long.class));
+        }
     }
 
     @Bean(destroyMethod = "shutdown")

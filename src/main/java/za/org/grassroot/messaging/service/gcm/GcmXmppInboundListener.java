@@ -91,6 +91,7 @@ public class GcmXmppInboundListener implements StanzaListener {
         if (action != null) {
             switch (action) {
                 case "REGISTER":
+                    // todo : migrate this to using user uid
                     String phoneNumber = (String) message.getData().get("phoneNumber");
                     gcmHandlingBroker.registerUser(phoneNumber, from);
                     break;

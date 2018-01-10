@@ -70,6 +70,12 @@ public class NotificationBrokerImpl implements NotificationBroker {
         return notificationRepository.findAll(NotificationSpecifications.getSentNotificationsWithUnknownDeliveryStatus(messagingProvider));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Notification loadBySendingKey(String sendingKey) {
+        return notificationRepository.findOne((root, query, cb) -> cb.equal(root.get(Notification_.sendingKey), sendingKey));
+    }
+
 
     @Override
     @Transactional
@@ -112,9 +118,6 @@ public class NotificationBrokerImpl implements NotificationBroker {
         }
         return false;
     }
-
-
-
 
 
 }

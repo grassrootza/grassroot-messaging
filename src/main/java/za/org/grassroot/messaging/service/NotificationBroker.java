@@ -25,13 +25,15 @@ public interface NotificationBroker {
 
     List<Notification> loadSentNotificationsWithUnknownDeliveryStatus(MessagingProvider messagingProvider);
 
+    Notification loadBySendingKey(String sendingKey);
+
     /**
      * updates notification status
      *  @param notificationUid        uid of notification
      * @param status                 status to be set
      * @param errorMessage           if status is being set to some type of delivery failure status, error message should be set also
      * @param resultOfSendingAttempt if this status update is result of sending attempt this should be true, false otherwise
-     * @param resultOfReceiptFetch
+     * @param resultOfReceiptFetch   if this status update is result of getting a receipt via querying logs or callback, set as true
      * @param messageSendKey         if this status update is result of sending attempt sending provider message identifier should be passed here, null otherwise
      * @param sentViaProvider        if this status update is result of sending attempt sending provider should be specified, null otherwise
      */
@@ -42,4 +44,5 @@ public interface NotificationBroker {
     void incrementReceiptFetchCount(String notificationUid);
 
     boolean isUserSelfJoinedToGroup(Notification notification);
+
 }

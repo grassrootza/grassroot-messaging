@@ -46,11 +46,11 @@ public class NotificationPushRequestController extends BaseController {
     }
 
     @RequestMapping(value = "/system/{phoneNumber}", method = RequestMethod.POST)
-    public @ResponseBody SmsGatewayResponse sendSystemMessage(@PathVariable String phoneNumber,
-                                                                     @RequestParam String message,
-                                                                     @RequestParam(required = false) Boolean userRequested) {
-        logger.info("Sending normal system SMS to {}", phoneNumber);
-        User user = userRepository.findByPhoneNumber(phoneNumber);
+    public @ResponseBody SmsGatewayResponse sendSystemMessage(@PathVariable String destUserId,
+                                                              @RequestParam String message,
+                                                              @RequestParam(required = false) Boolean userRequested) {
+        logger.info("Sending normal system SMS to {}", destUserId);
+        User user = userRepository.findOneByUid(destUserId);
         if (user != null) {
             Notification notification = new SimpleNotification(user, message, userRequested != null ? userRequested : false);
             requestChannel.send(MessageBuilder

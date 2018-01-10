@@ -70,7 +70,7 @@ public class GcmXmppBrokerImpl implements GcmHandlingBroker {
             return;
         }
 
-        User user = userRepository.findByPhoneNumber(convertedNumber);
+        User user = userRepository.findByPhoneNumberAndPhoneNumberNotNull(convertedNumber);
         if (user == null) {
             logger.warn("received valid phone number, but no user found", convertedNumber);
             return;

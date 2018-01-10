@@ -7,12 +7,14 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.convert.threeten.Jsr310JpaConverters;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * Created by luke on 2017/05/17.
  */
 @SpringBootApplication
 @EnableAsync
+@EnableScheduling
 @EnableJpaRepositories(basePackages = "za.org.grassroot")
 @ComponentScan(basePackages = "za.org.grassroot")
 @EntityScan(basePackages = "za.org.grassroot", basePackageClasses = Jsr310JpaConverters.class)

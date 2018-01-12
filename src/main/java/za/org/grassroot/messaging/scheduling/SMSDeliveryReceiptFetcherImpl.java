@@ -1,5 +1,6 @@
 package za.org.grassroot.messaging.scheduling;
 
+import com.amazonaws.SdkClientException;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.Message;
@@ -52,8 +53,16 @@ public class SMSDeliveryReceiptFetcherImpl implements SMSDeliveryReceiptFetcher 
     @PostConstruct
     public void init() {
         if (callbackQueueEnabled) {
+            setUpSqsClient();
+        }
+    }
+
+    private void setUpSqsClient() {
+        try {
             this.sqs = AmazonSQSClientBuilder.defaultClient();
             this.maxSqsMessages = (int) ((callbackInterval / 1000) * ratePerSecond);
+        } catch (SdkClientException e) {
+            log.error("Could not set up SQS client but callback q enabled", e);
         }
     }
 
@@ -99,7 +108,7 @@ public class SMSDeliveryReceiptFetcherImpl implements SMSDeliveryReceiptFetcher 
 
     @Override
     public void clearCallBackQueue() {
-        if (callbackQueueEnabled) {
+        if (callbackQueueEnabled && sqs != null) {
             log.debug("clearing the call back queue ...");
             ReceiveMessageRequest request = new ReceiveMessageRequest(callbackQueueName);
             request.setMaxNumberOfMessages(maxSqsMessages);

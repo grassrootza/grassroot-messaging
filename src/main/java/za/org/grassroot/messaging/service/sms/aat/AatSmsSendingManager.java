@@ -1,9 +1,5 @@
 package za.org.grassroot.messaging.service.sms.aat;
 
-//import org.dom4j.Document;
-//import org.dom4j.Element;
-//import org.dom4j.io.SAXReader;
-
 import com.vdurmont.emoji.EmojiParser;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -24,8 +20,6 @@ import za.org.grassroot.messaging.service.sms.SmsResponseType;
 import za.org.grassroot.messaging.service.sms.SmsSendingService;
 
 import java.io.StringReader;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by luke on 2015/09/09.

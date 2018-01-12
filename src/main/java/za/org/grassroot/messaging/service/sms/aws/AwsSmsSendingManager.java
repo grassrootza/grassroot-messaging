@@ -30,7 +30,7 @@ public class AwsSmsSendingManager implements SmsSendingService {
 
     private static final Logger logger = LoggerFactory.getLogger(AwsSmsSendingManager.class);
 
-    @Value("${grassroot.aws.test.topic:}")
+    @Value("${grassroot.aws.test.topic:aws-testing-topic}")
     private String awsTestTopicArn; // for testing on AWS SNS
 
     @Value("${grassroot.aws.test.subscribe:false}")

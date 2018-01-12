@@ -1,6 +1,7 @@
 package za.org.grassroot.messaging.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,6 +24,7 @@ NOTE: convert to Kafka as soon as possible, basically
  */
 @RestController @Slf4j
 @RequestMapping("/email")
+@ConditionalOnProperty(value = "grassroot.email.enabled", havingValue = "true")
 public class EmailController {
 
     private final EmailSendingBroker emailSendingBroker;

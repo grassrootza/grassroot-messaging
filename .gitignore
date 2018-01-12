@@ -1,3 +1,22 @@
+# localhost logs #
+log
+log/*
+
+# localhost environment files #
+environment/*
+.deploy/envpath.txt
+/.clean
+/build-jar.sh
+/test.sh
+
+# localhost deployment scripts #
+/startgrassroot.sh
+
+# ignore docker files #
+/docker-compose.yml
+/Dockerfile
+/build-jar.sh
+
 # Created by .ignore support plugin (hsz.mobi)
 ### Java template
 # Compiled class file
@@ -66,7 +85,7 @@ gradle-app.setting
 .idea/misc.xml
 .idea/modules.xml
 .idea/modules/
-.idea/vcs.xml 
+.idea/vcs.xml
 
 **/application-production.properties
 .idea/

@@ -1,0 +1,12 @@
+version: '2'
+services:
+  grassroot:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - 8081:8081
+    volumes:
+      - "./:/usr/src/grassroot-msg/"
+      - "<ENVPATH>:/usr/src/grassroot-msg/environment"

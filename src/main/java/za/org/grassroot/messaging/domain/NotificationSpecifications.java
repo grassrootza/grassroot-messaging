@@ -15,12 +15,14 @@ public class NotificationSpecifications {
     public static Specifications<Notification> getUnreadAndroidNotifications() {
 
         Specification<Notification> messageNotRead = (root, query, cb) -> cb.notEqual(root.get("status"), NotificationStatus.READ);
+        Specification<Notification> messageNotUndeliverable = (root, query, cb) -> cb.notEqual(root.get("status"), NotificationStatus.UNDELIVERABLE);
         Specification<Notification> androidChannel = (root, query, cb) -> cb.equal(root.get("deliveryChannel"), DeliveryRoute.ANDROID_APP);
 
         return Specifications
                 .where(messageNotRead)
+                .and(messageNotUndeliverable)
                 .and(androidChannel)
-                .and(sentAtLeastXMinsAgo(10));
+                .and(sentAtLeastXMinsAgo(1));
     }
 
     public static Specifications<Notification> getUnsuccessfulSmsNotifications() {

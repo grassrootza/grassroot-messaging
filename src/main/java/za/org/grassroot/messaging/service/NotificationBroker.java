@@ -5,6 +5,7 @@ import za.org.grassroot.core.domain.NotificationStatus;
 import za.org.grassroot.core.enums.MessagingProvider;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by paballo on 2016/04/07.
@@ -19,9 +20,9 @@ public interface NotificationBroker {
 
     List<Notification> loadNextBatchOfNotificationsToSend(int maxCount);
 
-	List<Notification> loadUnreadGcmNotificationsToSend();
+	List<Notification> loadUnreadGcmNotificationsToSend(int maxCount);
 
-	List<Notification> loadFailedShortMessagesToTryAgain();
+	List<Notification> loadFailedShortMessagesToTryAgain(int maxCount);
 
     List<Notification> loadSentNotificationsWithUnknownDeliveryStatus(MessagingProvider messagingProvider);
 
@@ -40,6 +41,8 @@ public interface NotificationBroker {
     void updateNotificationStatus(String notificationUid, NotificationStatus status,
                                   String errorMessage, boolean resultOfSendingAttempt, boolean resultOfReceiptFetch,
                                   String messageSendKey, MessagingProvider sentViaProvider);
+
+    void updateNotifications(Set<Notification> notificationSet);
 
     void incrementReceiptFetchCount(String notificationUid);
 

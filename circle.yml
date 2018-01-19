@@ -41,7 +41,7 @@ general:
 
 deployment:
   production:
-    branch: master
+    branch: docker-migration
     commands:
       # define environment
       - echo 'export ENVIRONMENT=production' >> ~/.circlerc

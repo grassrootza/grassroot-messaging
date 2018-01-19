@@ -17,7 +17,7 @@ RUN mkdir -p /usr/src/grassroot-msg/environment && mkdir -p /usr/src/grassroot-m
 COPY . /usr/src/grassroot-msg
 
 # BUILD JAR FILE
-COPY .deploy/build-jar.sh /usr/src/grassroot-msg/build-jar.sh
+# COPY .deploy/build-jar.sh /usr/src/grassroot-msg/build-jar.sh
 RUN /usr/src/grassroot-msg/build-jar.sh
 
 # START SUPERVISORD

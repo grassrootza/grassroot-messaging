@@ -16,6 +16,6 @@ chmod +x startgrassroot.sh
 chmod +x stopgrassroot.sh
 
 # DEPLOY MODIFIED IMAGE TO DOCKER HUB
-docker build --rm=false -t grassrootdocker/gr-msg-app:$ENVIRONMENT .
+docker build --rm=false -t grassrootdocker/gr-msg:$ENVIRONMENT .
 docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-docker push grassrootdocker/gr-msg-app:$ENVIRONMENT
+docker push grassrootdocker/gr-msg:$ENVIRONMENT

@@ -38,7 +38,6 @@ public class UnreadShortMsgNotificationHandlerImpl implements UnreadShortMsgNoti
         logger.info("Send time would be restricted to: {}", SendTimeUtil.restrictSendTime(userZone));
         if (unreadNotifications.size() > 0) {
             logger.info("Sending {} unread notifications", unreadNotifications.size());
-            // just for some debugging
             int sendCount = 0;
             int maxCount = 0;
             for (Notification n : unreadNotifications) {

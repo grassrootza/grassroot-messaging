@@ -17,6 +17,7 @@ DOCKERRUN_FILE=Dockerrun.aws.json
 sed -i "s/<TAG>/$ENVIRONMENT/" .deploy/$DOCKERRUN_FILE
 
 # DOWNLOAD ENVIRONMENT VARIABLES AND CREDENTIALS FROM S3
+mkdir -p environment
 aws s3 cp s3://$S3BUCKET/environment-variables.$ENVIRONMENT environment/environment-variables --region $S3REGION
 #aws s3 cp s3://$S3BUCKET/aws-credentials.$ENVIRONMENT environment/aws-credentials --region $S3REGION
 aws s3 cp s3://$S3BUCKET/grassroot-integration.properties.$ENVIRONMENT environment/grassroot-integration.properties --region $S3REGION

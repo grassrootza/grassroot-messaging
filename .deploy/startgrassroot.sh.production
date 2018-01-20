@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # SET ENVIRONMENT VARIABLES BASED ON THE ENVIRONMENT PREVIOUSLY SETUP VIA
-. /usr/src/grassroot/environment/environment-variables
+. /usr/src/grassroot-msg/environment/environment-variables
 
 # SET HOSTNAME ACCORDINGLY TO BE UNIQUE WITHIN PAPERTRAIL
 wget http://s3.amazonaws.com/ec2metadata/ec2-metadata

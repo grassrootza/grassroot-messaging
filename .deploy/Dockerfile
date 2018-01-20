@@ -14,11 +14,11 @@ RUN mkdir -p /usr/src/grassroot-msg/environment && mkdir -p /usr/src/grassroot-m
 
 # COPY ALL SOURCE CODE, ALTERNATIVELY WE COULD BE COPYING JUST THE JAR FILES (TO REVIEW LATER)
 # DECIDED TO COPY ONLY THE JAR FILES
-COPY . /usr/src/grassroot-msg
+# COPY . /usr/src/grassroot-msg
 
 # BUILD JAR FILE
 # COPY .deploy/build-jar.sh /usr/src/grassroot-msg/build-jar.sh
-RUN /usr/src/grassroot-msg/build-jar.sh
+# RUN /usr/src/grassroot-msg/build-jar.sh
 
 # START SUPERVISORD
 CMD ["supervisord", "-n"]

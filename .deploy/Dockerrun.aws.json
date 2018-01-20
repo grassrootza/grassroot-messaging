@@ -11,12 +11,8 @@
   ],
   "Volumes": [
     {
-      "HostDirectory": "/var/app/current/environment",
-      "ContainerDirectory": "/usr/src/grassroot-msg/environment"
-    },
-    {
-      "HostDirectory": "/var/app/current/log",
-      "ContainerDirectory": "/usr/src/grassroot-msg/log"
+      "HostDirectory": "/var/app/current/",
+      "ContainerDirectory": "/usr/src/grassroot-msg/"
     }
   ],
   "Logging": "/var/log/nginx"

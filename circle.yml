@@ -36,7 +36,7 @@ test:
 
 general:
   artifacts:
-    #- "grassroot-core/build/libs/grassroot-core-1.0.0.M3.jar"
+    #- "grassroot-messaging-1.0.0.9.jar"
     #- "grassroot-webapp/build/libs/grassroot-webapp-1.0.0.M3.jar"
 
 deployment:
@@ -52,6 +52,11 @@ deployment:
       - mv .deploy/buildimage.sh buildimage.sh
       - chmod +x buildimage.sh
       - ./buildimage.sh $CIRCLE_SHA1 $ENVIRONMENT
+
+      # build jar and add properties file from S3
+      - mv .deploy/buildjar.sh buildjar.sh
+      - chmod +x buildimage.sh
+      - ./buildjar.sh $ENVIRONMENT
 
       # deploy files to beanstalk
       - mv .deploy/ebdeploy.sh ebdeploy.sh

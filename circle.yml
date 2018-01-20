@@ -55,7 +55,7 @@ deployment:
 
       # build jar and add properties file from S3
       - mv .deploy/buildjar.sh buildjar.sh
-      - chmod +x buildimage.sh
+      - chmod +x buildjar.sh
       - ./buildjar.sh $ENVIRONMENT
 
       # deploy files to beanstalk

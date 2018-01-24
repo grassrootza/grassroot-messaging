@@ -29,11 +29,8 @@ public class PushNotificationBrokerImpl implements PushNotificationBroker {
     private static final Logger logger = LoggerFactory.getLogger(PushNotificationBrokerImpl.class);
 
     private final GcmHandlingBroker sendingService;
-
     private final ObjectMapper objectMapper;
-
     private final GcmRegistrationRepository gcmRegistrationRepository;
-
     private final NotificationBroker notificationBroker;
 
     @Autowired

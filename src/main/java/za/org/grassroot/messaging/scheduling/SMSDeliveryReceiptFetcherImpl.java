@@ -61,7 +61,7 @@ public class SMSDeliveryReceiptFetcherImpl implements SMSDeliveryReceiptFetcher 
     private void setUpSqsClient() {
         try {
             this.sqs = AmazonSQSClientBuilder.standard().withRegion(Regions.EU_WEST_1).build();
-            this.maxSqsMessages = (int) ((callbackInterval / 1000) * ratePerSecond);
+            this.maxSqsMessages = Math.min(10, (int) ((callbackInterval / 1000) * ratePerSecond));
             log.info("max SQS messages = {}", maxSqsMessages);
         } catch (SdkClientException e) {
             log.error("Could not set up SQS client but callback q enabled", e);
@@ -114,7 +114,7 @@ public class SMSDeliveryReceiptFetcherImpl implements SMSDeliveryReceiptFetcher 
             log.debug("clearing the call back queue ... max messages : {}", maxSqsMessages);
             ReceiveMessageRequest request = new ReceiveMessageRequest(callbackQueueName);
             request.setMaxNumberOfMessages(maxSqsMessages);
-            List<Message> batch = sqs.receiveMessage(callbackQueueName).getMessages();
+            List<Message> batch = sqs.receiveMessage(request).getMessages();
             log.info("received {} messages in queue ...", batch.size());
             batch.forEach(this::handleCallbackDeliveryReceipt);
         }

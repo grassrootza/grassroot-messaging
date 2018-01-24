@@ -98,6 +98,7 @@ public class NotificationBrokerImpl implements NotificationBroker {
                 notification.setSendingKey(messageSendKey);
             if (sentViaProvider != null)
                 notification.setSentViaProvider(sentViaProvider);
+
             notificationRepository.save(notification);
         }
     }

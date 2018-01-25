@@ -1,6 +1,7 @@
 package za.org.grassroot.messaging.scheduling;
 
 import com.amazonaws.SdkClientException;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.Message;
@@ -32,7 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class SMSDeliveryReceiptFetcherImpl implements SMSDeliveryReceiptFetcher {
 
     @Value("${grassroot.callbackq.enabled:false}") private boolean callbackQueueEnabled;
-    @Value("${grassroot.callbackq.queue.name:callback-receipts}") private String callbackQueueName;
+    @Value("${grassroot.callbackq.queue.name:delivery-receipt-dummy}") private String callbackQueueName;
     @Value("${grassroot.callbackq.interval:5000}") private long callbackInterval;
     @Value("${grassroot.callbackq.ratepersecond:1}") private int ratePerSecond;
     @Value("${grassroot.callbackq.queue.deadl:dead-letter}") private String deadLetterQueue;
@@ -59,8 +60,9 @@ public class SMSDeliveryReceiptFetcherImpl implements SMSDeliveryReceiptFetcher 
 
     private void setUpSqsClient() {
         try {
-            this.sqs = AmazonSQSClientBuilder.defaultClient();
-            this.maxSqsMessages = (int) ((callbackInterval / 1000) * ratePerSecond);
+            this.sqs = AmazonSQSClientBuilder.standard().withRegion(Regions.EU_WEST_1).build();
+            this.maxSqsMessages = Math.min(10, (int) ((callbackInterval / 1000) * ratePerSecond));
+            log.info("max SQS messages = {}", maxSqsMessages);
         } catch (SdkClientException e) {
             log.error("Could not set up SQS client but callback q enabled", e);
         }
@@ -109,10 +111,10 @@ public class SMSDeliveryReceiptFetcherImpl implements SMSDeliveryReceiptFetcher 
     @Override
     public void clearCallBackQueue() {
         if (callbackQueueEnabled && sqs != null) {
-            log.debug("clearing the call back queue ...");
+            log.debug("clearing the call back queue ... max messages : {}", maxSqsMessages);
             ReceiveMessageRequest request = new ReceiveMessageRequest(callbackQueueName);
             request.setMaxNumberOfMessages(maxSqsMessages);
-            List<Message> batch = sqs.receiveMessage(callbackQueueName).getMessages();
+            List<Message> batch = sqs.receiveMessage(request).getMessages();
             log.info("received {} messages in queue ...", batch.size());
             batch.forEach(this::handleCallbackDeliveryReceipt);
         }
@@ -126,7 +128,7 @@ public class SMSDeliveryReceiptFetcherImpl implements SMSDeliveryReceiptFetcher 
             Map<String, Object> msgBodyMap = objectMapper.readValue(msgBody, new TypeReference<HashMap<String, Object>>() {});
             log.debug("msgBodyMap: {}", msgBodyMap);
             LinkedHashMap qsm = (LinkedHashMap) msgBodyMap.get("queryStringParameters");
-            log.info("queryStringParams, type: {}, content: {}", qsm.getClass(), qsm.toString());
+            log.debug("queryStringParams, type: {}, content: {}", qsm.getClass(), qsm.toString());
             handleReceipt((String) qsm.get("rf"), Integer.valueOf((String) qsm.get("st")));
         } catch (IOException e) {
             log.error("could not read value", e);
@@ -135,7 +137,7 @@ public class SMSDeliveryReceiptFetcherImpl implements SMSDeliveryReceiptFetcher 
             log.error("could not cast map from JSON, time to shift transforming to lambda", e);
             sendToDeadLetterQueue(message);
         } finally {
-            log.info("cleaning up by removing message");
+            log.debug("cleaning up by removing message");
             sqs.deleteMessage(callbackQueueName, message.getReceiptHandle());
         }
     }

@@ -19,10 +19,10 @@ sed -i "s/<TAG>/$ENVIRONMENT/" .deploy/$DOCKERRUN_FILE
 # DOWNLOAD ENVIRONMENT VARIABLES AND CREDENTIALS FROM S3
 mkdir -p environment
 mkdir -p log
-aws s3 cp s3://$S3BUCKET/environment-variables.$ENVIRONMENT environment/environment-variables --region $S3REGION
+aws s3 cp s3://$S3BUCKET/environment-variables.messaging.$ENVIRONMENT environment/environment-variables.messaging.production --region $S3REGION
 #aws s3 cp s3://$S3BUCKET/aws-credentials.$ENVIRONMENT environment/aws-credentials --region $S3REGION
-aws s3 cp s3://$S3BUCKET/grassroot-integration.properties.$ENVIRONMENT environment/grassroot-integration.properties --region $S3REGION
-aws s3 cp s3://$S3BUCKET/grassroot-payments.properties.$ENVIRONMENT environment/grassroot-payments.properties --region $S3REGION
+#aws s3 cp s3://$S3BUCKET/grassroot-integration.properties.$ENVIRONMENT environment/grassroot-integration.properties --region $S3REGION
+#aws s3 cp s3://$S3BUCKET/grassroot-payments.properties.$ENVIRONMENT environment/grassroot-payments.properties --region $S3REGION
 #aws s3 cp s3://$S3BUCKET/jwt_keystore.jks.$ENVIRONMENT environment/jwt_keystore.jks --region $S3REGION
 touch log/grassroot-msg.log
 # DOWNLOAD PDF TEMPLATES (AT SOME POINT JUST FETCH FROM S3 DIRECTLY IN APP)

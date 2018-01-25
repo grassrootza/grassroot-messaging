@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.domain.Specifications;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import za.org.grassroot.core.domain.*;
@@ -19,6 +20,7 @@ import za.org.grassroot.messaging.domain.NotificationSpecifications;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Ported to micro project by Luke on 2017/05/18.
@@ -41,27 +43,31 @@ public class NotificationBrokerImpl implements NotificationBroker {
     @Override
     @Transactional(readOnly = true)
     public Notification loadNotification(String uid) {
-        Objects.nonNull(uid);
+        Objects.requireNonNull(uid);
         return notificationRepository.findByUid(uid);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Notification> loadNextBatchOfNotificationsToSend(int maxCount) {
+        return wrapMaxResults(NotificationSpecifications.getNotificationsReadyForSending(), maxCount);
+    }
+
+
+    @Override
+    public List<Notification> loadUnreadGcmNotificationsToSend(int maxCount) {
+        return wrapMaxResults(NotificationSpecifications.getUnreadAndroidNotifications(), maxCount);
+    }
+
+    @Override
+    public List<Notification> loadFailedShortMessagesToTryAgain(int maxCount) {
+        return wrapMaxResults(NotificationSpecifications.getUnsuccessfulSmsNotifications(), maxCount);
+    }
+
+    private List<Notification> wrapMaxResults(Specifications<Notification> specs, int maxCount) {
         Pageable pageable = new PageRequest(0, maxCount, Sort.Direction.ASC, Notification_.createdDateTime.getName());
-        Page<Notification> page = notificationRepository.findAll(NotificationSpecifications.getNotificationsReadyForSending(), pageable);
+        Page<Notification> page = notificationRepository.findAll(specs, pageable);
         return page.hasContent() ? page.getContent() : Collections.emptyList();
-    }
-
-
-    @Override
-    public List<Notification> loadUnreadGcmNotificationsToSend() {
-        return notificationRepository.findAll(NotificationSpecifications.getUnreadAndroidNotifications());
-    }
-
-    @Override
-    public List<Notification> loadFailedShortMessagesToTryAgain() {
-        return notificationRepository.findAll(NotificationSpecifications.getUnsuccessfulSmsNotifications());
     }
 
     @Override
@@ -92,8 +98,16 @@ public class NotificationBrokerImpl implements NotificationBroker {
                 notification.setSendingKey(messageSendKey);
             if (sentViaProvider != null)
                 notification.setSentViaProvider(sentViaProvider);
+
             notificationRepository.save(notification);
         }
+    }
+
+    @Override
+    @Transactional
+    public void updateNotifications(Set<Notification> notificationSet) {
+        logger.info("updating status for {} notifications", notificationSet.size());
+        notificationRepository.save(notificationSet);
     }
 
     @Override

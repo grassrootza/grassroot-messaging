@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # SET ENVIRONMENT VARIABLES BASED ON THE ENVIRONMENT PREVIOUSLY SETUP VIA
-. /usr/src/grassroot-msg/environment/environment-variables
+. /usr/src/grassroot-msg/environment/environment-variables.messaging.production
 
 # SET HOSTNAME ACCORDINGLY TO BE UNIQUE WITHIN PAPERTRAIL
 wget http://s3.amazonaws.com/ec2metadata/ec2-metadata
@@ -18,6 +18,4 @@ remote_syslog -p 38961 -d logs6.papertrailapp.com --pid-file=/var/run/remote_sys
 
 # START GRASSROOT
 cd /usr/src/grassroot-msg/
-
-#./scripts/startmqtt.sh
 java -Djava.security.egd=file:/dev/urandom -Dspring.profiles.active=$PROFILE,fast -jar -Xmx1024m build/libs/grassroot-messaging-1.0.0.9.jar > log/grassroot-msg.log 2>&1 &

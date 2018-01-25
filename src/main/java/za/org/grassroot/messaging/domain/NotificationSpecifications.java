@@ -15,12 +15,19 @@ public class NotificationSpecifications {
     public static Specifications<Notification> getUnreadAndroidNotifications() {
 
         Specification<Notification> messageNotRead = (root, query, cb) -> cb.notEqual(root.get("status"), NotificationStatus.READ);
+        Specification<Notification> messageNotUndeliverable = (root, query, cb) -> cb.notEqual(root.get("status"), NotificationStatus.UNDELIVERABLE);
+        Specification<Notification> messageNotReadyForSending = (root, query, cb) -> cb.notEqual(root.get("status"), NotificationStatus.READY_FOR_SENDING);
         Specification<Notification> androidChannel = (root, query, cb) -> cb.equal(root.get("deliveryChannel"), DeliveryRoute.ANDROID_APP);
+        Specification<Notification> notSentByAat = (root, query, cb) -> cb.notEqual(root.get("sentViaProvider"), MessagingProvider.AAT);
 
         return Specifications
                 .where(messageNotRead)
+                .and(messageNotUndeliverable)
+                .and(messageNotReadyForSending)
                 .and(androidChannel)
-                .and(sentAtLeastXMinsAgo(10));
+                .and(notSentByAat) // since sometimes routing header can be GCM but defaults into AAT
+                .and(lastStatusChangeNotStale(1))
+                .and(sentAtLeastXMinsAgo(30));
     }
 
     public static Specifications<Notification> getUnsuccessfulSmsNotifications() {
@@ -39,6 +46,11 @@ public class NotificationSpecifications {
     private static Specification<Notification> sentAtLeastXMinsAgo(int X) {
         Instant tenMinAgo = Instant.now().minus(X, ChronoUnit.MINUTES);
         return (root, query, cb) -> cb.lessThan(root.get("lastStatusChange"), tenMinAgo);
+    }
+
+    private static Specification<Notification> lastStatusChangeNotStale(int daysBack) {
+        Instant daysAgo = Instant.now().minus(daysBack, ChronoUnit.DAYS);
+        return (root, query, cb) -> cb.greaterThan(root.get("lastStatusChange"), daysAgo);
     }
 
     public static Specifications<Notification> getSentNotificationsWithUnknownDeliveryStatus(MessagingProvider sentViaProvider) {

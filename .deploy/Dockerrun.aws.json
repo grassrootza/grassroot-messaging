@@ -1,0 +1,19 @@
+{
+  "AWSEBDockerrunVersion": "1",
+  "Image": {
+    "Name": "grassrootdocker/gr-msg:<TAG>",
+    "Update": "true"
+  },
+  "Ports": [
+    {
+      "ContainerPort": "80"
+    }
+  ],
+  "Volumes": [
+    {
+      "HostDirectory": "/var/app/current/",
+      "ContainerDirectory": "/usr/src/grassroot-msg/"
+    }
+  ],
+  "Logging": "/var/log/nginx"
+}

@@ -1,0 +1,12 @@
+version: '2'
+services:
+  grassroot:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8081
+    volumes:
+      - "./:/usr/src/grassroot-msg/"
+      - "./environment:/usr/src/grassroot-msg/environment"
+      # - "./log:/usr/src/grassroot/log"

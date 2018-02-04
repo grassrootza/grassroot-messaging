@@ -1,0 +1,13 @@
+branch-defaults:
+  master:
+    environment: gr-msg-prod
+  staging:
+    environment: gr-msg-stg
+
+global:
+  application_name: gr-msg
+  default_ec2_keyname: gr-msg-prod
+  default_platform: 64bit Amazon Linux 2017.03 v2.7.1 running Docker 17.03.1-ce
+  default_region: eu-west-1
+  profile: default
+  sc: git

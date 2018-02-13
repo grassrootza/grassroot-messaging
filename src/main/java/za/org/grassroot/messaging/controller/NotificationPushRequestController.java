@@ -45,7 +45,7 @@ public class NotificationPushRequestController extends BaseController {
         this.priorityChannel = priorityChannel;
     }
 
-    @RequestMapping(value = "/system/{phoneNumber}", method = RequestMethod.POST)
+    @RequestMapping(value = "/system/{destUserId}", method = RequestMethod.POST)
     public @ResponseBody SmsGatewayResponse sendSystemMessage(@PathVariable String destUserId,
                                                               @RequestParam String message,
                                                               @RequestParam(required = false) Boolean userRequested) {

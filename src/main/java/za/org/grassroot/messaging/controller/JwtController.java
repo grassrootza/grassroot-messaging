@@ -2,6 +2,7 @@ package za.org.grassroot.messaging.controller;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,7 +18,7 @@ import java.util.Date;
 /**
  * Created by luke on 2017/05/22.
  */
-@RestController
+@RestController @Slf4j
 @RequestMapping("/jwt")
 public class JwtController extends BaseController {
 
@@ -33,6 +34,7 @@ public class JwtController extends BaseController {
 
     @RequestMapping("/public/refresh/trusted")
     public @ResponseBody boolean refreshPublicCredentials() {
+        log.info("received call to refresh trusted keys");
         return jwtService.refreshTrustedKeys();
     }
 

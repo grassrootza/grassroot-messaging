@@ -56,7 +56,7 @@ dependencies {
     testCompile group: 'org.springframework.integration', name: 'spring-integration-test', version:libs.springIntegrationVersion
 
     compile project(':grassroot-messaging-dto')
-    compile group: 'za.org.grassroot', name: 'grassroot-core', version: '1.1.1.6'
+    compile group: 'za.org.grassroot', name: 'grassroot-core', version: '1.1.1.7'
 
     compile group: 'org.quartz-scheduler', name: 'quartz', version: '2.3.0'
 

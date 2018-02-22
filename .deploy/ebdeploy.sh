@@ -43,5 +43,7 @@ mv .deploy/.elasticbeanstalk .elasticbeanstalk
 mv .deploy/.ebextensions .ebextensions
 mv .deploy/.ebignore .ebignore
 mv .deploy/Dockerrun.aws.json Dockerrun.aws.json
+mv .deploy/log_files.yml log_files.yml
+
 eb use $EBENVIRONMENT
 eb deploy $EBENVIRONMENT --label "$ENVIRONMENT-$COMMIT_MESSAGE" --timeout 20

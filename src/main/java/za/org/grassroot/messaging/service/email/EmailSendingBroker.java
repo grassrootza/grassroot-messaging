@@ -1,7 +1,7 @@
 package za.org.grassroot.messaging.service.email;
 
 import org.springframework.messaging.Message;
-import za.org.grassroot.messaging.domain.GrassrootEmail;
+import za.org.grassroot.core.dto.GrassrootEmail;
 
 import java.util.Set;
 

@@ -12,8 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import za.org.grassroot.core.domain.Notification;
 import za.org.grassroot.core.domain.NotificationStatus;
+import za.org.grassroot.core.dto.GrassrootEmail;
 import za.org.grassroot.core.enums.MessagingProvider;
-import za.org.grassroot.messaging.domain.GrassrootEmail;
 import za.org.grassroot.messaging.service.NotificationBroker;
 
 import javax.mail.MessagingException;
@@ -94,11 +94,11 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
             MimeMessage javaMail = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(javaMail, true);
             helper.setFrom(StringUtils.isEmpty(email.getFromAddress()) ? fromAddress : email.getFromAddress(),
-                    StringUtils.isEmpty(email.getFromName()) ? defaultFromName : email.getFromName());
+                    StringUtils.isEmpty(email.getFrom()) ? defaultFromName : email.getFrom());
             helper.setSubject(email.getSubject());
-            helper.setTo(email.getToAddress());
+            helper.setTo(email.getAddress());
             // note: we assume default is html content
-            helper.setText(email.hasPlainText() ? email.getPlainTextContent() : email.getContent(), email.getContent());
+            helper.setText(email.hasHtmlContent() ? email.getHtmlContent() : email.getContent(), email.getContent());
             if (email.hasAttachment()) {
                 helper.addAttachment(email.getAttachmentName(), email.getAttachment());
             }

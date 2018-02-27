@@ -98,7 +98,12 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
             helper.setSubject(email.getSubject());
             helper.setTo(email.getAddress());
             // note: we assume default is html content
-            helper.setText(email.hasHtmlContent() ? email.getHtmlContent() : email.getContent(), email.getContent());
+            if (email.hasHtmlContent()) {
+                helper.setText(email.getContent(), email.getHtmlContent());
+            } else {
+                helper.setText(email.getContent());
+            }
+
             if (email.hasAttachment()) {
                 helper.addAttachment(email.getAttachmentName(), email.getAttachment());
             }

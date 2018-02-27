@@ -1,6 +1,7 @@
 package za.org.grassroot.messaging.service.sms.aat;
 
 import com.vdurmont.emoji.EmojiParser;
+import org.apache.commons.lang3.StringUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.slf4j.Logger;
@@ -56,7 +57,7 @@ public class AatSmsSendingManager implements SmsSendingService {
 
         long startTime = System.currentTimeMillis();
         UriComponentsBuilder gatewayURI = UriComponentsBuilder.newInstance().scheme("https").host(smsGatewayHost);
-        String msgToSend = replaceIllegalChars(message);
+        String msgToSend = replaceSmartQuotes(replaceIllegalChars(message));
         gatewayURI.path("send/").queryParam("username", smsGatewayUsername)
                 .queryParam("password", smsGatewayPassword)
                 .queryParam("number", destinationNumber)
@@ -101,6 +102,41 @@ public class AatSmsSendingManager implements SmsSendingService {
     private String replaceIllegalChars(String message) {
         String messageEmojiStripped = EmojiParser.removeAllEmojis(message).replaceAll("[<=_]", "");
         return messageEmojiStripped.replaceAll("\\s*&\\s*", " and ");
+    }
+
+    // these are from Google base (couldn't find them in guava, so hand ported)
+    private String replaceSmartQuotes(String str) {
+        log.debug("special chars? : {}", indexOfChars(str, "\u0091\u0092\u2018\u2019", 0));
+        str = replaceChars(str, "\u0091\u0092\u2018\u2019", '\'');
+        str = replaceChars(str, "\u0093\u0094\u201c\u201d", '"');
+        return str;
+    }
+
+    public static String replaceChars(String str, String oldchars,
+                                      char newchar) {
+        int pos = indexOfChars(str, oldchars, 0);
+        if (pos == -1) {
+            return str;
+        }
+
+        StringBuilder buf = new StringBuilder(str);
+        do {
+            buf.setCharAt(pos, newchar);
+            pos = indexOfChars(str, oldchars, pos + 1);
+        } while (pos != -1);
+
+        return buf.toString();
+    }
+
+    public static int indexOfChars(String str, String chars, int fromIndex) {
+        final int len = str.length();
+
+        for (int pos = fromIndex; pos < len; pos++) {
+            if (chars.indexOf(str.charAt(pos)) >= 0) {
+                return pos;
+            }
+        }
+        return -1;
     }
 
     @Override

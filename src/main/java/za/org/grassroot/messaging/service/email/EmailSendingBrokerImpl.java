@@ -1,14 +1,19 @@
 package za.org.grassroot.messaging.service.email;
 
+import lombok.AllArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.messaging.Message;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Base64Utils;
 import org.springframework.util.StringUtils;
 import za.org.grassroot.core.domain.Notification;
 import za.org.grassroot.core.domain.NotificationStatus;
@@ -18,13 +23,19 @@ import za.org.grassroot.messaging.service.NotificationBroker;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service @Slf4j
 @ConditionalOnProperty(value = "grassroot.email.enabled", havingValue = "true")
 public class EmailSendingBrokerImpl implements EmailSendingBroker {
+
+    private static final Pattern imgRegExp  = Pattern.compile( "<img[^>]+src\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>" );
+    private static final String srcToken = "src=\"";
 
     @Value("${grassroot.notifications.email.from:notifications@grassroot.org.za}")
     private String fromAddress;
@@ -93,13 +104,32 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
         try {
             MimeMessage javaMail = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(javaMail, true);
-            helper.setFrom(StringUtils.isEmpty(email.getFromAddress()) ? fromAddress : email.getFromAddress(),
-                    StringUtils.isEmpty(email.getFrom()) ? defaultFromName : email.getFrom());
-            helper.setSubject(email.getSubject());
+            
             helper.setTo(email.getAddress());
+            helper.setSubject(email.getSubject());
+            
+            boolean hasFromAddress = !StringUtils.isEmpty(email.getFromAddress());
+            boolean hasFrom = !StringUtils.isEmpty(email.getFrom());
+            
+            helper.setFrom(hasFromAddress ? email.getFromAddress() : fromAddress, hasFrom ? email.getFrom() : defaultFromName);
+            if (hasFromAddress && hasFrom) {
+                helper.setReplyTo(email.getFromAddress(), email.getFrom());
+            } else if (hasFromAddress) {
+                helper.setReplyTo(email.getFrom());
+            }
+            
+            helper.setReplyTo(email.getFromAddress(), email.getFrom());
             // note: we assume default is html content
             if (email.hasHtmlContent()) {
-                helper.setText(email.getContent(), email.getHtmlContent());
+                List<InlineImage> imgMap = new ArrayList<>();
+                String htmlContent = email.getHtmlContent();
+                htmlContent = searchForImagesInHtml(htmlContent, imgMap);
+                log.info("traversed, image map = {}", imgMap);
+                log.debug("added images, done, html content = {}", htmlContent);
+                // also just to remove the image, in case it's there
+                final String text = searchForImagesInHtml(email.getContent(), new ArrayList<>());
+                helper.setText(text, htmlContent);
+                imgMap.forEach(img -> addInlineImage(helper, img));
             } else {
                 helper.setText(email.getContent());
             }
@@ -112,6 +142,47 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
             log.error("Error transforming mail! Email: {}, exception: {}", email, e);
             return null;
         }
+    }
+
+    private String searchForImagesInHtml(String htmlContent, List<InlineImage> images) {
+        final Matcher matcher = imgRegExp.matcher(htmlContent);
+        int i = 0;
+        while (matcher.find()) {
+            String srcBlock  = matcher.group();
+            if (htmlContent.contains(srcBlock)) {
+                int startOfSrcToken = srcBlock.indexOf(srcToken);
+                int endOfSrcBlock= srcBlock.indexOf( "\"", startOfSrcToken + srcToken.length());
+                String dataBlock = srcBlock.substring(startOfSrcToken + srcToken.length(), endOfSrcBlock);
+                String contentType = dataBlock.substring("data:".length(), dataBlock.indexOf(";"));
+                log.info("contentType = {}", contentType);
+                String base64ImageText = dataBlock.split(",")[1];
+                log.debug("base64 image text = {}", base64ImageText);
+                ByteArrayResource convertedStream = new ByteArrayResource(Base64Utils.decodeFromString(base64ImageText));
+                String cidString = srcBlock.replace(dataBlock, "cid:image" + i);
+                htmlContent = htmlContent.replace(srcBlock, cidString);
+                images.add(new InlineImage("image"+i, contentType, convertedStream));
+                i++;
+            }
+        }
+        log.info("html content now looks like: {}", htmlContent);
+        return htmlContent;
+    }
+
+    private void addInlineImage(MimeMessageHelper helper, InlineImage image) {
+        try {
+            helper.addInline(image.cid, image.inputStream, image.contentType);
+            log.info("added an image, cid : {}", image.cid);
+        } catch (MessagingException e) {
+            log.error("error adding message with id {}, error {}", image.cid, e);
+        }
+    }
+
+    // small helper for the above, might exist somewhere in Spring but can't find at present
+    @AllArgsConstructor @ToString
+    private class InlineImage {
+        String cid;
+        String contentType;
+        ByteArrayResource inputStream;
     }
 
 }

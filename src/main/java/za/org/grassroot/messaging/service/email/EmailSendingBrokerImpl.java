@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -23,10 +22,11 @@ import za.org.grassroot.messaging.service.NotificationBroker;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -117,8 +117,7 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
             } else if (hasFromAddress) {
                 helper.setReplyTo(email.getFrom());
             }
-            
-            helper.setReplyTo(email.getFromAddress(), email.getFrom());
+
             // note: we assume default is html content
             if (email.hasHtmlContent()) {
                 List<InlineImage> imgMap = new ArrayList<>();

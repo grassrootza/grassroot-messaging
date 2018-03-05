@@ -16,12 +16,16 @@ import org.springframework.util.Base64Utils;
 import org.springframework.util.StringUtils;
 import za.org.grassroot.core.domain.Notification;
 import za.org.grassroot.core.domain.NotificationStatus;
+import za.org.grassroot.core.domain.media.MediaFileRecord;
 import za.org.grassroot.core.dto.GrassrootEmail;
 import za.org.grassroot.core.enums.MessagingProvider;
+import za.org.grassroot.core.repository.MediaFileRecordRepository;
 import za.org.grassroot.messaging.service.NotificationBroker;
+import za.org.grassroot.messaging.service.StorageBroker;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,10 +49,14 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
 
     private final JavaMailSender javaMailSender;
     private final NotificationBroker notificationBroker;
+    private final MediaFileRecordRepository recordRepository;
+    private final StorageBroker storageBroker;
 
-    public EmailSendingBrokerImpl(JavaMailSender javaMailSender, NotificationBroker notificationBroker) {
+    public EmailSendingBrokerImpl(JavaMailSender javaMailSender, NotificationBroker notificationBroker, MediaFileRecordRepository recordRepository, StorageBroker storageBroker) {
         this.javaMailSender = javaMailSender;
         this.notificationBroker = notificationBroker;
+        this.recordRepository = recordRepository;
+        this.storageBroker = storageBroker;
     }
 
     @Override
@@ -136,6 +144,23 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
             if (email.hasAttachment()) {
                 helper.addAttachment(email.getAttachmentName(), email.getAttachment());
             }
+
+            log.info("email attachments and UIDs = {}", email.getAttachmentUidsAndNames());
+
+            if (email.getAttachmentUidsAndNames() != null) {
+                email.getAttachmentUidsAndNames().forEach((uid, name) -> {
+                    MediaFileRecord record = recordRepository.findOneByUid(uid);
+                    File fileToAttach = storageBroker.fetchFileFromRecord(record);
+                    final String attachmentName = !StringUtils.isEmpty(name) ? name :
+                            !StringUtils.isEmpty(record.getFileName()) ? record.getFileName() : fileToAttach.getName();
+                    try {
+                        helper.addAttachment(attachmentName, fileToAttach);
+                    } catch(MessagingException e) {
+                        log.error("could not attach! name: ", name);
+                    }
+                });
+            }
+
             return javaMail;
         } catch (MessagingException|UnsupportedEncodingException|MailException e) {
             log.error("Error transforming mail! Email: {}, exception: {}", email, e);
@@ -163,7 +188,7 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
                 i++;
             }
         }
-        log.info("html content now looks like: {}", htmlContent);
+        log.debug("html content now looks like: {}", htmlContent);
         return htmlContent;
     }
 

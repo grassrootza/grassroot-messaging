@@ -1,5 +1,9 @@
 package za.org.grassroot.messaging.service.email;
 
+import biweekly.Biweekly;
+import biweekly.ICalendar;
+import biweekly.component.VEvent;
+import biweekly.util.Duration;
 import lombok.AllArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +20,10 @@ import org.springframework.util.Base64Utils;
 import org.springframework.util.StringUtils;
 import za.org.grassroot.core.domain.Notification;
 import za.org.grassroot.core.domain.NotificationStatus;
+import za.org.grassroot.core.domain.User;
 import za.org.grassroot.core.domain.media.MediaFileRecord;
+import za.org.grassroot.core.domain.notification.EventNotification;
+import za.org.grassroot.core.domain.task.Event;
 import za.org.grassroot.core.dto.GrassrootEmail;
 import za.org.grassroot.core.enums.MessagingProvider;
 import za.org.grassroot.core.repository.MediaFileRecordRepository;
@@ -27,10 +34,8 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,6 +51,10 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
 
     @Value("${grassroot.email.default.name:Grassroot}")
     private String defaultFromName;
+
+    private static final String DEFAULT_SUBJECT = "Grassroot notification";
+    private static final String NOTIFICATION_BODY_HTML = "<p>Dear %1$s</p><p><b>Notice: </b>%2$s</p><p>Sent by Grassroot</p>";
+    private static final String NOTIFICATION_BODY_TEXT = "Dear %1$s,\n\n%2$s\n\nSent by Grassroot";
 
     private final JavaMailSender javaMailSender;
     private final NotificationBroker notificationBroker;
@@ -69,11 +78,27 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
 
         try {
             MimeMessage mail = javaMailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mail, false); // todo : we may attach calendar invite
-            helper.setFrom(fromAddress, "Grassroot");
-            helper.setSubject("Grassroot notification");
-            helper.setText(notification.getMessage());
+            ByteArrayResource calendarAttachment = notification instanceof EventNotification ?
+                    calendarAttachment((EventNotification) notification) : null;
+            MimeMessageHelper helper = new MimeMessageHelper(mail, calendarAttachment != null);
+            User sender = notification.getSender();
+            if (sender != null && sender.hasEmailAddress()) {
+                helper.setFrom(sender.getEmailAddress(), sender.getName());
+                helper.setReplyTo(sender.getEmailAddress(), sender.getName());
+            } else {
+                helper.setFrom(fromAddress, defaultFromName);
+            }
+            helper.setSubject(DEFAULT_SUBJECT);
+            // whole templating language for this is going to be too much, so just using basic strings
+            User target = notification.getTarget();
+            helper.setText(String.format(NOTIFICATION_BODY_TEXT, target.getName(), notification.getMessage()),
+                    String.format(NOTIFICATION_BODY_HTML, target.getName(), notification.getMessage()));
             helper.setTo(notification.getTarget().getEmailAddress());
+            log.info("do we have a calendar attachment? : {}", calendarAttachment);
+            if (calendarAttachment != null) {
+                log.info("attaching calendar invite ...");
+                helper.addAttachment("meeting.ics", calendarAttachment);
+            }
             javaMailSender.send(mail);
             mail.saveChanges();
             // note: docs state Gmail can set header in way that makes getMessageId return wrong value, so recommended is following way
@@ -87,14 +112,37 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
             notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.DELIVERY_FAILED,
                     "Error sending message via email", true, false, null, MessagingProvider.EMAIL);
         }
+    }
 
+    private ByteArrayResource calendarAttachment(EventNotification notification) {
+        ICalendar ical = new ICalendar();
+        VEvent virtualEvent = new VEvent();
+        Event event = notification.getEvent();
+        if (event == null) {
+            return null;
+        }
+
+        virtualEvent.setSummary(event.getName());
+        virtualEvent.setDescription(notification.getEvent().getDescription());
+        Date start = Date.from(event.getEventStartDateTime());
+        virtualEvent.setDateStart(start);
+        Duration duration = new Duration.Builder().hours(1).build();
+        virtualEvent.setDuration(duration);
+        ical.addEvent(virtualEvent);
+
+        String iCalendarAsString = Biweekly.write(ical).go();
+        try {
+            return new ByteArrayResource(iCalendarAsString.getBytes(StandardCharsets.UTF_8.name()));
+        } catch (UnsupportedEncodingException e) {
+            log.error("Something went wrong writing to iCal", e);
+            return null;
+        }
     }
 
     @Async
     @Override
     public void sendNonNotificationEmails(Set<GrassrootEmail> emails) {
-        // todo: consider handling queues in here
-        log.info("trying to send out a queue of {} emails", emails.size());
+        log.info("trying to send out a list of {} emails", emails.size());
         emails.stream()
                 .map(this::transformEmail)
                 .filter(Objects::nonNull)

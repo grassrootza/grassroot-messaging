@@ -53,8 +53,11 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
     private String defaultFromName;
 
     private static final String DEFAULT_SUBJECT = "Grassroot notification";
-    private static final String NOTIFICATION_BODY_HTML = "<p>Dear %1$s</p><p><b>Notice: </b>%2$s</p><p>Sent by Grassroot</p>";
-    private static final String NOTIFICATION_BODY_TEXT = "Dear %1$s,\n\n%2$s\n\nSent by Grassroot";
+    private static final String NOTIFICATION_BODY_HTML = "<p>Dear %1$s</p><p><b>Notice: </b>%2$s</p><p>%3$s</p>";
+
+    private static final String NOTIFICATION_BODY_TEXT = "Dear %1$s,\n\n%2$s\n\n%3$s";
+    private static final String NOTIFICATION_FOOTER_PLAIN = "Sent by Grassroot";
+    private static final String NOTIFICATION_FOOTER_ACCOUNT = "Sent for %1$s by Grassoot";
 
     private final JavaMailSender javaMailSender;
     private final NotificationBroker notificationBroker;
@@ -91,12 +94,14 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
             helper.setSubject(DEFAULT_SUBJECT);
             // whole templating language for this is going to be too much, so just using basic strings
             User target = notification.getTarget();
-            helper.setText(String.format(NOTIFICATION_BODY_TEXT, target.getName(), notification.getMessage()),
-                    String.format(NOTIFICATION_BODY_HTML, target.getName(), notification.getMessage()));
+            String footer = sender == null || sender.getPrimaryAccount() == null ? NOTIFICATION_FOOTER_PLAIN :
+                    String.format(NOTIFICATION_FOOTER_ACCOUNT, sender.getPrimaryAccount().getName());
+            helper.setText(String.format(NOTIFICATION_BODY_TEXT, target.getName(), notification.getMessage(), footer),
+                    String.format(NOTIFICATION_BODY_HTML, target.getName(), notification.getMessage(), footer));
             helper.setTo(notification.getTarget().getEmailAddress());
             log.info("do we have a calendar attachment? : {}", calendarAttachment);
             if (calendarAttachment != null) {
-                log.info("attaching calendar invite ...");
+                log.debug("attaching calendar invite ...");
                 helper.addAttachment("meeting.ics", calendarAttachment);
             }
             javaMailSender.send(mail);

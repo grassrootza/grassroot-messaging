@@ -66,6 +66,7 @@ public class AatSmsSendingManager implements SmsSendingService {
                 .queryParam("password", smsGatewayPassword)
                 .queryParam("number", destinationNumber)
                 .queryParam("message", msgToSend);
+
         try {
             log.info("Sending AAT SMS to {} ...", destinationNumber);
             SmsGatewayResponse response = environment.acceptsProfiles("default") ? AatResponseInterpreter.makeDummy() :

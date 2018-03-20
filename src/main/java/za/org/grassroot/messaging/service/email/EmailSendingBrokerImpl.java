@@ -16,6 +16,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.messaging.Message;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Base64Utils;
 import org.springframework.util.StringUtils;
 import za.org.grassroot.core.domain.Notification;
@@ -25,6 +26,7 @@ import za.org.grassroot.core.domain.media.MediaFileRecord;
 import za.org.grassroot.core.domain.notification.EventNotification;
 import za.org.grassroot.core.domain.task.Event;
 import za.org.grassroot.core.dto.GrassrootEmail;
+import za.org.grassroot.core.enums.EventType;
 import za.org.grassroot.core.enums.MessagingProvider;
 import za.org.grassroot.core.repository.MediaFileRecordRepository;
 import za.org.grassroot.messaging.service.NotificationBroker;
@@ -72,18 +74,20 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
     }
 
     @Override
+    @Transactional
     public void sendNotificationByEmail(Message message) {
+//        DebugUtil.transactionRequired("");
         log.info("sending a notification by email ...");
         Notification notification = (Notification) message.getPayload();
         // since email sending may take time, especially if there's a queue, mark it as sending until we know it failed
         notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.SENDING, null, true, false, null,
                 MessagingProvider.EMAIL);
+        log.info("status updated, proceeding with: {}", notification);
 
         try {
             MimeMessage mail = javaMailSender.createMimeMessage();
-            ByteArrayResource calendarAttachment = notification instanceof EventNotification ?
-                    calendarAttachment((EventNotification) notification) : null;
-            MimeMessageHelper helper = new MimeMessageHelper(mail, calendarAttachment != null);
+            MimeMessageHelper helper = new MimeMessageHelper(mail, true);
+
             User sender = notification.getSender();
             if (sender != null && sender.hasEmailAddress()) {
                 helper.setFrom(sender.getEmailAddress(), sender.getName());
@@ -91,19 +95,29 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
             } else {
                 helper.setFrom(fromAddress, defaultFromName);
             }
-            helper.setSubject(DEFAULT_SUBJECT);
+
+            if (notification instanceof EventNotification) {
+                Event event = ((EventNotification) notification).getEvent();
+                helper.setSubject(event.getAncestorGroup().getName() + ": " + event.getName());
+            } else {
+                helper.setSubject(DEFAULT_SUBJECT);
+            }
             // whole templating language for this is going to be too much, so just using basic strings
             User target = notification.getTarget();
             String footer = sender == null || sender.getPrimaryAccount() == null ? NOTIFICATION_FOOTER_PLAIN :
-                    String.format(NOTIFICATION_FOOTER_ACCOUNT, sender.getPrimaryAccount().getName());
+                    String.format(NOTIFICATION_FOOTER_ACCOUNT, sender.getName());
             helper.setText(String.format(NOTIFICATION_BODY_TEXT, target.getName(), notification.getMessage(), footer),
                     String.format(NOTIFICATION_BODY_HTML, target.getName(), notification.getMessage(), footer));
             helper.setTo(notification.getTarget().getEmailAddress());
-            log.info("do we have a calendar attachment? : {}", calendarAttachment);
+
+            ByteArrayResource calendarAttachment = notification instanceof EventNotification ?
+                    calendarAttachment((EventNotification) notification) : null;
+            log.debug("do we have a calendar attachment? : {}", calendarAttachment);
             if (calendarAttachment != null) {
                 log.debug("attaching calendar invite ...");
                 helper.addAttachment("meeting.ics", calendarAttachment);
             }
+
             javaMailSender.send(mail);
             mail.saveChanges();
             // note: docs state Gmail can set header in way that makes getMessageId return wrong value, so recommended is following way
@@ -113,9 +127,11 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
                     MessagingProvider.EMAIL);
         } catch (MessagingException|UnsupportedEncodingException|MailException e) {
             // todo : better handle / distinguish failed sends (and how to check for undeliverable exceptions)
-            log.error("Error sending a notification mail1", e);
+            log.error("Error sending a notification mail", e);
             notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.DELIVERY_FAILED,
                     "Error sending message via email", true, false, null, MessagingProvider.EMAIL);
+        } catch (Exception e) {
+            log.error("Unknown exception: ", e);
         }
     }
 
@@ -123,7 +139,7 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
         ICalendar ical = new ICalendar();
         VEvent virtualEvent = new VEvent();
         Event event = notification.getEvent();
-        if (event == null) {
+        if (event == null || EventType.VOTE.equals(event.getEventType())) {
             return null;
         }
 

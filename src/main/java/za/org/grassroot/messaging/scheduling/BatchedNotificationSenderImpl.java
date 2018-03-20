@@ -11,10 +11,12 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.stereotype.Service;
 import za.org.grassroot.core.domain.GcmRegistration;
 import za.org.grassroot.core.domain.Notification;
+import za.org.grassroot.core.domain.User;
+import za.org.grassroot.core.enums.DeliveryRoute;
 import za.org.grassroot.core.repository.GcmRegistrationRepository;
 import za.org.grassroot.messaging.service.NotificationBroker;
 
-import javax.persistence.EntityManager;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -26,6 +28,9 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
 	private final GcmRegistrationRepository gcmRegistrationRepository;
 
 	private MessageChannel requestChannel;
+
+	private static final List<DeliveryRoute> EMAIL_ROUTES = Arrays.asList(DeliveryRoute.EMAIL_3RDPARTY,
+			DeliveryRoute.EMAIL_GRASSROOT, DeliveryRoute.EMAIL_USERACCOUNT);
 
 	@Autowired
 	public BatchedNotificationSenderImpl(NotificationBroker notificationBroker, GcmRegistrationRepository gcmRegistrationRepository) {
@@ -61,29 +66,39 @@ public class BatchedNotificationSenderImpl implements BatchedNotificationSender 
         Notification notification = notificationBroker.loadNotification(notificationUid);
         logger.debug("Sending notification: {}", notification);
 		try {
-			logger.info("sending message via: {}", notification.getDeliveryChannel());
-            requestChannel.send(createMessage(notification, notification.getDeliveryChannel().toString()));
+			requestChannel.send(createMessage(notification, notification.getDeliveryChannel()));
         } catch (Exception e) {
 			logger.error("Failed to send notification {}, : {}", notification, e);
 		}
 	}
 
-	private Message<Notification> createMessage(Notification notification, String givenRoute) {
+	private Message<Notification> createMessage(Notification notification, DeliveryRoute givenRoute) {
 
-		String route = (givenRoute != null) ? givenRoute :
-				(notification.getTarget().getMessagingPreference() == null) ?
-						"SMS" : notification.getTarget().getMessagingPreference().name();
+		DeliveryRoute route = (givenRoute != null) ? givenRoute : (notification.getTarget().getMessagingPreference() == null) ?
+						DeliveryRoute.SMS : notification.getTarget().getMessagingPreference();
 
-        if ("ANDROID_APP".equals(route)) {
+        if (DeliveryRoute.ANDROID_APP.equals(route)) {
         	logger.info("sending via Android App route");
 			GcmRegistration registration = gcmRegistrationRepository.findTopByUserOrderByCreationTimeDesc(notification.getTarget());
 			if (registration == null)
-				route = "SMS";
+				route = DeliveryRoute.SHORT_MESSAGE;
 		}
 
+
 		return MessageBuilder.withPayload(notification)
-				.setHeader("route", route)
+				.setHeader("route", safeRoute(notification.getTarget(), route).name())
 				.build();
+	}
+
+	// todo : include Android / GCM
+	private DeliveryRoute safeRoute(User target, DeliveryRoute preference) {
+		if (DeliveryRoute.SMS.equals(preference) && !target.hasPhoneNumber()) {
+			return target.hasEmailAddress() ? DeliveryRoute.EMAIL_GRASSROOT : DeliveryRoute.WEB_ONLY; // since we then don't know what to do with it
+		} else if (EMAIL_ROUTES.contains(preference) && !target.hasEmailAddress()) {
+			return target.hasPhoneNumber() ? DeliveryRoute.SMS : DeliveryRoute.WEB_ONLY; // as above
+		} else {
+			return preference;
+		}
 	}
 
 }

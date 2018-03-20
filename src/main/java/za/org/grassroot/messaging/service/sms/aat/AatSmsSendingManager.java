@@ -54,6 +54,10 @@ public class AatSmsSendingManager implements SmsSendingService {
 
     @Override
     public SmsGatewayResponse sendSMS(String message, String destinationNumber) {
+        if (StringUtils.isEmpty(destinationNumber)) {
+            log.error("Error! Called send SMS with null number, returning error");
+            return AatResponseInterpreter.makeErrorResponse(SmsResponseType.COMMUNICATION_ERROR);
+        }
 
         long startTime = System.currentTimeMillis();
         UriComponentsBuilder gatewayURI = UriComponentsBuilder.newInstance().scheme("https").host(smsGatewayHost);

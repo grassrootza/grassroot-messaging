@@ -1,4 +1,4 @@
-package za.org.grassroot.messaging.scheduling;
+package za.org.grassroot.messaging.scheduling.sending;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

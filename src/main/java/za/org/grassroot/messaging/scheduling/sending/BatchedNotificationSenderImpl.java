@@ -1,4 +1,4 @@
-package za.org.grassroot.messaging.scheduling;
+package za.org.grassroot.messaging.scheduling.sending;
 
 import com.codahale.metrics.annotation.Timed;
 import org.slf4j.Logger;

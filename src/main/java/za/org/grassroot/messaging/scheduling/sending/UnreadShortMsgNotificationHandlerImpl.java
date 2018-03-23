@@ -1,4 +1,4 @@
-package za.org.grassroot.messaging.scheduling;
+package za.org.grassroot.messaging.scheduling.sending;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

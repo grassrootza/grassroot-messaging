@@ -23,9 +23,8 @@ import za.org.grassroot.core.domain.NotificationStatus;
 import za.org.grassroot.core.domain.User;
 import za.org.grassroot.core.domain.media.MediaFileRecord;
 import za.org.grassroot.core.domain.notification.EventNotification;
-import za.org.grassroot.core.domain.notification.TodoNotification;
 import za.org.grassroot.core.domain.task.Event;
-import za.org.grassroot.core.domain.task.Todo;
+import za.org.grassroot.core.domain.task.Task;
 import za.org.grassroot.core.dto.GrassrootEmail;
 import za.org.grassroot.core.enums.EventType;
 import za.org.grassroot.core.enums.MessagingProvider;
@@ -75,9 +74,11 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
     private String defaultFromName;
 
     private static final String DEFAULT_SUBJECT = "Grassroot notification";
-    private static final String NOTIFICATION_BODY_HTML = "<p>Dear %1$s</p><p><b>Notice: </b>%2$s</p><p>%3$s</p>";
 
-    private static final String NOTIFICATION_BODY_TEXT = "Dear %1$s,\n\n%2$s\n\n%3$s";
+    // 1 = name, 2 = message
+    private static final String NOTIFICATION_BODY_HTML = "<p>Dear %1$s</p><p><b>Notice: </b>%2$s</p>";
+    private static final String NOTIFICATION_BODY_TEXT = "Dear %1$s,\n\n%2$s\n\n";
+
     private static final String NOTIFICATION_FOOTER_PLAIN = "Sent by Grassroot";
     private static final String NOTIFICATION_FOOTER_ACCOUNT = "Sent for %1$s by Grassoot";
 
@@ -128,7 +129,6 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
                         log.error("Error inside java mail sending loop", e);
                     }
                 });
-        log.info("Sent emails!");
     }
 
     private Response sendMail(Mail mail) throws IOException {
@@ -140,7 +140,7 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
         request.setBody(mail.build());
         log.info("sendgrid: request params: {}, and body: {}", request.getQueryParams(), request.getBody());
         Response response = sg.api(request);
-        log.info("sendgrid: here is our status code: {}, and headers: {}", response.getStatusCode(), response.getHeaders());
+        log.debug("sendgrid response: here is our status code: {}, and headers: {}", response.getStatusCode(), response.getHeaders());
         return response;
     }
 
@@ -172,31 +172,36 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
         mail.setFrom(from);
         mail.setReplyTo(replyTo);
 
+        User target = notification.getTarget();
+        mail.addPersonalization(userBasedPersonalization(target, notification.getUid()));
+
+        final String bodyPlain = String.format(NOTIFICATION_BODY_TEXT, target.getName(), notification.getMessage());
+        final String bodyHtml = String.format(NOTIFICATION_BODY_HTML, target.getName(), notification.getMessage());
+
+        final String footer = sender == null || sender.getPrimaryAccount() == null ? NOTIFICATION_FOOTER_PLAIN :
+                String.format(NOTIFICATION_FOOTER_ACCOUNT, sender.getName());
+
         String subject;
-        if (notification instanceof EventNotification) {
-            Event event = ((EventNotification) notification).getEvent();
-            subject = event.getAncestorGroup().getName() + ": " + event.getName();
-            mail.addCustomArg("event_id", event.getUid());
-        } else if (notification instanceof TodoNotification) {
-            Todo todo = ((TodoNotification) notification).getTodo();
-            subject = todo.getAncestorGroup().getName() + ": " + todo.getName();
-            mail.addCustomArg("todo_id", todo.getUid());
+        String mailText;
+        String mailHtml;
+
+        if (notification.getTask() != null) {
+            Task task = notification.getTask();
+            subject = task.getAncestorGroup().getName() + ": " + task.getName();
+            mail.addCustomArg("task_id", task.getUid());
+            mail.addCustomArg("task_type", task.getTaskType().name());
+            mailText = bodyPlain + "\n\n" + task.getDescription() + "\n\n" + footer;
+            mailHtml = bodyPlain + "<p>" + task.getDescription() + "</p>" + footer;
         } else {
             subject = DEFAULT_SUBJECT;
+            mailText = bodyPlain + "\n\n" + footer;
+            mailHtml = bodyPlain + "<p>" + footer + "</p>";
         }
 
         mail.setSubject(subject);
 
-        User target = notification.getTarget();
-        mail.addPersonalization(userBasedPersonalization(target, notification.getUid()));
-
-        final String footer = sender == null || sender.getPrimaryAccount() == null ? NOTIFICATION_FOOTER_PLAIN :
-                String.format(NOTIFICATION_FOOTER_ACCOUNT, sender.getName());
-        final String bodyPlain = String.format(NOTIFICATION_BODY_TEXT, target.getName(), notification.getMessage(), footer);
-        final String bodyHtml = String.format(NOTIFICATION_BODY_HTML, target.getName(), notification.getMessage(), footer);
-
-        Content textContent = new Content("text/plain", bodyPlain);
-        Content htmlContent = new Content("text/html", bodyHtml);
+        Content textContent = new Content("text/plain", mailText);
+        Content htmlContent = new Content("text/html", mailHtml);
         mail.addContent(textContent);
         mail.addContent(htmlContent);
 

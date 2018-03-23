@@ -1,4 +1,4 @@
-package za.org.grassroot.messaging.scheduling;
+package za.org.grassroot.messaging.scheduling.sending;
 
 /**
  * Ported by luke on 2017/05/19.

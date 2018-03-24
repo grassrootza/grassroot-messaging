@@ -9,12 +9,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
-import org.springframework.scheduling.config.CronTask;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.scheduling.quartz.CronTriggerFactoryBean;
 import org.springframework.scheduling.quartz.JobDetailFactoryBean;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
-import za.org.grassroot.messaging.scheduling.*;
+import za.org.grassroot.messaging.scheduling.ApplicationContextAwareQuartzJobBean;
+import za.org.grassroot.messaging.scheduling.receipts.FailedEmailResponseFetcher;
+import za.org.grassroot.messaging.scheduling.receipts.SMSDeliveryReceiptFetcher;
+import za.org.grassroot.messaging.scheduling.sending.BatchedNotificationSenderJob;
+import za.org.grassroot.messaging.scheduling.sending.UnreadNotificationSenderJob;
+import za.org.grassroot.messaging.scheduling.sending.UnsuccessfulSmsHandlerJob;
 
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -28,27 +32,32 @@ public class SchedulingConfig implements SchedulingConfigurer {
 
     private Environment env;
     private SMSDeliveryReceiptFetcher smsDeliveryReceiptFetcher;
+    private FailedEmailResponseFetcher emailFailureFetcher;
 
     @Autowired
     public SchedulingConfig(Environment env, SMSDeliveryReceiptFetcher smsDeliveryReceiptFetcher) {
-        log.info("Constructing scheduling config");
         this.env = env;
         this.smsDeliveryReceiptFetcher = smsDeliveryReceiptFetcher;
+    }
+
+    @Autowired(required = false)
+    public void setEmailFailureFetcher(FailedEmailResponseFetcher emailFailureFetcher) {
+        this.emailFailureFetcher = emailFailureFetcher;
     }
 
     @Override
     public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
         log.info("Setting standard scheduled tasks");
         taskRegistrar.setScheduler(taskExecutor());
-        CronTask smsDeliveryFetchCronTask = new CronTask(smsDeliveryReceiptFetcher::fetchDeliveryReceiptsFromApiLog, " 0 0/1 * * * ?");
-        Boolean smsFetchEnabled = env.getProperty("grassroot.smsfetcher.enabled", Boolean.class);
-        if (smsFetchEnabled != null && smsFetchEnabled) {
-            taskRegistrar.addCronTask(smsDeliveryFetchCronTask);
-        }
         Boolean callBackQueueEnabled = env.getProperty("grassroot.callbackq.enabled", Boolean.class);
         if (callBackQueueEnabled != null && callBackQueueEnabled) {
             taskRegistrar.addFixedRateTask(smsDeliveryReceiptFetcher::clearCallBackQueue,
                     env.getProperty("grassroot.callbackq.interval", Long.class));
+        }
+        Boolean emailFetchingEnabled = env.getProperty("grassroot.email.failure.fetching", Boolean.class);
+        if (emailFailureFetcher != null && emailFetchingEnabled != null && emailFetchingEnabled) {
+            taskRegistrar.addFixedRateTask(emailFailureFetcher::fetchInvalidEmailAddesses,
+                    env.getProperty("grassroot.email.failure.interval", Long.class, 60000L));
         }
     }
 

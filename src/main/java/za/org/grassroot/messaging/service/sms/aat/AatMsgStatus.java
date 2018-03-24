@@ -54,12 +54,14 @@ public enum AatMsgStatus {
     PROBLEM_COMMUNICATING_WITH_GATEWAY(160),
     INVALID_QUERY_STRING(161);
 
-
-
     private Set<Integer> codes;
 
     private static List<AatMsgStatus> deliveryInProgressStatuses = Arrays.asList(EN_ROUTE, WAITING_FOR_RECEIPT, ACCEPTED_FOR_DELIVERY, WAITING_TO_BE_QUEUED, WAITING_AT_SMSC, WAITING_FOR_RESEND,
             CONGESTED_WILL_RETRY, BUSY_WILL_RETRY, NO_RESPONSE_WILL_RETRY, REJECTED_WILL_RETRY, LOW_SIGNAL_WILL_RETRY);
+
+    private static List<AatMsgStatus> invalidNumberStatuses = Arrays.asList(
+            INVALID_NUMBER_NO_ROUTE, INVALID_NUMBER, CANNOT_DELIVER, DESTINATION_INVALID
+    );
 
 
     AatMsgStatus(Integer... code) {
@@ -84,6 +86,9 @@ public enum AatMsgStatus {
             return SMSDeliveryStatus.DELIVERED;
         else if (deliveryInProgressStatuses.contains(this))
             return SMSDeliveryStatus.DELIVERY_IN_PROGRESS;
-        else return SMSDeliveryStatus.DELIVERY_FAILED;
+        else if (invalidNumberStatuses.contains(this))
+            return SMSDeliveryStatus.PROBLEM_NUMBER;
+        else
+            return SMSDeliveryStatus.DELIVERY_FAILED;
     }
 }

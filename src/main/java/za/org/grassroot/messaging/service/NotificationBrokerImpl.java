@@ -15,6 +15,7 @@ import za.org.grassroot.core.domain.*;
 import za.org.grassroot.core.enums.MessagingProvider;
 import za.org.grassroot.core.repository.MembershipRepository;
 import za.org.grassroot.core.repository.NotificationRepository;
+import za.org.grassroot.core.repository.UserRepository;
 import za.org.grassroot.messaging.domain.NotificationSpecifications;
 
 import java.util.Collections;
@@ -33,11 +34,13 @@ public class NotificationBrokerImpl implements NotificationBroker {
 
     private final NotificationRepository notificationRepository;
     private final MembershipRepository membershipRepository;
+    private final UserRepository userRepository;
 
     @Autowired
-    public NotificationBrokerImpl(NotificationRepository notificationRepository, MembershipRepository membershipRepository) {
+    public NotificationBrokerImpl(NotificationRepository notificationRepository, MembershipRepository membershipRepository, UserRepository userRepository) {
         this.notificationRepository = notificationRepository;
         this.membershipRepository = membershipRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -88,19 +91,25 @@ public class NotificationBrokerImpl implements NotificationBroker {
     public void updateNotificationStatus(String notificationUid, NotificationStatus status, String errorMessage,
                                          boolean resultOfSendingAttempt, boolean resultOfReceiptFetch, String messageSendKey, MessagingProvider sentViaProvider) {
 
-        Notification notification = notificationRepository.findByUid(notificationUid);
-
-        if (notification != null) {
-
-            notification.updateStatus(status, resultOfSendingAttempt, resultOfReceiptFetch, errorMessage);
-
-            if (messageSendKey != null)
-                notification.setSendingKey(messageSendKey);
-            if (sentViaProvider != null)
-                notification.setSentViaProvider(sentViaProvider);
-
-            notificationRepository.save(notification);
+        Notification notification = notificationRepository.findByUid(Objects.requireNonNull(notificationUid));
+        if (notification == null) {
+            logger.error("Error! Passed a notification ID without notification: {}", notification);
+            return;
         }
+
+        notification.updateStatus(status, resultOfSendingAttempt, resultOfReceiptFetch, errorMessage);
+
+        if (messageSendKey != null)
+            notification.setSendingKey(messageSendKey);
+        if (sentViaProvider != null)
+            notification.setSentViaProvider(sentViaProvider);
+
+        if (NotificationStatus.UNDELIVERABLE.equals(status)) {
+            User user = notification.getTarget();
+            user.setContactError(true);
+        }
+
+        notificationRepository.save(notification);
     }
 
     @Override

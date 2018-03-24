@@ -39,8 +39,8 @@ public interface NotificationBroker {
      * @param sentViaProvider        if this status update is result of sending attempt sending provider should be specified, null otherwise
      */
     void updateNotificationStatus(String notificationUid, NotificationStatus status,
-                                  String errorMessage, boolean resultOfSendingAttempt, boolean resultOfReceiptFetch,
-                                  String messageSendKey, MessagingProvider sentViaProvider);
+                                  String errorMessage, boolean resultOfSendingAttempt,
+                                  boolean resultOfReceiptFetch, String messageSendKey, MessagingProvider sentViaProvider);
 
     void updateNotifications(Set<Notification> notificationSet);
 

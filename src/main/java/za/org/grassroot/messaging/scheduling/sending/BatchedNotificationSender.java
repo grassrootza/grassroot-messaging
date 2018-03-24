@@ -1,4 +1,4 @@
-package za.org.grassroot.messaging.scheduling;
+package za.org.grassroot.messaging.scheduling.sending;
 
 
 public interface BatchedNotificationSender {

@@ -4,5 +4,6 @@ public enum SMSDeliveryStatus {
 
     DELIVERY_IN_PROGRESS,
     DELIVERED,
-    DELIVERY_FAILED
+    DELIVERY_FAILED,
+    PROBLEM_NUMBER
 }

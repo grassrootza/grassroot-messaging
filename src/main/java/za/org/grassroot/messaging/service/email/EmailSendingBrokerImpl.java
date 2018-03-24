@@ -4,49 +4,68 @@ import biweekly.Biweekly;
 import biweekly.ICalendar;
 import biweekly.component.VEvent;
 import biweekly.util.Duration;
+import com.sendgrid.*;
 import lombok.AllArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.mail.MailException;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.messaging.Message;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Base64Utils;
 import org.springframework.util.StringUtils;
+import za.org.grassroot.core.GrassrootTemplate;
 import za.org.grassroot.core.domain.Notification;
 import za.org.grassroot.core.domain.NotificationStatus;
 import za.org.grassroot.core.domain.User;
 import za.org.grassroot.core.domain.media.MediaFileRecord;
 import za.org.grassroot.core.domain.notification.EventNotification;
 import za.org.grassroot.core.domain.task.Event;
+import za.org.grassroot.core.domain.task.Task;
 import za.org.grassroot.core.dto.GrassrootEmail;
 import za.org.grassroot.core.enums.EventType;
 import za.org.grassroot.core.enums.MessagingProvider;
+import za.org.grassroot.core.enums.Province;
 import za.org.grassroot.core.repository.MediaFileRecordRepository;
+import za.org.grassroot.core.repository.UserRepository;
 import za.org.grassroot.messaging.service.NotificationBroker;
 import za.org.grassroot.messaging.service.StorageBroker;
 
-import javax.mail.MessagingException;
-import javax.mail.internet.MimeMessage;
 import java.io.File;
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service @Slf4j
 @ConditionalOnProperty(value = "grassroot.email.enabled", havingValue = "true")
 public class EmailSendingBrokerImpl implements EmailSendingBroker {
 
+    private static final DateTimeFormatter SDF = DateTimeFormatter.ofPattern("EEE d MMM");
+    private static final String NO_PROVINCE = "your province";
+
     private static final Pattern imgRegExp  = Pattern.compile( "<img[^>]+src\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>" );
     private static final String srcToken = "src=\"";
+
+    @Value("${SENDGRID_API_KEY:testing}")
+    private String sendGridApiKey;
+
+    @Value("${grassroot.email.test.enabled:true}")
+    private boolean routeMailsToTest;
+
+    @Value("${grassroot.email.test.address:test@grassroot.org.za}")
+    private String testEmailAddress;
+
+    @Value("${grassroot.email.test.sandbox:false}")
+    private boolean useSandboxOnly;
 
     @Value("${grassroot.notifications.email.from:notifications@grassroot.org.za}")
     private String fromAddress;
@@ -55,87 +74,155 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
     private String defaultFromName;
 
     private static final String DEFAULT_SUBJECT = "Grassroot notification";
-    private static final String NOTIFICATION_BODY_HTML = "<p>Dear %1$s</p><p><b>Notice: </b>%2$s</p><p>%3$s</p>";
 
-    private static final String NOTIFICATION_BODY_TEXT = "Dear %1$s,\n\n%2$s\n\n%3$s";
+    // 1 = name, 2 = message
+    private static final String NOTIFICATION_BODY_HTML = "<p>Dear %1$s</p><p><b>Notice: </b>%2$s</p>";
+    private static final String NOTIFICATION_BODY_TEXT = "Dear %1$s,\n\n%2$s\n\n";
+
     private static final String NOTIFICATION_FOOTER_PLAIN = "Sent by Grassroot";
     private static final String NOTIFICATION_FOOTER_ACCOUNT = "Sent for %1$s by Grassoot";
 
-    private final JavaMailSender javaMailSender;
     private final NotificationBroker notificationBroker;
     private final MediaFileRecordRepository recordRepository;
     private final StorageBroker storageBroker;
+    private final UserRepository userRepository;
 
-    public EmailSendingBrokerImpl(JavaMailSender javaMailSender, NotificationBroker notificationBroker, MediaFileRecordRepository recordRepository, StorageBroker storageBroker) {
-        this.javaMailSender = javaMailSender;
+    public EmailSendingBrokerImpl(NotificationBroker notificationBroker, MediaFileRecordRepository recordRepository, StorageBroker storageBroker, UserRepository userRepository) {
         this.notificationBroker = notificationBroker;
         this.recordRepository = recordRepository;
         this.storageBroker = storageBroker;
+        this.userRepository = userRepository;
     }
 
     @Override
     @Transactional
     public void sendNotificationByEmail(Message message) {
-//        DebugUtil.transactionRequired("");
-        log.info("sending a notification by email ...");
         Notification notification = (Notification) message.getPayload();
-        // since email sending may take time, especially if there's a queue, mark it as sending until we know it failed
         notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.SENDING, null, true, false, null,
                 MessagingProvider.EMAIL);
-        log.info("status updated, proceeding with: {}", notification);
 
         try {
-            MimeMessage mail = javaMailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mail, true);
-
-            User sender = notification.getSender();
-            if (sender != null && sender.hasEmailAddress()) {
-                helper.setFrom(sender.getEmailAddress(), sender.getName());
-                helper.setReplyTo(sender.getEmailAddress(), sender.getName());
+            Response response = sendMail(mailFromNotification(notification));
+            if (response.getStatusCode() / 100 == 2) {
+                notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.SENT, null,
+                        true, false, null, MessagingProvider.EMAIL);
             } else {
-                helper.setFrom(fromAddress, defaultFromName);
+                updateNotificationFailed(notification.getUid(), response.getBody());
             }
-
-            if (notification instanceof EventNotification) {
-                Event event = ((EventNotification) notification).getEvent();
-                helper.setSubject(event.getAncestorGroup().getName() + ": " + event.getName());
-            } else {
-                helper.setSubject(DEFAULT_SUBJECT);
-            }
-            // whole templating language for this is going to be too much, so just using basic strings
-            User target = notification.getTarget();
-            String footer = sender == null || sender.getPrimaryAccount() == null ? NOTIFICATION_FOOTER_PLAIN :
-                    String.format(NOTIFICATION_FOOTER_ACCOUNT, sender.getName());
-            helper.setText(String.format(NOTIFICATION_BODY_TEXT, target.getName(), notification.getMessage(), footer),
-                    String.format(NOTIFICATION_BODY_HTML, target.getName(), notification.getMessage(), footer));
-            helper.setTo(notification.getTarget().getEmailAddress());
-
-            ByteArrayResource calendarAttachment = notification instanceof EventNotification ?
-                    calendarAttachment((EventNotification) notification) : null;
-            log.debug("do we have a calendar attachment? : {}", calendarAttachment);
-            if (calendarAttachment != null) {
-                log.debug("attaching calendar invite ...");
-                helper.addAttachment("meeting.ics", calendarAttachment);
-            }
-
-            javaMailSender.send(mail);
-            mail.saveChanges();
-            // note: docs state Gmail can set header in way that makes getMessageId return wrong value, so recommended is following way
-            String messageId = mail.getHeader("Message-ID", "");
-            mail.setText("Mail is sent! message Id = {}", messageId);
-            notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.SENT, null, true, false, messageId,
-                    MessagingProvider.EMAIL);
-        } catch (MessagingException|UnsupportedEncodingException|MailException e) {
-            // todo : better handle / distinguish failed sends (and how to check for undeliverable exceptions)
+        } catch (IOException e) {
             log.error("Error sending a notification mail", e);
-            notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.DELIVERY_FAILED,
-                    "Error sending message via email", true, false, null, MessagingProvider.EMAIL);
-        } catch (Exception e) {
-            log.error("Unknown exception: ", e);
+            updateNotificationFailed(notification.getUid(), "Unknown IO error sending message via email");
         }
     }
 
-    private ByteArrayResource calendarAttachment(EventNotification notification) {
+    @Async
+    @Override
+    public void sendNonNotificationEmails(Set<GrassrootEmail> emails) {
+        log.info("trying to send out a list of {} emails", emails.size());
+        emails.stream()
+                .map(this::transformEmail)
+                .filter(Objects::nonNull)
+                .forEach(mail -> {
+                    try {
+                        sendMail(mail);
+                    } catch (IOException e) {
+                        log.error("Error inside java mail sending loop", e);
+                    }
+                });
+    }
+
+    private Response sendMail(Mail mail) throws IOException {
+        SendGrid sg = new SendGrid(sendGridApiKey);
+        Request request = new Request();
+        request.setMethod(Method.POST);
+        request.setEndpoint("mail/send");
+
+        request.setBody(mail.build());
+        log.info("sendgrid: request params: {}, and body: {}", request.getQueryParams(), request.getBody());
+        Response response = sg.api(request);
+        log.debug("sendgrid response: here is our status code: {}, and headers: {}", response.getStatusCode(), response.getHeaders());
+        return response;
+    }
+
+    private Mail checkForSandbox(Mail mail) {
+        if (useSandboxOnly) {
+            Setting sandboxMode = new Setting();
+            sandboxMode.setEnable(true);
+            MailSettings settings = new MailSettings();
+            settings.setSandboxMode(sandboxMode);
+            mail.setMailSettings(settings);
+        }
+        return mail;
+    }
+
+    private Mail mailFromNotification(Notification notification) {
+        Mail mail = new Mail();
+
+        User sender = notification.getSender();
+        Email from;
+        Email replyTo;
+        if (sender != null && sender.hasEmailAddress()) {
+            from = new Email(sender.getEmailAddress(), sender.getName());
+            replyTo = new Email(sender.getEmailAddress(), sender.getName());
+        } else {
+            from = new Email(fromAddress, defaultFromName);
+            replyTo = new Email(fromAddress);
+        }
+
+        mail.setFrom(from);
+        mail.setReplyTo(replyTo);
+
+        User target = notification.getTarget();
+        mail.addPersonalization(userBasedPersonalization(target, notification.getUid()));
+
+        final String bodyPlain = String.format(NOTIFICATION_BODY_TEXT, target.getName(), notification.getMessage());
+        final String bodyHtml = String.format(NOTIFICATION_BODY_HTML, target.getName(), notification.getMessage());
+
+        final String footer = sender == null || sender.getPrimaryAccount() == null ? NOTIFICATION_FOOTER_PLAIN :
+                String.format(NOTIFICATION_FOOTER_ACCOUNT, sender.getName());
+
+        String subject;
+        String mailText;
+        String mailHtml;
+
+        if (notification.getTask() != null) {
+            Task task = notification.getTask();
+            subject = task.getAncestorGroup().getName() + ": " + task.getName();
+            mail.addCustomArg("task_id", task.getUid());
+            mail.addCustomArg("task_type", task.getTaskType().name());
+            mailText = bodyPlain + "\n\n" + task.getDescription() + "\n\n" + footer;
+            mailHtml = bodyPlain + "<p>" + task.getDescription() + "</p>" + footer;
+        } else {
+            subject = DEFAULT_SUBJECT;
+            mailText = bodyPlain + "\n\n" + footer;
+            mailHtml = bodyPlain + "<p>" + footer + "</p>";
+        }
+
+        mail.setSubject(subject);
+
+        Content textContent = new Content("text/plain", mailText);
+        Content htmlContent = new Content("text/html", mailHtml);
+        mail.addContent(textContent);
+        mail.addContent(htmlContent);
+
+        InputStream calendarAttachment = notification instanceof EventNotification ? calendarAttachment((EventNotification) notification) : null;
+        log.debug("do we have a calendar attachment? : {}", calendarAttachment);
+        if (calendarAttachment != null) {
+            Attachments attachments = new Attachments.Builder("meeting.ics", calendarAttachment).build();
+            mail.addAttachments(attachments);
+        }
+
+        mail.addCustomArg("notification_uid", notification.getUid());
+
+        return checkForSandbox(mail);
+    }
+
+    private void updateNotificationFailed(String notificationUid, String cause) {
+        notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.DELIVERY_FAILED,
+                "Error sending message via email", true, false, null, MessagingProvider.EMAIL);
+    }
+
+    private InputStream calendarAttachment(EventNotification notification) {
         ICalendar ical = new ICalendar();
         VEvent virtualEvent = new VEvent();
         Event event = notification.getEvent();
@@ -151,90 +238,142 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
         virtualEvent.setDuration(duration);
         ical.addEvent(virtualEvent);
 
-        String iCalendarAsString = Biweekly.write(ical).go();
         try {
-            return new ByteArrayResource(iCalendarAsString.getBytes(StandardCharsets.UTF_8.name()));
-        } catch (UnsupportedEncodingException e) {
+            return new ByteArrayResource(Biweekly.write(ical).go().getBytes(StandardCharsets.UTF_8.name())).getInputStream();
+        } catch (IOException e) {
             log.error("Something went wrong writing to iCal", e);
             return null;
         }
     }
 
-    @Async
-    @Override
-    public void sendNonNotificationEmails(Set<GrassrootEmail> emails) {
-        log.info("trying to send out a list of {} emails", emails.size());
-        emails.stream()
-                .map(this::transformEmail)
-                .filter(Objects::nonNull)
-                .forEach(mail -> {
-                    try {
-                        javaMailSender.send(mail);
-                    } catch (MailException e) {
-                        log.error("Error inside java mail sending loop", e);
-                    }
-                });
-        log.info("Sent emails!");
+
+    private Mail transformEmail(GrassrootEmail email) {
+        Mail mail = new Mail();
+        mail.setSubject(email.getSubject());
+
+        boolean hasFromName = !StringUtils.isEmpty(email.getFromName());
+        boolean hasFromAddress = !StringUtils.isEmpty(email.getFromAddress());
+        Email fromPerson = hasFromName ? new Email(hasFromAddress ? email.getFromAddress() : fromAddress,
+                email.getFromName()) : new Email(hasFromAddress ? email.getFromAddress() : fromAddress);
+        mail.setFrom(fromPerson);
+
+        if (hasFromAddress || hasFromName) {
+            Email replyTo = !hasFromName ? new Email(email.getFromAddress()) : new Email(email.getFromAddress(), email.getFromName());
+            mail.setReplyTo(replyTo);
+        }
+
+        if (email.isMultiUser()) {
+            log.info("generating personalization, email base ID = {}", email.getBaseId());
+            email.getToUserUids().stream().map(userRepository::findOneByUid)
+                    .map(user -> userBasedPersonalization(user, email.getBaseId()))
+                    .forEach(mail::addPersonalization);
+        } else {
+            mail.addPersonalization(nameBasedPersonalization(email.getToName(), email.getToAddress(), email.getBaseId()));
+        }
+
+        if (email.hasHtmlContent()) {
+            List<InlineImage> imgMap = new ArrayList<>();
+            String htmlContent = searchForImagesInHtml(email.getHtmlContent(), imgMap);
+            log.debug("traversed, image map = {}, htmlContent = {}", imgMap, htmlContent);
+            // also just to remove the image, in case it's there
+            final String text = searchForImagesInHtml(email.getContent(), new ArrayList<>());
+            mail.addContent(new Content("text/html", text));
+            List<Attachments> attachments = imgMap.stream().map(this::addInlineImage).collect(Collectors.toList());
+            safeAddAttachments(mail, attachments);
+        } else {
+            mail.addContent(new Content("text/plain", email.getContent()));
+        }
+
+        if (email.hasAttachment()) {
+            mail = safeAddAttachments(mail, Collections.singleton(createAttachment(email.getAttachmentName(), email.getAttachment(), null)));
+        }
+
+        List<Attachments> attachments = email.getAttachmentUidsAndNames().entrySet().stream().map(entry -> {
+            MediaFileRecord record = recordRepository.findOneByUid(entry.getKey());
+            File fileToAttach = storageBroker.fetchFileFromRecord(record);
+            final String attachmentName = !StringUtils.isEmpty(entry.getValue()) ? entry.getValue() :
+                    !StringUtils.isEmpty(record.getFileName()) ? record.getFileName() : fileToAttach.getName();
+            return createAttachment(attachmentName, fileToAttach, record.getMimeType());
+        }).collect(Collectors.toList());
+
+        if (!attachments.isEmpty()) {
+            mail = safeAddAttachments(mail, attachments);
+        }
+
+        return checkForSandbox(mail);
     }
 
-    private MimeMessage transformEmail(GrassrootEmail email) {
+    private Personalization userBasedPersonalization(User user, String baseId) {
+        Personalization personalization = new Personalization();
+
+        final String emailAddress = routeMailsToTest ? testEmailAddress : user.getEmailAddress();
+        Email toPerson = user.hasName() ? new Email(emailAddress, user.getName()) : new Email(emailAddress);
+
+        personalization.addTo(toPerson);
+        personalization.addCustomArg("base_id", baseId);
+        personalization.addCustomArg("user_id", user.getUid());
+
+        personalization.addSubstitution(GrassrootTemplate.NAME_FIELD_TEMPLATE, user.getName());
+        personalization.addSubstitution(GrassrootTemplate.DATE_FIELD_TEMPLATE, SDF.format(LocalDate.now()));
+        personalization.addSubstitution(GrassrootTemplate.CONTACT_FIELD_TEMPALTE, user.getUsername());
+        personalization.addSubstitution(GrassrootTemplate.PROVINCE_FIELD_TEMPLATE, user.getProvince() == null ?
+                NO_PROVINCE : Province.CANONICAL_NAMES_ZA.getOrDefault(user.getProvince(), NO_PROVINCE));
+
+        if (routeMailsToTest) {
+            personalization.addHeader("X-Test", "test");
+        }
+
+        return personalization;
+    }
+
+    private Personalization nameBasedPersonalization(String toName, String toAddress, String baseId) {
+        Personalization personalization = new Personalization();
+
+        final boolean hasName = !StringUtils.isEmpty(toName);
+        final String emailAddress = routeMailsToTest ? testEmailAddress : toAddress;
+
+        Email toPerson = hasName ? new Email(emailAddress, toName) : new Email(emailAddress);
+        personalization.addTo(toPerson);
+
+        if (hasName) {
+            personalization.addSubstitution(GrassrootTemplate.NAME_FIELD_TEMPLATE, toName);
+            personalization.addSubstitution(GrassrootTemplate.DATE_FIELD_TEMPLATE, SDF.format(LocalDate.now()));
+        }
+
+        if (!StringUtils.isEmpty(baseId)) {
+            personalization.addCustomArg("base_id", baseId);
+        }
+
+        if (routeMailsToTest) {
+            personalization.addHeader("X-Test", "test");
+        }
+
+        return personalization;
+    }
+
+    private Attachments createAttachment(String name, File file, String type) {
         try {
-            MimeMessage javaMail = javaMailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(javaMail, true);
-            
-            helper.setTo(email.getAddress());
-            helper.setSubject(email.getSubject());
-            
-            boolean hasFromAddress = !StringUtils.isEmpty(email.getFromAddress());
-            boolean hasFrom = !StringUtils.isEmpty(email.getFrom());
-            
-            helper.setFrom(hasFromAddress ? email.getFromAddress() : fromAddress, hasFrom ? email.getFrom() : defaultFromName);
-            if (hasFromAddress && hasFrom) {
-                helper.setReplyTo(email.getFromAddress(), email.getFrom());
-            } else if (hasFromAddress) {
-                helper.setReplyTo(email.getFrom());
-            }
-
-            // note: we assume default is html content
-            if (email.hasHtmlContent()) {
-                List<InlineImage> imgMap = new ArrayList<>();
-                String htmlContent = email.getHtmlContent();
-                htmlContent = searchForImagesInHtml(htmlContent, imgMap);
-                log.info("traversed, image map = {}", imgMap);
-                log.debug("added images, done, html content = {}", htmlContent);
-                // also just to remove the image, in case it's there
-                final String text = searchForImagesInHtml(email.getContent(), new ArrayList<>());
-                helper.setText(text, htmlContent);
-                imgMap.forEach(img -> addInlineImage(helper, img));
-            } else {
-                helper.setText(email.getContent());
-            }
-
-            if (email.hasAttachment()) {
-                helper.addAttachment(email.getAttachmentName(), email.getAttachment());
-            }
-
-            log.info("email attachments and UIDs = {}", email.getAttachmentUidsAndNames());
-
-            if (email.getAttachmentUidsAndNames() != null) {
-                email.getAttachmentUidsAndNames().forEach((uid, name) -> {
-                    MediaFileRecord record = recordRepository.findOneByUid(uid);
-                    File fileToAttach = storageBroker.fetchFileFromRecord(record);
-                    final String attachmentName = !StringUtils.isEmpty(name) ? name :
-                            !StringUtils.isEmpty(record.getFileName()) ? record.getFileName() : fileToAttach.getName();
-                    try {
-                        helper.addAttachment(attachmentName, fileToAttach);
-                    } catch(MessagingException e) {
-                        log.error("could not attach! name: ", name);
-                    }
-                });
-            }
-
-            return javaMail;
-        } catch (MessagingException|UnsupportedEncodingException|MailException e) {
-            log.error("Error transforming mail! Email: {}, exception: {}", email, e);
+            InputStream stream = FileUtils.openInputStream(file);
+            Attachments.Builder builder = new Attachments
+                    .Builder(name, stream)
+                    .withType(type);
+            return builder.build();
+        } catch (IOException e) {
+            log.error("Could not attach to mail, error", e);
             return null;
         }
+    }
+
+    private Mail safeAddAttachments(Mail mail, Collection<Attachments> attachments) {
+        attachments.stream().filter(Objects::nonNull).forEach(mail::addAttachments);
+        return mail;
+    }
+
+    private Attachments addInlineImage(InlineImage image) {
+        Attachments attachments = new Attachments.Builder("image", image.content)
+                .withDisposition("inline").withContentId(image.cid).withType(image.contentType).build();
+        log.info("added an image, cid : {}", image.cid);
+        return attachments;
     }
 
     private String searchForImagesInHtml(String htmlContent, List<InlineImage> images) {
@@ -250,10 +389,9 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
                 log.info("contentType = {}", contentType);
                 String base64ImageText = dataBlock.split(",")[1];
                 log.debug("base64 image text = {}", base64ImageText);
-                ByteArrayResource convertedStream = new ByteArrayResource(Base64Utils.decodeFromString(base64ImageText));
                 String cidString = srcBlock.replace(dataBlock, "cid:image" + i);
                 htmlContent = htmlContent.replace(srcBlock, cidString);
-                images.add(new InlineImage("image"+i, contentType, convertedStream));
+                images.add(new InlineImage("image"+i, contentType, base64ImageText));
                 i++;
             }
         }
@@ -261,21 +399,12 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
         return htmlContent;
     }
 
-    private void addInlineImage(MimeMessageHelper helper, InlineImage image) {
-        try {
-            helper.addInline(image.cid, image.inputStream, image.contentType);
-            log.info("added an image, cid : {}", image.cid);
-        } catch (MessagingException e) {
-            log.error("error adding message with id {}, error {}", image.cid, e);
-        }
-    }
-
     // small helper for the above, might exist somewhere in Spring but can't find at present
     @AllArgsConstructor @ToString
     private class InlineImage {
         String cid;
         String contentType;
-        ByteArrayResource inputStream;
+        String content;
     }
 
 }

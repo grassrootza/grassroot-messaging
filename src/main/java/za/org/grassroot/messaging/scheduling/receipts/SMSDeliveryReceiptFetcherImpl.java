@@ -1,4 +1,4 @@
-package za.org.grassroot.messaging.scheduling;
+package za.org.grassroot.messaging.scheduling.receipts;
 
 import com.amazonaws.SdkClientException;
 import com.amazonaws.regions.Regions;
@@ -16,7 +16,6 @@ import za.org.grassroot.core.domain.Notification;
 import za.org.grassroot.core.domain.NotificationStatus;
 import za.org.grassroot.core.enums.MessagingProvider;
 import za.org.grassroot.messaging.service.NotificationBroker;
-import za.org.grassroot.messaging.service.sms.SMSDeliveryReceipt;
 import za.org.grassroot.messaging.service.sms.SMSDeliveryStatus;
 import za.org.grassroot.messaging.service.sms.SmsSendingService;
 import za.org.grassroot.messaging.service.sms.aat.AatMsgStatus;
@@ -69,46 +68,6 @@ public class SMSDeliveryReceiptFetcherImpl implements SMSDeliveryReceiptFetcher 
     }
 
     @Override
-    public void fetchDeliveryReceiptsFromApiLog() {
-        log.info("called fetch deliver receipts");
-        // if not running set to running and do the job
-        if (running.compareAndSet(false, true)) {
-            log.info("Running SMSDeliveryReceiptFetcher ...");
-            try {
-                for (Map.Entry<MessagingProvider, SmsSendingService> entry : messagingProviderServiceMap.entrySet()) {
-                    MessagingProvider provider = entry.getKey();
-                    SmsSendingService smsSendingService = entry.getValue();
-                    List<Notification> notifications = notificationBroker.loadSentNotificationsWithUnknownDeliveryStatus(provider);
-                    for (Notification notification : notifications) {
-                        try {
-                            SMSDeliveryReceipt receipt = smsSendingService.fetchSMSDeliveryStatus(notification.getSendingKey());
-                            if (receipt != null) {
-                                SMSDeliveryStatus deliveryStatus = receipt.getDeliveryStatus();
-                                if (deliveryStatus == SMSDeliveryStatus.DELIVERED)
-                                    notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.DELIVERED, null, false, true, null, null);
-                                else if (deliveryStatus == SMSDeliveryStatus.DELIVERY_FAILED)
-                                    notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.DELIVERY_FAILED, receipt.getDescription(), false, true, null, null);
-                            } else {
-                                log.warn("No delivery receipt returned by provider for notification uid {}, sendingKey: {}", notification.getUid(), notification.getSendingKey());
-                                notificationBroker.incrementReceiptFetchCount(notification.getUid());
-                            }
-                        } catch (Exception e) {
-                            log.error("Failed to fetch delivery receipt for notification with uid" + notification.getUid(), e);
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                log.info("SMSDeliveryReceiptFetcher failed!", e);
-            } finally {
-                running.set(false);
-            }
-        } else {
-            log.warn("SMSDeliveryReceiptFetcher triggered but it's already running");
-        }
-
-    }
-
-    @Override
     public void clearCallBackQueue() {
         if (callbackQueueEnabled && sqs != null) {
             log.debug("clearing the call back queue ... max messages : {}", maxSqsMessages);
@@ -148,16 +107,24 @@ public class SMSDeliveryReceiptFetcherImpl implements SMSDeliveryReceiptFetcher 
         if (notification != null) {
             AatMsgStatus aatMsgStatus = AatMsgStatus.fromCode(status);
             if (aatMsgStatus != null) {
-                SMSDeliveryStatus deliveryStatus = aatMsgStatus.toSMSDeliveryStatus();
-                if (deliveryStatus == SMSDeliveryStatus.DELIVERED)
-                    notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.DELIVERED, null, false, true, null, null);
-                else if (deliveryStatus == SMSDeliveryStatus.DELIVERY_FAILED)
-                    notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.DELIVERY_FAILED, "Message delivery failed: " + aatMsgStatus.name(),
-                            false, true, null, null);
+                updateNotificationFromAatStatus(notification, aatMsgStatus);
             } else {
-                // maybe also send to DL queue
-                log.error("Received confusing AAT message status: {}", status);
+                log.error("Received confusing AAT message status: {}", status);// maybe also send to DL queue
             }
+        }
+    }
+
+    private void updateNotificationFromAatStatus(Notification notification, AatMsgStatus aatMsgStatus) {
+        SMSDeliveryStatus deliveryStatus = aatMsgStatus.toSMSDeliveryStatus();
+        if (deliveryStatus == SMSDeliveryStatus.DELIVERED) {
+            notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.DELIVERED, null,
+                    false, true, null, MessagingProvider.AAT);
+        } else if (deliveryStatus == SMSDeliveryStatus.DELIVERY_FAILED) {
+            notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.DELIVERY_FAILED, "Message delivery failed: " + aatMsgStatus.name(),
+                    false, true, null, MessagingProvider.AAT);
+        } else if (deliveryStatus == SMSDeliveryStatus.PROBLEM_NUMBER) {
+            notificationBroker.updateNotificationStatus(notification.getUid(), NotificationStatus.UNDELIVERABLE, "Likely number issues: " + aatMsgStatus.name(),
+                    false, true, null, MessagingProvider.AAT);
         }
     }
 

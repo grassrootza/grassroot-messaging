@@ -191,11 +191,11 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
             mail.addCustomArg("task_id", task.getUid());
             mail.addCustomArg("task_type", task.getTaskType().name());
             mailText = bodyPlain + "\n\n" + task.getDescription() + "\n\n" + footer;
-            mailHtml = bodyPlain + "<p>" + task.getDescription() + "</p>" + footer;
+            mailHtml = bodyHtml + "<p>" + task.getDescription() + "</p>" + footer;
         } else {
             subject = DEFAULT_SUBJECT;
             mailText = bodyPlain + "\n\n" + footer;
-            mailHtml = bodyPlain + "<p>" + footer + "</p>";
+            mailHtml = bodyHtml + "<p>" + footer + "</p>";
         }
 
         mail.setSubject(subject);
@@ -271,12 +271,15 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
             mail.addPersonalization(nameBasedPersonalization(email.getToName(), email.getToAddress(), email.getBaseId()));
         }
 
+        log.debug("does email have html content: {}", email.hasHtmlContent());
+        log.debug("email text: {}, email html: {}", email.getContent(), email.getHtmlContent());
+
         if (email.hasHtmlContent()) {
             List<InlineImage> imgMap = new ArrayList<>();
             String htmlContent = searchForImagesInHtml(email.getHtmlContent(), imgMap);
             log.debug("traversed, image map = {}, htmlContent = {}", imgMap, htmlContent);
             // also just to remove the image, in case it's there
-            final String text = searchForImagesInHtml(email.getContent(), new ArrayList<>());
+            final String text = searchForImagesInHtml(email.getHtmlContent(), new ArrayList<>());
             mail.addContent(new Content("text/html", text));
             List<Attachments> attachments = imgMap.stream().map(this::addInlineImage).collect(Collectors.toList());
             safeAddAttachments(mail, attachments);

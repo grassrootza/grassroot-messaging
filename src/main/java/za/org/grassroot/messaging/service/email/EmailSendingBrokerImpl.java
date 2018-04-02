@@ -18,9 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import za.org.grassroot.core.GrassrootTemplate;
-import za.org.grassroot.core.domain.Notification;
-import za.org.grassroot.core.domain.NotificationStatus;
-import za.org.grassroot.core.domain.User;
+import za.org.grassroot.core.domain.*;
 import za.org.grassroot.core.domain.media.MediaFileRecord;
 import za.org.grassroot.core.domain.notification.EventNotification;
 import za.org.grassroot.core.domain.task.Event;
@@ -31,6 +29,8 @@ import za.org.grassroot.core.enums.MessagingProvider;
 import za.org.grassroot.core.enums.Province;
 import za.org.grassroot.core.repository.MediaFileRecordRepository;
 import za.org.grassroot.core.repository.UserRepository;
+import za.org.grassroot.core.repository.VerificationTokenCodeRepository;
+import za.org.grassroot.core.specifications.TokenSpecifications;
 import za.org.grassroot.messaging.service.NotificationBroker;
 import za.org.grassroot.messaging.service.StorageBroker;
 
@@ -73,25 +73,41 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
     @Value("${grassroot.email.default.name:Grassroot}")
     private String defaultFromName;
 
+    @Value("${grassroot.inbound.responses.url:http://localhost:4200/respond/}")
+    private String inboundResponseUrl;
+
+    @Value("${grassroot.inbound.unsubscribe.url:http://localhost:4200/unsubscribe/}")
+    private String unsubscribeUrl;
+
     private static final String DEFAULT_SUBJECT = "Grassroot notification";
 
     // 1 = name, 2 = message
     private static final String NOTIFICATION_BODY_HTML = "<p>Dear %1$s</p><p><b>Notice: </b>%2$s</p>";
     private static final String NOTIFICATION_BODY_TEXT = "Dear %1$s,\n\n%2$s\n\n";
 
-    private static final String NOTIFICATION_FOOTER_PLAIN = "Sent by Grassroot";
-    private static final String NOTIFICATION_FOOTER_ACCOUNT = "Sent for %1$s by Grassoot";
+    private static final String RESPOND_TASK_HTML = "<p><a href=\"%1$s\">Click here to respond</a></p>";
+    private static final String RESPOND_TASK_TXT = "To respond, just copy and paste this link: %1$s\n\n";
+
+    private static final String NOTIFICATION_FOOTER_PLAIN = "Sent by Grassroot.";
+    private static final String NOTIFICATION_FOOTER_ACCOUNT = "Sent for %1$s by Grassoot.";
+
+    private static final String UNSUB_GROUP_HTML = "<p>To unsubscribe from this group, <a href=\"%1$s\">click here</a></p>";
+    private static final String UNSUB_GROUP_TXT = "\n\n To unsubscribe from this group, just copy and paste this link: %1$s";
+
+    private static final String UNSUB_FIELD = "___unsubscribe_link___";
 
     private final NotificationBroker notificationBroker;
     private final MediaFileRecordRepository recordRepository;
     private final StorageBroker storageBroker;
     private final UserRepository userRepository;
+    private final VerificationTokenCodeRepository tokenRepository;
 
-    public EmailSendingBrokerImpl(NotificationBroker notificationBroker, MediaFileRecordRepository recordRepository, StorageBroker storageBroker, UserRepository userRepository) {
+    public EmailSendingBrokerImpl(NotificationBroker notificationBroker, MediaFileRecordRepository recordRepository, StorageBroker storageBroker, UserRepository userRepository, VerificationTokenCodeRepository tokenRepository) {
         this.notificationBroker = notificationBroker;
         this.recordRepository = recordRepository;
         this.storageBroker = storageBroker;
         this.userRepository = userRepository;
+        this.tokenRepository = tokenRepository;
     }
 
     @Override
@@ -173,7 +189,7 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
         mail.setReplyTo(replyTo);
 
         User target = notification.getTarget();
-        mail.addPersonalization(userBasedPersonalization(target, notification.getUid()));
+        mail.addPersonalization(userBasedPersonalization(target, notification.getUid(), null)); // since add group below
 
         final String bodyPlain = String.format(NOTIFICATION_BODY_TEXT, target.getName(), notification.getMessage());
         final String bodyHtml = String.format(NOTIFICATION_BODY_HTML, target.getName(), notification.getMessage());
@@ -190,12 +206,24 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
             subject = task.getAncestorGroup().getName() + ": " + task.getName();
             mail.addCustomArg("task_id", task.getUid());
             mail.addCustomArg("task_type", task.getTaskType().name());
-            mailText = bodyPlain + "\n\n" + task.getDescription() + "\n\n" + footer;
-            mailHtml = bodyHtml + "<p>" + task.getDescription() + "</p>" + footer;
+            final String responseLink = getResponseLink(task, target);
+            boolean hasDescription = !StringUtils.isEmpty(task.getDescription()) && !"null".equals(task.getDescription());
+            mailText = bodyPlain + (hasDescription ? "\n\n" + task.getDescription() + "\n\n" : "")
+                    + String.format(RESPOND_TASK_TXT, responseLink) + footer;
+            mailHtml = bodyHtml + (hasDescription ? "<p>" + task.getDescription() + "</p>" : "")
+                    + String.format(RESPOND_TASK_HTML, responseLink) + footer;
+            log.info("link footer: {}", String.format(RESPOND_TASK_HTML, responseLink));
         } else {
             subject = DEFAULT_SUBJECT;
             mailText = bodyPlain + "\n\n" + footer;
             mailHtml = bodyHtml + "<p>" + footer + "</p>";
+        }
+
+        final String groupUnsubLink = getGroupUnsubscribeLink(notification);
+        log.info("unsubscribe link ? {}", groupUnsubLink);
+        if (groupUnsubLink != null) {
+            mailHtml += String.format(UNSUB_GROUP_HTML, groupUnsubLink);
+            mailText += String.format(UNSUB_GROUP_TXT, groupUnsubLink);
         }
 
         mail.setSubject(subject);
@@ -215,6 +243,17 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
         mail.addCustomArg("notification_uid", notification.getUid());
 
         return checkForSandbox(mail);
+    }
+
+    private String getGroupUnsubscribeLink(Notification notification) {
+        Group group = notification.getRelevantGroup();
+        return group == null ? null : getGroupUnsubLink(group.getUid(), notification.getTarget().getUid());
+    }
+
+    private String getResponseLink(Task task, User user) {
+        final VerificationTokenCode token = tokenRepository.findOne(TokenSpecifications.forUserAndEntity(user.getUid(), task.getUid()));
+        return token == null ? null : inboundResponseUrl + task.getTaskType() + "/" + task.getUid()
+                + "/" + user.getUid() + "/" + token.getCode();
     }
 
     private void updateNotificationFailed(String notificationUid, String cause) {
@@ -262,51 +301,71 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
             mail.setReplyTo(replyTo);
         }
 
-        if (email.isMultiUser()) {
-            log.info("generating personalization, email base ID = {}", email.getBaseId());
-            email.getToUserUids().stream().map(userRepository::findOneByUid)
-                    .map(user -> userBasedPersonalization(user, email.getBaseId()))
-                    .forEach(mail::addPersonalization);
-        } else {
-            mail.addPersonalization(nameBasedPersonalization(email.getToName(), email.getToAddress(), email.getBaseId()));
-        }
-
         log.debug("does email have html content: {}", email.hasHtmlContent());
         log.debug("email text: {}, email html: {}", email.getContent(), email.getHtmlContent());
 
+        String htmlContent;
+        String textContent;
+
         if (email.hasHtmlContent()) {
             List<InlineImage> imgMap = new ArrayList<>();
-            String htmlContent = searchForImagesInHtml(email.getHtmlContent(), imgMap);
-            log.debug("traversed, image map = {}, htmlContent = {}", imgMap, htmlContent);
-            // also just to remove the image, in case it's there
-            final String text = searchForImagesInHtml(email.getHtmlContent(), new ArrayList<>());
-            mail.addContent(new Content("text/html", text));
+            htmlContent = searchForImagesInHtml(email.getHtmlContent(), imgMap);
+            textContent = searchForImagesInHtml(email.getHtmlContent(), new ArrayList<>()); // also just to remove the image, in case it's there
             List<Attachments> attachments = imgMap.stream().map(this::addInlineImage).collect(Collectors.toList());
             safeAddAttachments(mail, attachments);
         } else {
-            mail.addContent(new Content("text/plain", email.getContent()));
+            textContent = email.getContent();
+            htmlContent = null;
         }
 
-        if (email.hasAttachment()) {
+        // since for single user we don't have uids etc (and anyway this probably doesn't make sense)
+        boolean addGroupUnsubLink = !StringUtils.isEmpty(email.getGroupUid()) && email.isMultiUser();
+        if (addGroupUnsubLink && htmlContent != null) {
+            htmlContent += String.format(UNSUB_GROUP_HTML, UNSUB_FIELD);
+        }
+
+        if (addGroupUnsubLink && textContent != null) {
+            textContent += String.format(UNSUB_GROUP_TXT, UNSUB_FIELD);
+        }
+
+        if (htmlContent != null)
+            mail.addContent(new Content("text/html", htmlContent));
+
+        if (textContent != null)
+            mail.addContent(new Content("text/plain", textContent));
+
+
+        if (email.hasAttachment())
             mail = safeAddAttachments(mail, Collections.singleton(createAttachment(email.getAttachmentName(), email.getAttachment(), null)));
-        }
 
-        List<Attachments> attachments = email.getAttachmentUidsAndNames().entrySet().stream().map(entry -> {
-            MediaFileRecord record = recordRepository.findOneByUid(entry.getKey());
-            File fileToAttach = storageBroker.fetchFileFromRecord(record);
-            final String attachmentName = !StringUtils.isEmpty(entry.getValue()) ? entry.getValue() :
-                    !StringUtils.isEmpty(record.getFileName()) ? record.getFileName() : fileToAttach.getName();
-            return createAttachment(attachmentName, fileToAttach, record.getMimeType());
-        }).collect(Collectors.toList());
+        List<Attachments> attachments = email.getAttachmentUidsAndNames().entrySet().stream()
+                .map(this::attachmentFromMapEntry).collect(Collectors.toList());
 
         if (!attachments.isEmpty()) {
             mail = safeAddAttachments(mail, attachments);
         }
 
+        if (email.isMultiUser()) {
+            log.info("generating personalization, email base ID = {}", email.getBaseId());
+            email.getToUserUids().stream().map(userRepository::findOneByUid)
+                    .map(user -> userBasedPersonalization(user, email.getBaseId(), email.getGroupUid()))
+                    .forEach(mail::addPersonalization);
+        } else {
+            mail.addPersonalization(nameBasedPersonalization(email.getToName(), email.getToAddress(), email.getBaseId()));
+        }
+
         return checkForSandbox(mail);
     }
 
-    private Personalization userBasedPersonalization(User user, String baseId) {
+    private Attachments attachmentFromMapEntry(Map.Entry<String, String> entry) {
+        MediaFileRecord record = recordRepository.findOneByUid(entry.getKey());
+        File fileToAttach = storageBroker.fetchFileFromRecord(record);
+        final String attachmentName = !StringUtils.isEmpty(entry.getValue()) ? entry.getValue() :
+                !StringUtils.isEmpty(record.getFileName()) ? record.getFileName() : fileToAttach.getName();
+        return createAttachment(attachmentName, fileToAttach, record.getMimeType());
+    }
+
+    private Personalization userBasedPersonalization(User user, String baseId, String groupUid) {
         Personalization personalization = new Personalization();
 
         final String emailAddress = routeMailsToTest ? testEmailAddress : user.getEmailAddress();
@@ -324,6 +383,10 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
 
         if (routeMailsToTest) {
             personalization.addHeader("X-Test", "test");
+        }
+
+        if (!StringUtils.isEmpty(groupUid)) {
+            personalization.addSubstitution(UNSUB_FIELD, getGroupUnsubLink(groupUid, user.getUid()));
         }
 
         return personalization;
@@ -400,6 +463,11 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
         }
         log.debug("html content now looks like: {}", htmlContent);
         return htmlContent;
+    }
+
+    private String getGroupUnsubLink(String groupUid, String userUid) {
+        final VerificationTokenCode token = tokenRepository.findOne(TokenSpecifications.forUserAndEntity(userUid, groupUid));
+        return token == null ? null : unsubscribeUrl + groupUid + "/" + userUid + "/" + token.getCode();
     }
 
     // small helper for the above, might exist somewhere in Spring but can't find at present

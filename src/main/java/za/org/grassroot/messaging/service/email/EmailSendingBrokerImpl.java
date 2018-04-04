@@ -328,12 +328,11 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
             textContent += String.format(UNSUB_GROUP_TXT, UNSUB_FIELD);
         }
 
-        if (htmlContent != null)
-            mail.addContent(new Content("text/html", htmlContent));
-
         if (textContent != null)
             mail.addContent(new Content("text/plain", textContent));
 
+        if (htmlContent != null)
+            mail.addContent(new Content("text/html", htmlContent));
 
         if (email.hasAttachment())
             mail = safeAddAttachments(mail, Collections.singleton(createAttachment(email.getAttachmentName(), email.getAttachment(), null)));

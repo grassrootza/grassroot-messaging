@@ -1,6 +1,7 @@
 package za.org.grassroot.messaging.service.sms.aat;
 
 import com.vdurmont.emoji.EmojiParser;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -25,12 +26,12 @@ import java.io.StringReader;
 /**
  * Created by luke on 2015/09/09.
  */
-@Primary
+@Primary @Slf4j
 @Service("aatSmsSender")
 @PropertySource(value = "file:${grassroot.messaging.properties.path}", ignoreResourceNotFound = true)
 public class AatSmsSendingManager implements SmsSendingService {
 
-    private Logger log = LoggerFactory.getLogger(AatSmsSendingManager.class);
+    private static final String ALLOWABLE_C_CODE = "27";
 
     private final Environment environment;
     private final RestTemplate restTemplate;
@@ -57,6 +58,12 @@ public class AatSmsSendingManager implements SmsSendingService {
         if (StringUtils.isEmpty(destinationNumber)) {
             log.error("Error! Called send SMS with null number, returning error");
             return AatResponseInterpreter.makeErrorResponse(SmsResponseType.COMMUNICATION_ERROR);
+        }
+
+        // we are going to skip international numbers
+        if (!"27".equals(destinationNumber.substring(0, 2))) {
+            log.info("skipping international number: {}, substring: {}", destinationNumber, destinationNumber.substring(0, 1));
+            return AatResponseInterpreter.makeErrorResponse(SmsResponseType.INTL_NUMBER);
         }
 
         long startTime = System.currentTimeMillis();

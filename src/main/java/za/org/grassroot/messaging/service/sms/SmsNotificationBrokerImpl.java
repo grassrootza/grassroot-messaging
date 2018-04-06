@@ -163,6 +163,11 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
                             "Can't send message. Could not't access sms gateway", true, false, null, response.getProvider());
                     break;
 
+                case INTL_NUMBER:
+                    logger.info("number is international, cannot be sent at present");
+                    notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.UNDELIVERABLE,
+                            "Can't send message. Number is international", true, false, null, response.getProvider());
+
                 default:
                     notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.SENDING_FAILED,
                             "Can't send message. Reason: " + response.getResponseType(), true, false, null, response.getProvider());

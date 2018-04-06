@@ -450,7 +450,8 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
                 int startOfSrcToken = srcBlock.indexOf(srcToken);
                 int endOfSrcBlock= srcBlock.indexOf( "\"", startOfSrcToken + srcToken.length());
                 String dataBlock = srcBlock.substring(startOfSrcToken + srcToken.length(), endOfSrcBlock);
-                String contentType = dataBlock.substring("data:".length(), dataBlock.indexOf(";"));
+                String contentType = dataBlock.indexOf(";") > "data:".length() ?
+                        dataBlock.substring("data:".length(), dataBlock.indexOf(";")) : null;
                 log.info("contentType = {}", contentType);
                 String base64ImageText = dataBlock.split(",")[1];
                 log.debug("base64 image text = {}", base64ImageText);
@@ -460,7 +461,7 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
                 i++;
             }
         }
-        log.debug("html content now looks like: {}", htmlContent);
+//        log.info("html content now looks like: {}", htmlContent);
         return htmlContent;
     }
 

@@ -165,7 +165,7 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
 
                 case INTL_NUMBER:
                     logger.info("number is international, cannot be sent at present");
-                    notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.UNDELIVERABLE,
+                    notificationBroker.updateNotificationStatus(notificationUid, NotificationStatus.SENDING_FAILED,
                             "Can't send message. Number is international", true, false, null, response.getProvider());
 
                 default:

@@ -1,6 +1,5 @@
 description 'Grassroot Messaging Microservice'
 
-
 allprojects  {
     group 'grassroot'
     version '1.0.0.9'
@@ -16,10 +15,12 @@ ext.libs = [
 buildscript {
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.10.RELEASE")
-        classpath("io.spring.gradle:dependency-management-plugin:1.0.4.RELEASE")
+        classpath("io.spring.gradle:dependency-management-plugin:1.0.5.RELEASE")
+        classpath "com.github.ben-manes:gradle-versions-plugin:0.17.0"
     }
 
     repositories {
+        jcenter()
         mavenLocal()
         mavenCentral()
     }
@@ -28,6 +29,7 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
+apply plugin: 'com.github.ben-manes.versions'
 
 sourceCompatibility = 1.8
 
@@ -44,8 +46,8 @@ repositories {
 
 dependencyManagement {
     imports {
-        mavenBom 'com.amazonaws:aws-java-sdk-bom:1.11.297'
-        mavenBom 'software.amazon.awssdk:bom:2.0.0-preview-8'
+        mavenBom 'com.amazonaws:aws-java-sdk-bom:1.11.333'
+        mavenBom 'software.amazon.awssdk:bom:2.0.0-preview-9'
     }
 }
 
@@ -56,7 +58,7 @@ dependencies {
     testCompile group: 'org.springframework.integration', name: 'spring-integration-test', version:libs.springIntegrationVersion
 
     compile project(':grassroot-messaging-dto')
-    compile group: 'za.org.grassroot', name: 'grassroot-core', version: '1.1.1.16'
+    compile group: 'za.org.grassroot', name: 'grassroot-core', version: '1.1.1.17'
 
     compile group: 'org.quartz-scheduler', name: 'quartz', version: '2.3.0'
 
@@ -68,31 +70,31 @@ dependencies {
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-undertow', version:libs.springBootVersion
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-integration', version:libs.springBootVersion
 
-    compile 'com.sendgrid:sendgrid-java:4.2.0'
+    compile 'com.sendgrid:sendgrid-java:4.2.1'
 
     compile group: 'org.springframework.integration', name: 'spring-integration-xmpp', version: libs.springIntegrationVersion
 
     compile group: 'org.springframework', name: 'spring-web', version: libs.springVersion
 
-    compile group: 'com.h2database', name: 'h2', version: '1.4.195'
-    compile group: 'org.postgresql', name: 'postgresql', version: '42.1.1'
+    compile group: 'com.h2database', name: 'h2', version: '1.4.197'
+    compile group: 'org.postgresql', name: 'postgresql', version: '42.2.2'
 
-    compile group: 'org.apache.tika', name: 'tika-core', version: '1.17'
+    compile group: 'org.apache.tika', name: 'tika-core', version: '1.18'
     compile group: 'commons-io', name: 'commons-io', version: '2.6'
 
-    compile group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.11.297'
+    compile group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.11.333'
 
     compile 'com.amazonaws:aws-java-sdk-sns'
     compile 'software.amazon.awssdk:sqs' // v2 hence different naming
 
     // needed for calendar writing
-    compile 'net.sf.biweekly:biweekly:0.6.1'
+    compile 'net.sf.biweekly:biweekly:0.6.2'
 
     compile group: 'org.igniterealtime.smack', name: 'smack-core', version: '4.1.9'
     compile group: 'org.igniterealtime.smack', name: 'smack-tcp', version: '4.1.9'
     compile group: 'org.igniterealtime.smack', name: 'smack-experimental', version: '4.1.9'
 
-    compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '8.9.2'
+    compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '8.9.6'
     compile group: 'io.jsonwebtoken', name: 'jjwt', version: '0.9.0'
 
     compile group: 'org.projectlombok', name: 'lombok', version: '1.16.20'

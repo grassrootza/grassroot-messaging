@@ -1,6 +1,5 @@
 package za.org.grassroot.messaging.service.sms;
 
-import com.codahale.metrics.annotation.Timed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,7 +55,6 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
         }
     }
 
-    @Timed
     @Override
     public void sendStandardSmsNotification(Message message) {
         logger.debug("Handling SMS message, no strategy specified, sending by default ...");
@@ -71,7 +69,6 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
         handleSmsGatewayResponse(messagePayload.getUid(), response);
     }
 
-    @Timed
     @Override
     public void sendSmsNotificationByStrategy(Message message, SmsSendingStrategy strategy) {
         logger.debug("Sending with strategy: {}", strategy.name());

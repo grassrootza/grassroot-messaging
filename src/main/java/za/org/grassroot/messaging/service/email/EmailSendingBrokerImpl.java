@@ -309,8 +309,8 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
 
         if (email.hasHtmlContent()) {
             List<InlineImage> imgMap = new ArrayList<>();
-            htmlContent = searchForImagesInHtml(email.getHtmlContent(), imgMap);
-            textContent = searchForImagesInHtml(email.getHtmlContent(), new ArrayList<>()); // also just to remove the image, in case it's there
+            htmlContent = safeHandleInlineImages(email.getHtmlContent(), imgMap);
+            textContent = safeHandleInlineImages(email.getHtmlContent(), new ArrayList<>()); // also just to remove the image, in case it's there
             List<Attachments> attachments = imgMap.stream().map(this::addInlineImage).collect(Collectors.toList());
             safeAddAttachments(mail, attachments);
         } else {
@@ -441,6 +441,15 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
         return attachments;
     }
 
+    private String safeHandleInlineImages(String htmlContent, List<InlineImage> images) {
+        try {
+            return searchForImagesInHtml(htmlContent, images);
+        } catch (Exception e) {
+            log.error("Error processing inline images: {}", htmlContent);
+            return htmlContent;
+        }
+    }
+
     private String searchForImagesInHtml(String htmlContent, List<InlineImage> images) {
         final Matcher matcher = imgRegExp.matcher(htmlContent);
         int i = 0;
@@ -453,12 +462,15 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
                 String contentType = dataBlock.indexOf(";") > "data:".length() ?
                         dataBlock.substring("data:".length(), dataBlock.indexOf(";")) : null;
                 log.info("contentType = {}", contentType);
-                String base64ImageText = dataBlock.split(",")[1];
-                log.debug("base64 image text = {}", base64ImageText);
-                String cidString = srcBlock.replace(dataBlock, "cid:image" + i);
-                htmlContent = htmlContent.replace(srcBlock, cidString);
-                images.add(new InlineImage("image"+i, contentType, base64ImageText));
-                i++;
+                String[] imagesSplit = dataBlock.split(",");
+                if (imagesSplit.length > 1) {
+                    String base64ImageText = dataBlock.split(",")[1];
+                    log.debug("base64 image text = {}", base64ImageText);
+                    String cidString = srcBlock.replace(dataBlock, "cid:image" + i);
+                    htmlContent = htmlContent.replace(srcBlock, cidString);
+                    images.add(new InlineImage("image" + i, contentType, base64ImageText));
+                    i++;
+                }
             }
         }
 //        log.info("html content now looks like: {}", htmlContent);

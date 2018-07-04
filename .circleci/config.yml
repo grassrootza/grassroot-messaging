@@ -109,4 +109,4 @@ workflows:
           - build
         filters:
           branches:
-            only: circle2-migration
+            only: master

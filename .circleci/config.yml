@@ -8,11 +8,11 @@ jobs:
         - checkout
         - restore_cache:
                     keys:
-                      - v2-gradle-deps-{{ checksum "build.gradle" }}-{{ checksum "grassroot-core/build.gradle" }}-{{ checksum "grassroot-integration/build.gradle" }}-{{ checksum "grassroot-services/build.gradle" }}-{{ checksum "grassroot-webapp/build.gradle" }}
+                      - v2-gradle-deps-{{ checksum "build.gradle" }}
                       - v2-gradle-deps
         - run: ./gradlew downloadDependencies
         - save_cache:
-                    key: v2-gradle-deps-{{ checksum "build.gradle" }}-{{ checksum "grassroot-core/build.gradle" }}-{{ checksum "grassroot-integration/build.gradle" }}-{{ checksum "grassroot-services/build.gradle" }}-{{ checksum "grassroot-webapp/build.gradle" }}
+                    key: v2-gradle-deps-{{ checksum "build.gradle" }}
                     paths:
                       - .gradle
                       - ~/.gradle
@@ -25,7 +25,7 @@ jobs:
         - checkout
         - restore_cache:
             keys:
-              - v2-gradle-deps-{{ checksum "build.gradle" }}-{{ checksum "grassroot-core/build.gradle" }}-{{ checksum "grassroot-integration/build.gradle" }}-{{ checksum "grassroot-services/build.gradle" }}-{{ checksum "grassroot-webapp/build.gradle" }}
+              - v2-gradle-deps-{{ checksum "build.gradle" }}
               - v2-gradle-deps
         - run: ./gradlew test
 
@@ -38,7 +38,7 @@ jobs:
         - checkout
         - restore_cache:
             keys:
-              - v2-gradle-deps-{{ checksum "build.gradle" }}-{{ checksum "grassroot-core/build.gradle" }}-{{ checksum "grassroot-integration/build.gradle" }}-{{ checksum "grassroot-services/build.gradle" }}-{{ checksum "grassroot-webapp/build.gradle" }}
+              - v2-gradle-deps-{{ checksum "build.gradle" }}
               - v2-gradle-deps
         - save_cache:
             key: v2-built-jar-{{ .Branch }}-{{ .Revision }}

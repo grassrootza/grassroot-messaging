@@ -44,6 +44,7 @@ mv .deploy/Dockerrun.aws.json Dockerrun.aws.json
 mv .deploy/log_files.yml log_files.yml
 
 echo "Done, triggering EB update"
+mkdir ~/.aws
 cp environment/aws-credentials ~/.aws/credentials # else for some reason eb can't use env vars like normal aws cli
 eb use $EBENVIRONMENT
 eb deploy $EBENVIRONMENT --label "$ENVIRONMENT-$COMMIT_MESSAGE" --timeout 20

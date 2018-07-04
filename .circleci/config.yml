@@ -74,6 +74,13 @@ jobs:
                   chmod +x buildimage.sh
                   ./buildimage.sh $CIRCLE_SHA1 $ENVIRONMENT
         - run:
+            name: Rebuild JAR with integration properties
+            command: |
+                  export PATH=~/.local/bin:$PATH
+                  mv .deploy/buildjar.sh buildjar.sh
+                  chmod +x buildjar.sh
+                  ./buildjar.sh $ENVIRONMENT
+        - run:
             name: Trigger EB update
             command: |
                   export PATH=~/.local/bin:$PATH

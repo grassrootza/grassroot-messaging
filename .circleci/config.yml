@@ -91,7 +91,7 @@ workflows:
     - build:
         requires:
           - test
-    - deploy-production:
+    - deploy_production:
         requires:
           - build
         filters:

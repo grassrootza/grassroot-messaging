@@ -64,8 +64,8 @@ jobs:
         - run:
             name: Install AWS tools
             command: |
-                    sudo -H pip install awscli --upgrade --user
-                    sudo -H pip install awsebcli --upgrade --user
+                    pip install awscli --upgrade --user
+                    pip install awsebcli --upgrade --user
         - run:
             name: Build & push Docker image
             command: |

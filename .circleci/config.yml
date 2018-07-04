@@ -47,7 +47,7 @@ jobs:
 
     deploy_production:
       docker:
-        - image: circleci/circleci/python:3.6.1
+        - image: circleci/python:3.6.1
           auth:
             username: $DOCKER_USER
             password: $DOCKER_PASS

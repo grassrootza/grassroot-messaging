@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # DEFINE VARIABLES
 ENVIRONMENT=$1

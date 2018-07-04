@@ -47,7 +47,7 @@ jobs:
 
     deploy_production:
       docker:
-        - image: circleci/python:3.6.1
+        - image: circleci/openjdk:8
           auth:
             username: $DOCKER_USER
             password: $DOCKER_PASS
@@ -64,6 +64,7 @@ jobs:
         - run:
             name: Install AWS tools
             command: |
+                    sudo apt-get update && sudo apt-get install python && sudo apt-get install python-pip && sudo apt-get install python-dev
                     pip install awscli --upgrade --user
                     pip install awsebcli --upgrade --user
         - run:

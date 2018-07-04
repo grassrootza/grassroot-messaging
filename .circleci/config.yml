@@ -52,8 +52,8 @@ jobs:
             username: $DOCKER_USER
             password: $DOCKER_PASS
       environment:
-                ENVIRONMENT: "production"
-                EBENVIRONMENT: "gr-msg-prod"
+            ENVIRONMENT: "production"
+            EBENVIRONMENT: "gr-msg-prod"
       steps:
         - checkout
         - restore_cache:
@@ -70,12 +70,14 @@ jobs:
         - run:
             name: Build & push Docker image
             command: |
+                  export PATH=~/.local/bin:$PATH
                   mv .deploy/buildimage.sh buildimage.sh
                   chmod +x buildimage.sh
                   ./buildimage.sh $CIRCLE_SHA1 $ENVIRONMENT
         - run:
             name: Trigger EB update
             command: |
+                  export PATH=~/.local/bin:$PATH
                   mv .deploy/ebdeploy.sh ebdeploy.sh
                   chmod +x ebdeploy.sh
                   ./ebdeploy.sh $CIRCLE_SHA1 $ENVIRONMENT $EBENVIRONMENT

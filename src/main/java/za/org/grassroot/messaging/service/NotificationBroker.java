@@ -1,7 +1,7 @@
 package za.org.grassroot.messaging.service;
 
 import za.org.grassroot.core.domain.Notification;
-import za.org.grassroot.core.domain.NotificationStatus;
+import za.org.grassroot.core.domain.notification.NotificationStatus;
 import za.org.grassroot.core.enums.MessagingProvider;
 
 import java.util.List;

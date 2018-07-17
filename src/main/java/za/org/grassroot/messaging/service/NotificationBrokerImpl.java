@@ -11,11 +11,16 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.domain.Specifications;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import za.org.grassroot.core.domain.*;
+import za.org.grassroot.core.domain.Notification;
+import za.org.grassroot.core.domain.Notification_;
+import za.org.grassroot.core.domain.User;
+import za.org.grassroot.core.domain.group.Group;
+import za.org.grassroot.core.domain.group.GroupJoinMethod;
+import za.org.grassroot.core.domain.group.Membership;
+import za.org.grassroot.core.domain.notification.NotificationStatus;
 import za.org.grassroot.core.enums.MessagingProvider;
 import za.org.grassroot.core.repository.MembershipRepository;
 import za.org.grassroot.core.repository.NotificationRepository;
-import za.org.grassroot.core.repository.UserRepository;
 import za.org.grassroot.messaging.domain.NotificationSpecifications;
 
 import java.util.Collections;
@@ -34,13 +39,11 @@ public class NotificationBrokerImpl implements NotificationBroker {
 
     private final NotificationRepository notificationRepository;
     private final MembershipRepository membershipRepository;
-    private final UserRepository userRepository;
 
     @Autowired
-    public NotificationBrokerImpl(NotificationRepository notificationRepository, MembershipRepository membershipRepository, UserRepository userRepository) {
+    public NotificationBrokerImpl(NotificationRepository notificationRepository, MembershipRepository membershipRepository) {
         this.notificationRepository = notificationRepository;
         this.membershipRepository = membershipRepository;
-        this.userRepository = userRepository;
     }
 
     @Override

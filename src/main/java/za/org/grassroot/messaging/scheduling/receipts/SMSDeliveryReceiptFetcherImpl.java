@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import za.org.grassroot.core.domain.Notification;
-import za.org.grassroot.core.domain.NotificationStatus;
+import za.org.grassroot.core.domain.notification.NotificationStatus;
 import za.org.grassroot.core.enums.MessagingProvider;
 import za.org.grassroot.messaging.service.NotificationBroker;
 import za.org.grassroot.messaging.service.sms.SMSDeliveryStatus;

@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import za.org.grassroot.core.domain.Notification;
-import za.org.grassroot.core.domain.NotificationStatus;
+import za.org.grassroot.core.domain.notification.NotificationStatus;
 import za.org.grassroot.core.enums.DeliveryRoute;
 import za.org.grassroot.messaging.service.NotificationBroker;
 import za.org.grassroot.messaging.util.SendTimeUtil;

@@ -2,7 +2,13 @@ package za.org.grassroot.messaging.domain;
 
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.domain.Specifications;
-import za.org.grassroot.core.domain.*;
+import za.org.grassroot.core.domain.Notification;
+import za.org.grassroot.core.domain.Notification_;
+import za.org.grassroot.core.domain.User_;
+import za.org.grassroot.core.domain.group.Group_;
+import za.org.grassroot.core.domain.group.Membership;
+import za.org.grassroot.core.domain.group.Membership_;
+import za.org.grassroot.core.domain.notification.NotificationStatus;
 import za.org.grassroot.core.enums.DeliveryRoute;
 import za.org.grassroot.core.enums.MessagingProvider;
 import za.org.grassroot.messaging.service.NotificationBroker;

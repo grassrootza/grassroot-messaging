@@ -29,8 +29,6 @@ public class HttpConfig {
 
     @Bean
     public RestTemplate restTemplate() {
-//        RestTemplate restTemplate = new RestTemplate(httpRequestFactory());
-//        restTemplate.getMessageConverters().add(new Jaxb2RootElementHttpMessageConverter());
         return new RestTemplate(httpRequestFactory());
     }
 

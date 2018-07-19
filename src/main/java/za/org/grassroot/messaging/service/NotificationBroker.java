@@ -5,6 +5,7 @@ import za.org.grassroot.core.domain.notification.NotificationStatus;
 import za.org.grassroot.core.enums.MessagingProvider;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -26,7 +27,7 @@ public interface NotificationBroker {
 
     List<Notification> loadSentNotificationsWithUnknownDeliveryStatus(MessagingProvider messagingProvider);
 
-    Notification loadBySendingKey(String sendingKey);
+    Optional<Notification> loadBySendingKey(String sendingKey);
 
     /**
      * updates notification status

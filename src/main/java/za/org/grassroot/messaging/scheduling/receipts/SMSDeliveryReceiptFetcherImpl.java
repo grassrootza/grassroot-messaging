@@ -22,10 +22,7 @@ import za.org.grassroot.messaging.service.sms.aat.AatMsgStatus;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service @Slf4j
@@ -103,11 +100,11 @@ public class SMSDeliveryReceiptFetcherImpl implements SMSDeliveryReceiptFetcher 
 
     private void handleReceipt(String messageKey, Integer status) {
         log.info("looking for notification with key: {}, status: {}", messageKey, status);
-        Notification notification = notificationBroker.loadBySendingKey(messageKey);
-        if (notification != null) {
+        Optional<Notification> notification = notificationBroker.loadBySendingKey(messageKey);
+        if (notification.isPresent()) {
             AatMsgStatus aatMsgStatus = AatMsgStatus.fromCode(status);
             if (aatMsgStatus != null) {
-                updateNotificationFromAatStatus(notification, aatMsgStatus);
+                updateNotificationFromAatStatus(notification.get(), aatMsgStatus);
             } else {
                 log.error("Received confusing AAT message status: {}", status);// maybe also send to DL queue
             }

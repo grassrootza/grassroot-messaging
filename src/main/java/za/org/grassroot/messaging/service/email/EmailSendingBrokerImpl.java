@@ -17,7 +17,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import za.org.grassroot.core.domain.*;
+import za.org.grassroot.core.domain.Notification;
+import za.org.grassroot.core.domain.User;
+import za.org.grassroot.core.domain.VerificationTokenCode;
 import za.org.grassroot.core.domain.group.Group;
 import za.org.grassroot.core.domain.media.MediaFileRecord;
 import za.org.grassroot.core.domain.notification.EventNotification;
@@ -253,9 +255,9 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
     }
 
     private String getResponseLink(Task task, User user) {
-        final VerificationTokenCode token = tokenRepository.findOne(TokenSpecifications.forUserAndEntity(user.getUid(), task.getUid()));
-        return token == null ? null : inboundResponseUrl + task.getTaskType() + "/" + task.getUid()
-                + "/" + user.getUid() + "/" + token.getCode();
+        final Optional<VerificationTokenCode> token = tokenRepository.findOne(TokenSpecifications.forUserAndEntity(user.getUid(), task.getUid()));
+        return token.map(verificationTokenCode -> inboundResponseUrl + task.getTaskType() + "/" + task.getUid()
+                + "/" + user.getUid() + "/" + verificationTokenCode.getCode()).orElse(null);
     }
 
     private void updateNotificationFailed(String notificationUid, String cause) {
@@ -480,8 +482,8 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
     }
 
     private String getGroupUnsubLink(String groupUid, String userUid) {
-        final VerificationTokenCode token = tokenRepository.findOne(TokenSpecifications.forUserAndEntity(userUid, groupUid));
-        return token == null ? null : unsubscribeUrl + groupUid + "/" + userUid + "/" + token.getCode();
+        final Optional<VerificationTokenCode> token = tokenRepository.findOne(TokenSpecifications.forUserAndEntity(userUid, groupUid));
+        return token.map(verificationTokenCode -> unsubscribeUrl + groupUid + "/" + userUid + "/" + verificationTokenCode.getCode()).orElse(null);
     }
 
     // small helper for the above, might exist somewhere in Spring but can't find at present

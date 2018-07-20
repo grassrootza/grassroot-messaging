@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import za.org.grassroot.core.domain.GcmRegistration;
 import za.org.grassroot.core.domain.Notification;
-import za.org.grassroot.core.domain.NotificationStatus;
+import za.org.grassroot.core.domain.notification.NotificationStatus;
 import za.org.grassroot.core.enums.MessagingProvider;
 import za.org.grassroot.core.repository.GcmRegistrationRepository;
 import za.org.grassroot.messaging.dto.MessageDTO;

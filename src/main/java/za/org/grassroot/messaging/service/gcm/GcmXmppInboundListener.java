@@ -3,7 +3,6 @@ package za.org.grassroot.messaging.service.gcm;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.StanzaListener;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.filter.StanzaTypeFilter;
@@ -18,7 +17,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import za.org.grassroot.core.domain.Notification;
-import za.org.grassroot.core.domain.NotificationStatus;
+import za.org.grassroot.core.domain.notification.NotificationStatus;
 import za.org.grassroot.messaging.service.NotificationBroker;
 
 /**
@@ -44,7 +43,7 @@ public class GcmXmppInboundListener implements StanzaListener {
     }
 
     @Override
-    public void processPacket(Stanza packet) throws SmackException.NotConnectedException {
+    public void processPacket(Stanza packet) {
         if (packet instanceof Message) {
             try {
                 GcmPacketExtension gcmPacket = GcmPacketExtension.from(packet);

@@ -1,7 +1,7 @@
 package za.org.grassroot.messaging.service.gcm;
 
-import za.org.grassroot.core.domain.Group;
 import za.org.grassroot.core.domain.Notification;
+import za.org.grassroot.core.domain.group.Group;
 import za.org.grassroot.core.domain.task.Task;
 import za.org.grassroot.core.domain.task.TaskLog;
 import za.org.grassroot.core.enums.NotificationType;

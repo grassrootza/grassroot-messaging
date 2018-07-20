@@ -8,11 +8,11 @@ jobs:
         - checkout
         - restore_cache:
                     keys:
-                      - v2-gradle-deps-{{ checksum "build.gradle" }}-{{ checksum "grassroot-core/build.gradle" }}-{{ checksum "grassroot-integration/build.gradle" }}-{{ checksum "grassroot-services/build.gradle" }}-{{ checksum "grassroot-webapp/build.gradle" }}
+                      - v2-gradle-deps-{{ checksum "build.gradle" }}
                       - v2-gradle-deps
         - run: ./gradlew downloadDependencies
         - save_cache:
-                    key: v2-gradle-deps-{{ checksum "build.gradle" }}-{{ checksum "grassroot-core/build.gradle" }}-{{ checksum "grassroot-integration/build.gradle" }}-{{ checksum "grassroot-services/build.gradle" }}-{{ checksum "grassroot-webapp/build.gradle" }}
+                    key: v2-gradle-deps-{{ checksum "build.gradle" }}
                     paths:
                       - .gradle
                       - ~/.gradle
@@ -25,7 +25,7 @@ jobs:
         - checkout
         - restore_cache:
             keys:
-              - v2-gradle-deps-{{ checksum "build.gradle" }}-{{ checksum "grassroot-core/build.gradle" }}-{{ checksum "grassroot-integration/build.gradle" }}-{{ checksum "grassroot-services/build.gradle" }}-{{ checksum "grassroot-webapp/build.gradle" }}
+              - v2-gradle-deps-{{ checksum "build.gradle" }}
               - v2-gradle-deps
         - run: ./gradlew test
 
@@ -38,7 +38,7 @@ jobs:
         - checkout
         - restore_cache:
             keys:
-              - v2-gradle-deps-{{ checksum "build.gradle" }}-{{ checksum "grassroot-core/build.gradle" }}-{{ checksum "grassroot-integration/build.gradle" }}-{{ checksum "grassroot-services/build.gradle" }}-{{ checksum "grassroot-webapp/build.gradle" }}
+              - v2-gradle-deps-{{ checksum "build.gradle" }}
               - v2-gradle-deps
         - save_cache:
             key: v2-built-jar-{{ .Branch }}-{{ .Revision }}
@@ -52,10 +52,14 @@ jobs:
             username: $DOCKER_USER
             password: $DOCKER_PASS
       environment:
-                ENVIRONMENT: "production"
-                EBENVIRONMENT: "gr-msg-prod"
+            ENVIRONMENT: "production"
+            EBENVIRONMENT: "gr-msg-prod"
       steps:
         - checkout
+        - restore_cache:
+            keys:
+              - v2-gradle-deps-{{ checksum "build.gradle" }}
+              - v2-gradle-deps
         - restore_cache:
             keys:
               - v2-built-jar-{{ .Branch }}-{{ .Revision }}
@@ -70,13 +74,39 @@ jobs:
         - run:
             name: Build & push Docker image
             command: |
+                  export PATH=~/.local/bin:$PATH
                   mv .deploy/buildimage.sh buildimage.sh
                   chmod +x buildimage.sh
                   ./buildimage.sh $CIRCLE_SHA1 $ENVIRONMENT
         - run:
+            name: Rebuild JAR with integration properties
+            command: |
+                  export PATH=~/.local/bin:$PATH
+                  mv .deploy/buildjar.sh buildjar.sh
+                  chmod +x buildjar.sh
+                  ./buildjar.sh $ENVIRONMENT
+        - run:
             name: Trigger EB update
             command: |
+                  export PATH=~/.local/bin:$PATH
                   mv .deploy/ebdeploy.sh ebdeploy.sh
                   chmod +x ebdeploy.sh
                   ./ebdeploy.sh $CIRCLE_SHA1 $ENVIRONMENT $EBENVIRONMENT
 
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+    - dependencies
+    - test:
+        requires:
+          - dependencies
+    - build:
+        requires:
+          - test
+    - deploy_production:
+        requires:
+          - build
+        filters:
+          branches:
+            only: master

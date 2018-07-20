@@ -6,9 +6,6 @@ ENVIRONMENT=$2
 S3BUCKET=grassroot-circleci
 S3REGION=eu-west-1
 
-# GET application-production.properties FROM S3, RENAME IT and CP TO RESOURCES FOLDER PRIOR BUILDING THE JAR
-aws s3 cp s3://$S3BUCKET/grassroot-messaging-$ENVIRONMENT.properties src/main/resources/application-$ENVIRONMENT.properties --region $S3REGION
-
 # GET THE COMMIT ID TO SET AS PART OF THE INSTANCE NAME
 COMMITID=$(git rev-parse --short HEAD)
 sed -i "s/<BUILDID>/$COMMITID/" .deploy/startgrassroot.sh.$ENVIRONMENT
@@ -24,5 +21,5 @@ chmod +x stopgrassroot.sh
 
 # DEPLOY MODIFIED IMAGE TO DOCKER HUB
 docker build --rm=false -t grassrootdocker/gr-msg:$ENVIRONMENT .
-docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+docker login -u $DOCKER_USER -p $DOCKER_PASS
 docker push grassrootdocker/gr-msg:$ENVIRONMENT

@@ -19,8 +19,10 @@ sed -i "s/<TAG>/$ENVIRONMENT/" .deploy/$DOCKERRUN_FILE
 # DOWNLOAD ENVIRONMENT VARIABLES AND CREDENTIALS FROM S3
 mkdir -p environment
 mkdir -p log
+
 aws s3 cp s3://$S3BUCKET/environment-variables.messaging.$ENVIRONMENT environment/environment-variables.messaging.production --region $S3REGION
 aws s3 cp s3://$S3BUCKET/aws-credentials.$ENVIRONMENT environment/aws-credentials --region $S3REGION
+echo "Finished pulling config files"
 #aws s3 cp s3://$S3BUCKET/jwt_keystore.jks.$ENVIRONMENT environment/jwt_keystore.jks --region $S3REGION
 touch log/grassroot-msg.log
 
@@ -41,5 +43,8 @@ mv .deploy/.ebignore .ebignore
 mv .deploy/Dockerrun.aws.json Dockerrun.aws.json
 mv .deploy/log_files.yml log_files.yml
 
+echo "Done, triggering EB update"
+mkdir ~/.aws
+cp environment/aws-credentials ~/.aws/credentials # else for some reason eb can't use env vars like normal aws cli
 eb use $EBENVIRONMENT
 eb deploy $EBENVIRONMENT --label "$ENVIRONMENT-$COMMIT_MESSAGE" --timeout 20

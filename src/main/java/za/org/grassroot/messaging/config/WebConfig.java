@@ -20,8 +20,10 @@ public class WebConfig implements WebMvcConfigurer {
     // have auth tokens, so we intercept everything
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        log.info("Adding interceptors in web config ...");
         registry.addInterceptor(jwtAuthInterceptor())
                 .addPathPatterns("/**")
+                .addPathPatterns("/notification/push/**")
                 .excludePathPatterns("/jwt/public/**")
                 .excludePathPatterns("/error")
                 .excludePathPatterns("/metrics");

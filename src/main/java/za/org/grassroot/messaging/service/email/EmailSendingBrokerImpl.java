@@ -29,6 +29,7 @@ import za.org.grassroot.core.domain.task.Task;
 import za.org.grassroot.core.dto.GrassrootEmail;
 import za.org.grassroot.core.enums.EventType;
 import za.org.grassroot.core.enums.MessagingProvider;
+import za.org.grassroot.core.enums.NotificationDetailedType;
 import za.org.grassroot.core.enums.Province;
 import za.org.grassroot.core.repository.MediaFileRecordRepository;
 import za.org.grassroot.core.repository.UserRepository;
@@ -99,6 +100,13 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
     private static final String UNSUB_GROUP_TXT = "\n\n To unsubscribe from this group, just copy and paste this link: %1$s";
 
     private static final String UNSUB_FIELD = "___unsubscribe_link___";
+
+    private static final List<NotificationDetailedType> EXCLUDED_RESPONSE_TYPES = Arrays.asList(
+            NotificationDetailedType.VOTE_RESULTS,
+            NotificationDetailedType.MEETING_RSVP_TOTALS,
+            NotificationDetailedType.EVENT_CANCELLED,
+            NotificationDetailedType.MEETING_THANKYOU,
+            NotificationDetailedType.TODO_CANCELLED);
 
     private final NotificationBroker notificationBroker;
     private final MediaFileRecordRepository recordRepository;
@@ -189,6 +197,8 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
             replyTo = new Email(fromAddress);
         }
 
+        log.info("Creating email from notification, email from: {}", from);
+
         mail.setFrom(from);
         mail.setReplyTo(replyTo);
 
@@ -210,13 +220,13 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
             subject = task.getAncestorGroup().getName() + ": " + task.getName();
             mail.addCustomArg("task_id", task.getUid());
             mail.addCustomArg("task_type", task.getTaskType().name());
+
             final String responseLink = getResponseLink(task, target);
             boolean hasDescription = !StringUtils.isEmpty(task.getDescription()) && !"null".equals(task.getDescription());
             mailText = bodyPlain + (hasDescription ? "\n\n" + task.getDescription() + "\n\n" : "")
-                    + String.format(RESPOND_TASK_TXT, responseLink) + footer;
+                    + getTaskFooterLink(notification, responseLink, RESPOND_TASK_TXT) + footer;
             mailHtml = bodyHtml + (hasDescription ? "<p>" + task.getDescription() + "</p>" : "")
-                    + String.format(RESPOND_TASK_HTML, responseLink) + footer;
-            log.info("link footer: {}", String.format(RESPOND_TASK_HTML, responseLink));
+                    + getTaskFooterLink(notification, responseLink, RESPOND_TASK_HTML) + footer;
         } else {
             subject = DEFAULT_SUBJECT;
             mailText = bodyPlain + "\n\n" + footer;
@@ -247,6 +257,16 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
         mail.addCustomArg("notification_uid", notification.getUid());
 
         return checkForSandbox(mail);
+    }
+
+    private String getTaskFooterLink(Notification notification, String responseLink, String template) {
+        if (StringUtils.isEmpty(responseLink))
+            return "";
+
+        if (EXCLUDED_RESPONSE_TYPES.contains(notification.getNotificationDetailedType()))
+            return "";
+
+        return String.format(template, responseLink);
     }
 
     private String getGroupUnsubscribeLink(Notification notification) {

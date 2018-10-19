@@ -61,7 +61,7 @@ public class AatSmsSendingManager implements SmsSendingService {
         }
 
         // we are going to skip international numbers
-        if (!"27".equals(destinationNumber.substring(0, 2))) {
+        if (!ALLOWABLE_C_CODE.equals(destinationNumber.substring(0, 2))) {
             log.info("skipping international number: {}, substring: {}", destinationNumber, destinationNumber.substring(0, 1));
             return AatResponseInterpreter.makeErrorResponse(SmsResponseType.INTL_NUMBER);
         }

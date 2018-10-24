@@ -89,5 +89,6 @@ gradle-app.setting
 
 **/application-production.properties
 .idea/
+grassroot-messaging.iml
 grassroot-messaging-dto/build/
 grassroot-messaging-dto/out/

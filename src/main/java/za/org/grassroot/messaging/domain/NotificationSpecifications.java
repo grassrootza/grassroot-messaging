@@ -83,7 +83,7 @@ public class NotificationSpecifications {
         Specification<Notification> sendOnlyAfterOK = Specification.where(sendOnlyAfterIsNull).or(sendOnlyAfterIsInPast);
 
 
-        return Specification.where(readyStatus).and(readyStatus).and(sendOnlyAfterOK);
+        return Specification.where(readyStatus).and(sendOnlyAfterOK);
     }
 
     public static Specification<Membership> getMembership(String groupUid, String userUid) {

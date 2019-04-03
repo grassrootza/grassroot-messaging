@@ -67,7 +67,7 @@ public class NotificationBrokerImpl implements NotificationBroker {
     }
 
     private List<Notification> wrapMaxResults(Specification<Notification> specs, int maxCount) {
-        Pageable pageable = PageRequest.of(0, maxCount, Sort.Direction.ASC, Notification_.createdDateTime.getName());
+        Pageable pageable = PageRequest.of(0, maxCount, Sort.Direction.ASC, Notification_.lastStatusChange.getName());
         logger.debug("Fetching specs: {}, pageable: {}", specs, pageable);
         Page<Notification> page = notificationRepository.findAll(specs, pageable);
         return page.hasContent() ? page.getContent() : Collections.emptyList();

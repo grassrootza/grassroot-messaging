@@ -58,7 +58,7 @@ public class FailedEmailResponseFetcherImpl implements FailedEmailResponseFetche
             BouncedEmailResponse[] bounceResponses = objectMapper.readValue(response.getBody(), BouncedEmailResponse[].class);
             if (bounceResponses != null && bounceResponses.length > 0) {
                 List<String> bouncedAddresses = Arrays.stream(bounceResponses).map(BouncedEmailResponse::getEmail).collect(Collectors.toList());
-                bouncedAddresses.stream().map(userRepository::findByEmailAddressAndEmailAddressNotNull)
+                bouncedAddresses.stream().map(userRepository::findByEmailAddressIgnoreCaseAndEmailAddressNotNull)
                         .filter(Objects::nonNull).forEach(user -> user.setContactError(true));
                 clearFailedEmails(bouncedAddresses);
             }

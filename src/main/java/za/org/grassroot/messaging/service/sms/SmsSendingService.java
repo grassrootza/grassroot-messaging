@@ -5,7 +5,7 @@ package za.org.grassroot.messaging.service.sms;
  */
 public interface SmsSendingService {
 
-    SmsGatewayResponse sendSMS(String message, String destinationNumber);
+    SmsGatewayResponse sendSMS(String message, String destinationNumber, boolean longMessageAllowed);
 
     SmsGatewayResponse sendPrioritySMS(String message, String destinationNumber);
 

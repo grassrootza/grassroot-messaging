@@ -41,6 +41,8 @@ public class AatResponseInterpreter implements SmsGatewayResponse {
 
     public AatResponseInterpreter(AatSmsResponse rawResponse) {
 
+        log.info("AAT response, raw: {}", rawResponse);
+
         if (rawResponse.getSubmitresult().getAction().equals(successAction)) {
             this.responseType = SmsResponseType.ROUTED;
             this.successful = true;

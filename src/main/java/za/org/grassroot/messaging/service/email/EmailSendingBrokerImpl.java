@@ -174,6 +174,7 @@ public class EmailSendingBrokerImpl implements EmailSendingBroker {
 
     private Mail checkForSandbox(Mail mail) {
         if (useSandboxOnly) {
+            log.info("We are in sandbox, this will not send");
             Setting sandboxMode = new Setting();
             sandboxMode.setEnable(true);
             MailSettings settings = new MailSettings();

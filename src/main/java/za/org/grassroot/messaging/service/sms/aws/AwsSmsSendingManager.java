@@ -62,7 +62,7 @@ public class AwsSmsSendingManager implements SmsSendingService {
     }
 
     @Override
-    public SmsGatewayResponse sendSMS(String message, String destinationNumber) {
+    public SmsGatewayResponse sendSMS(String message, String destinationNumber, boolean longMessageAllowed) {
         long startTime = System.currentTimeMillis();
         try {
             logger.info("Sending AWS SMS to {}, ...", destinationNumber);

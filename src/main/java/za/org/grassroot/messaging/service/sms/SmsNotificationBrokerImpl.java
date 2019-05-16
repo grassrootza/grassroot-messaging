@@ -9,10 +9,15 @@ import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import za.org.grassroot.core.domain.Notification;
 import za.org.grassroot.core.domain.notification.NotificationStatus;
+import za.org.grassroot.core.enums.DeliveryRoute;
+import za.org.grassroot.core.enums.NotificationDetailedType;
+import za.org.grassroot.core.enums.NotificationType;
 import za.org.grassroot.messaging.domain.PriorityMessage;
 import za.org.grassroot.messaging.service.NotificationBroker;
 
 import javax.annotation.PostConstruct;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by luke on 2017/05/18.
@@ -21,6 +26,10 @@ import javax.annotation.PostConstruct;
 public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
 
     private static final Logger logger = LoggerFactory.getLogger(SmsNotificationBrokerImpl.class);
+
+    private static final List<DeliveryRoute> LONG_MSG_ALLOWED_ROUTES = Arrays.asList(DeliveryRoute.LONG_SMS, DeliveryRoute.ANDROID_APP,
+            DeliveryRoute.WHATSAPP);
+    private static final List<NotificationType> LONG_MSG_ALLOWED_TYPES = Arrays.asList(NotificationType.BROADCAST);
 
     @Value("${grassroot.sms.sending.awsdefault:false}")
     private boolean routeAllThroughAws;
@@ -61,10 +70,12 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
         Notification messagePayload = (Notification) message.getPayload();
 
         boolean selfJoined = notificationBroker.isUserSelfJoinedToGroup(messagePayload);
+        boolean longMessageAllowed = LONG_MSG_ALLOWED_ROUTES.contains(messagePayload.getDeliveryChannel()) &&
+                LONG_MSG_ALLOWED_TYPES.contains(messagePayload.getNotificationType());
 
         SmsGatewayResponse response = awsSmsSender != null && selfJoined ?
-                awsSmsSender.sendSMS(messagePayload.getMessage(), messagePayload.getTarget().getPhoneNumber()) :
-                defaultSmsSender.sendSMS(messagePayload.getMessage(), messagePayload.getTarget().getPhoneNumber());
+                awsSmsSender.sendSMS(messagePayload.getMessage(), messagePayload.getTarget().getPhoneNumber(), longMessageAllowed) :
+                defaultSmsSender.sendSMS(messagePayload.getMessage(), messagePayload.getTarget().getPhoneNumber(), longMessageAllowed);
 
         handleSmsGatewayResponse(messagePayload.getUid(), response);
     }
@@ -73,6 +84,8 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
     public void sendSmsNotificationByStrategy(Message message, SmsSendingStrategy strategy) {
         logger.debug("Sending with strategy: {}", strategy.name());
         Notification notification = (Notification) message.getPayload();
+        boolean longMsgAllowed = LONG_MSG_ALLOWED_ROUTES.contains(notification.getDeliveryChannel()) &&
+                LONG_MSG_ALLOWED_TYPES.contains(notification.getNotificationType());
         SmsGatewayResponse response;
         switch (strategy) {
             case DEFAULT:
@@ -83,13 +96,13 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
                 if (aatSmsSender == null) {
                     throw new IllegalArgumentException("Error! AAT sending requested without bean wired");
                 }
-                response = aatSmsSender.sendSMS(notification.getMessage(), notification.getTarget().getPhoneNumber());
+                response = aatSmsSender.sendSMS(notification.getMessage(), notification.getTarget().getPhoneNumber(), longMsgAllowed);
                 break;
             case AWS:
                 if (awsSmsSender == null) {
                     throw new IllegalArgumentException("Error! AWS sending requested without bean wired");
                 }
-                response = awsSmsSender.sendSMS(notification.getMessage(), notification.getTarget().getPhoneNumber());
+                response = awsSmsSender.sendSMS(notification.getMessage(), notification.getTarget().getPhoneNumber(), longMsgAllowed);
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported SMS strategy provided");
@@ -107,9 +120,9 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
         boolean selfJoined = notificationBroker.isUserSelfJoinedToGroup(payload);
 
         if (awsSmsSender != null && selfJoined) {
-            awsSmsSender.sendSMS(payload.getMessage(), payload.getTarget().getPhoneNumber());
+            awsSmsSender.sendSMS(payload.getMessage(), payload.getTarget().getPhoneNumber(), false);
         }  else {
-            defaultSmsSender.sendSMS(payload.getMessage(), payload.getTarget().getPhoneNumber());
+            defaultSmsSender.sendSMS(payload.getMessage(), payload.getTarget().getPhoneNumber(), false);
         }
     }
 

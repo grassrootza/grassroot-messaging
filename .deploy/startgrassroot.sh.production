@@ -24,4 +24,4 @@ remote_syslog
 
 # START GRASSROOT
 cd /usr/src/grassroot-msg/
-java -Djava.security.egd=file:/dev/urandom -Dspring.profiles.active=$PROFILE,fast -jar -Xmx1024m build/libs/grassroot-messaging-1.0.0.9.jar > log/grassroot-msg.log 2>&1 &
+java -Djava.security.egd=file:/dev/urandom -Dspring.profiles.active=$PROFILE,fast -jar -Xmx1024m build/libs/grassroot-messaging-1.0.1.jar > log/grassroot-msg.log 2>&1 &

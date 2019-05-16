@@ -5,14 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -22,6 +22,9 @@ import za.org.grassroot.messaging.service.sms.SmsResponseType;
 import za.org.grassroot.messaging.service.sms.SmsSendingService;
 
 import java.io.StringReader;
+import java.net.URI;
+import java.nio.charset.Charset;
+import java.util.Collections;
 
 /**
  * Created by luke on 2015/09/09.
@@ -54,30 +57,41 @@ public class AatSmsSendingManager implements SmsSendingService {
     }
 
     @Override
-    public SmsGatewayResponse sendSMS(String message, String destinationNumber) {
+    public SmsGatewayResponse sendSMS(String message, String destinationNumber, boolean longMessageAllowed) {
         if (StringUtils.isEmpty(destinationNumber)) {
             log.error("Error! Called send SMS with null number, returning error");
             return AatResponseInterpreter.makeErrorResponse(SmsResponseType.COMMUNICATION_ERROR);
         }
 
         // we are going to skip international numbers
-        if (!"27".equals(destinationNumber.substring(0, 2))) {
+        if (!ALLOWABLE_C_CODE.equals(destinationNumber.substring(0, 2))) {
             log.info("skipping international number: {}, substring: {}", destinationNumber, destinationNumber.substring(0, 1));
             return AatResponseInterpreter.makeErrorResponse(SmsResponseType.INTL_NUMBER);
         }
 
-        long startTime = System.currentTimeMillis();
-        UriComponentsBuilder gatewayURI = UriComponentsBuilder.newInstance().scheme("https").host(smsGatewayHost);
-        String msgToSend = replaceSmartQuotes(replaceIllegalChars(message));
-        gatewayURI.path("send/").queryParam("username", smsGatewayUsername)
-                .queryParam("password", smsGatewayPassword)
-                .queryParam("number", destinationNumber)
-                .queryParam("message", msgToSend);
-
         try {
+            MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
+            queryParams.put("username", Collections.singletonList(smsGatewayUsername));
+            queryParams.put("password", Collections.singletonList(smsGatewayPassword));
+            queryParams.put("number", Collections.singletonList(destinationNumber));
+            queryParams.put("message", Collections.singletonList(replaceSmartQuotes(message)));
+
+            if (longMessageAllowed && message.length() > 160) {
+                queryParams.put("ems", Collections.singletonList("1"));
+            }
+
+            long startTime = System.currentTimeMillis();
+            UriComponentsBuilder gatewayURI = UriComponentsBuilder.newInstance()
+                    .scheme("https")
+                    .host(smsGatewayHost)
+                    .path("send/")
+                    .queryParams(queryParams);
+
             log.info("Sending AAT SMS to {} ...", destinationNumber);
+            URI encodedUri = gatewayURI.build().encode(Charset.forName("UTF-8")).toUri(); // let's see
+            log.debug("AAT SMS url: {}", encodedUri);
             SmsGatewayResponse response = environment.acceptsProfiles("default") ? AatResponseInterpreter.makeDummy() :
-                    new AatResponseInterpreter(restTemplate.getForObject(gatewayURI.build().toUri(), AatSmsResponse.class));
+                    new AatResponseInterpreter(restTemplate.getForObject(encodedUri, AatSmsResponse.class));
             log.debug("time to execute AAT sms: {} msecs", System.currentTimeMillis() - startTime);
             return response;
         } catch (Exception e) {
@@ -112,8 +126,9 @@ public class AatSmsSendingManager implements SmsSendingService {
     }
 
     private String replaceIllegalChars(String message) {
-        String messageEmojiStripped = EmojiParser.removeAllEmojis(message).replaceAll("[<=_]", "");
-        return messageEmojiStripped.replaceAll("\\s*&\\s*", " and ");
+//        String messageEmojiStripped = EmojiParser.removeAllEmojis(message).replaceAll("[<=_]", "");
+//        return messageEmojiStripped.replaceAll("\\s*&\\s*", " and ");
+        return EmojiParser.removeAllEmojis(message);
     }
 
     // these are from Google base (couldn't find them in guava, so hand ported)

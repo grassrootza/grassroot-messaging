@@ -19,10 +19,10 @@ jobs:
         - image: circleci/openjdk:8
       steps:
         - checkout
-#        - restore_cache:
-#            keys:
-#              - v2-gradle-deps-{{ checksum "build.gradle" }}
-#              - v2-gradle-deps
+        - restore_cache:
+            keys:
+              - v2-gradle-deps-{{ checksum "build.gradle" }}
+              - v2-gradle-deps
         - run: ./gradlew test
 
     build:

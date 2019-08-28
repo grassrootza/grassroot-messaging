@@ -29,7 +29,7 @@ public class SmsNotificationBrokerImpl implements SmsNotificationBroker {
 
     private static final List<DeliveryRoute> LONG_MSG_ALLOWED_ROUTES = Arrays.asList(DeliveryRoute.LONG_SMS, DeliveryRoute.ANDROID_APP,
             DeliveryRoute.WHATSAPP);
-    private static final List<NotificationType> LONG_MSG_ALLOWED_TYPES = Arrays.asList(NotificationType.BROADCAST);
+    private static final List<NotificationType> LONG_MSG_ALLOWED_TYPES = Arrays.asList(NotificationType.BROADCAST, NotificationType.USER);
 
     @Value("${grassroot.sms.sending.awsdefault:false}")
     private boolean routeAllThroughAws;

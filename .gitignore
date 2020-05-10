@@ -86,6 +86,11 @@ gradle-app.setting
 .idea/modules.xml
 .idea/modules/
 .idea/vcs.xml
+.project
+
+.settings/
+.classpath
+bin/
 
 **/application-production.properties
 .idea/

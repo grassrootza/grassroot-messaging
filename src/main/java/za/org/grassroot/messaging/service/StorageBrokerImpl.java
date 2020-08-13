@@ -23,7 +23,7 @@ import java.io.IOException;
 @Service @Slf4j
 public class StorageBrokerImpl implements StorageBroker {
 
-    private final AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard()
+    private static final AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard()
             .withRegion(Regions.EU_WEST_1)
             .withCredentials(new ProfileCredentialsProvider("s3images"));
 
